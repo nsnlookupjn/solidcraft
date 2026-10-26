@@ -637,6 +637,77 @@ store listings (Snap Store) but no shop. Paths, from least to most commitment:
    "Powered by Raspberry Pi" mark is available to approved products. Revenue could fund the
    project, but needs a legal entity, warranty and support.
 
+#### A commercial retrofit kit: "upgrade any machine"
+
+**Jason's idea:** commercialise a Pi package that also includes machine sensors (vibration,
+temperature) and coolant sensors (concentration by refraction, coolant temperature, and so on),
+to upgrade any machine while optimising production and quality. The kit is the hardware for
+[self-tuning CAM operations](#self-tuning-cam-operations) and for the per-part record; using the
+same signals to **predict failures and schedule maintenance** is covered by the companion
+predictive-maintenance research (topic "Predict machine failure and order maintenance").
+
+**Sensor options (prices are rough single-unit street prices; unverified, they move):**
+
+| Measures | Sensor | Rough cost | Why it matters | Notes |
+|---|---|---|---|---|
+| Vibration (chatter, imbalance, bearing condition) | MEMS accelerometer (low cost) or IEPE industrial accelerometer with an ADC board | USD 30–100 (MEMS); 250–650 (IEPE + ADC) | stability check per segment; self-tuning margin | magnetic or stud mount on spindle housing; sampled at kHz on the box |
+| Spindle and axis power | current transformers on the drive supply, or a Modbus power meter | USD 20–80 per CT; 100–300 meter | load measured independently of the control; works on old machines without data output | **electrical work inside the cabinet must be done by a qualified person**; clamp-on CTs avoid breaking circuits |
+| Temperatures | RTD or thermocouple probes with converter boards; IR sensor for spindle nose | USD 15–60 each | thermal growth and warm-up (machine library); part temperature at probing | 4–8 points: spindle housing, column, table, ambient, coolant |
+| Coolant temperature | RTD in the sump or return line | USD 20–60 | viscosity, part temperature, thermal growth | cheap and reliable |
+| Coolant level | ultrasonic or float sensor | USD 20–60 | top-up alerts; evaporation raises concentration | |
+| Coolant concentration | (a) operator reading with a handheld digital refractometer, entered by scan; (b) sump-side automatic unit; (c) inline process refractometer | (a) USD 100–300; (b) maker's price, not published in the sources found; (c) USD 12,000+ per point (data-collection guide) | concentration drift affects tool life, finish and corrosion | reading in °Brix × the coolant's refractometer factor = % concentration; tramp oil and temperature disturb the reading (unverified magnitude); a DIY inline refractometer is not a realistic first product (opinion) |
+| Coolant pH / conductivity | electrode probes with transmitters | USD 50–500 | ageing and bacterial growth | electrodes foul in oily fluid and need cleaning (data-collection guide) |
+| Coolant and air pressure | 4–20 mA pressure transmitters | USD 30–100 each + ADC | through-spindle coolant failures, low air for tool changes | |
+
+**Kit tiers (opinion, rough totals including the box from the edge-device section):**
+
+- **Inspect** (records, traveller, printer, scanner, serial capture): about USD 400–1,200.
+- **Monitor** (+ accelerometer, 4–8 temperatures, power CTs, coolant temperature and level):
+  + USD 300–1,000.
+- **Coolant** (+ automatic concentration unit or inline refractometer, pH/conductivity):
+  + USD 1,500 to well over 12,000, depending on whether a sump-side unit or a process
+  refractometer is used.
+
+**Existing products to compete or partner with (public descriptions only):**
+
+- **Caron Engineering TMAC**: tool monitoring and adaptive control with a scaling power sensor;
+  compares load to limits, adjusts feeds and speeds in real time, stops on breakage, records every
+  cut, and (v3.0) labels cuts by part feature; "universal interface" to nearly any CNC.
+  **Caron DTect-IT** detects machine irregularities with USB vibration sensors.
+- **Liquidtool Sensor and Manager**: magnet-mounted next to the sump, pumps a filtered sample past
+  a built-in refractometer and thermometer, networked, with app entry of pH, nitrite and hardness.
+- **Inline process refractometers** (e.g. Anton Paar L-Rix 2100/3100) and process sensors from
+  instrument makers (e.g. Vaisala lists metalworking applications): accurate, expensive, built for
+  process plants.
+- **Machine monitoring services** (MachineMetrics, Chatter and others): control data plus
+  optional sensors, cloud dashboards, subscription pricing (unverified details).
+- **Industrial Pi hardware** (Revolution Pi and others): a base to build on rather than a
+  competitor.
+
+**Where an open kit could stand out (opinion):** the incumbents each cover one piece (tool load,
+vibration, coolant, dashboards). None of the public descriptions reviewed ties the readings to
+**CAM's predictions per toolpath segment** and to **per-part inspection results** in an open
+format. That link, and an open data format with no mandatory cloud, is the differentiator,
+not the sensors themselves.
+
+**Practicalities for a product (opinion):**
+
+- **Never connect to safety circuits** (e-stop, door interlocks). Alarm outputs to the control
+  only through an input the machine builder documents for that purpose.
+- **Compliance**: the assembled kit needs its own EMC and electrical-safety conformity (CE/UKCA,
+  FCC); starting from a pre-certified industrial Pi and pre-certified sensors reduces the work but
+  does not remove it. The Raspberry Pi Integrator Programme exists to help small companies with
+  this testing.
+- **Installation and support** dominate cost: mounting, wiring, per-control setup, calibration.
+  A dealer or integrator network fits better than mail order for the Monitor and Coolant tiers.
+- **Calibration records** for anything used in acceptance (probes, gauges, temperature sensors
+  used to correct measurements).
+
+**Through SolidCraft channels:** the same three paths as above apply. The open part (record
+format, segment-aligned data format, conformance tests, reference BOM) belongs with SolidCraft;
+the kit itself is best sold by a separate business (Jason's or a partner's) listed as
+"works with SolidCraft", subject to the maintainers' permission to use the name.
+
 Someone outside the core team (for example Jason) could start at path 2 without asking anyone
 except the trademark question: using the "SolidCraft" name on a product needs the maintainers'
 permission (opinion; check the project's trademark position).
@@ -926,6 +997,12 @@ Connectivity and the edge device:
 - MTConnect agent for Haas (GPL-2.0, listed only to note it is out of bounds): https://github.com/TrakHound/MTConnect-Agent-For-Haas
 - Machine library (same author): https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md
 - CAM physics system (same author): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md
+- Caron TMAC (Production Machining): https://www.productionmachining.com/products/carons-tmac-system-offers-real-time-tool-monitoring
+- Caron DTect-IT (Modern Machine Shop): https://mmsonline.com/products/monitoring-system-detects-vibration-with-usb-sensors
+- Liquidtool coolant sensor (Fabricating & Metalworking): https://fandmmag.com/2021/07/automated-monitoring-of-coolant-results-in-cleaner-machines
+- CNC coolant monitoring sensors comparison: https://industrialmonitordirect.com/blogs/knowledgebase/cnc-coolant-monitoring-sensors-technical-comparison
+- Anton Paar L-Rix inline refractometers: https://manufacturingchemist.com/anton-paar-launches-l-rix-2100-and-l
+- Vaisala, metalworking and machining: https://www.vaisala.com/ko/node/82806
 - Revolution Pi products: https://revolutionpi.com/en/products
 - Raspberry Pi Integrator Programme and Powered by Raspberry Pi: https://www.raspberrypi.com/for-industry/integrator-programme/
 - Zebra CUPS driver configuration: https://support.zebra.com/cpws/docs/cups/cups_driver1_4_configure.pdf
