@@ -28,7 +28,9 @@ It is a companion to these files in the same fork, and does not repeat them:
   simulation: the gate before G-code"). Every check in this file reports into that gate with the
   same *Stop / Warn / Info* severities.
 - [In-process inspection](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md):
-  the Raspberry Pi box at the machine and Self-tuning CAM Operations. This file adds cameras and
+  **SolidCraft Edge** (Jason's name for the Raspberry Pi computer at the machine, which sits on
+  the edge of CAM and brings the machine and automation back into CAM for closed-loop process
+  improvement) and Self-tuning CAM Operations. This file adds cameras and
   chip observations to that box.
 - [Machine health](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-9w3gq9/research/cam-research-nsnlookupjn-machine-health.md):
   coolant concentration and temperature ("Coolant condition"), which this file does not repeat.
@@ -107,7 +109,7 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    machine-interior camera looks through a "fast-rotating viewing window" that "flings droplets
    and solid particles outward"
    ([Foundry Planet](https://www.foundry-planet.com/d/seeing-is-understanding-new-camera-system-provides-optical-information-from-inside-the-machine-for-machining-process-optimization/)).
-   A Pi-box camera without that window needs an air purge, a rinse-and-dry cycle, and an image
+   A SolidCraft Edge camera without that window needs an air purge, a rinse-and-dry cycle, and an image
    check that says when the view is too dirty to trust.
 
 ## Fundamentals
@@ -384,7 +386,7 @@ Notes:
   command moves to the approach move, with a dwell from the machine's spindle acceleration if the
   control does not wait by itself.
 - **R4 (opt-in per machine):** speed matching during the lead. Allowed only when the machine
-  library has (a) a spindle acceleration figure (measured, for example from the Pi box, or from
+  library has (a) a spindle acceleration figure (measured, for example from SolidCraft Edge, or from
   the builder), and (b) a confirmed "does not wait for spindle at speed during feed moves"
   behaviour. Feed per block is computed from the predicted actual speed.
 - **Checks:** `fz` out of the tool's range anywhere in a lead (**Warn**); `hex < hmin` for more
@@ -507,7 +509,7 @@ chips lie, so the marring check can name the face, and makes camera comparison p
 (see Accuracy). Not for the CAM check; useful offline to tune the level 0 and 1 rates for a
 machine type.
 
-**Monitoring with cameras (Jason's idea).** The Pi box at the machine (inspection file) gets one
+**Monitoring with cameras (Jason's idea).** SolidCraft Edge, the Raspberry Pi computer at the machine (inspection file), gets one
 or more cameras inside the enclosure:
 
 - **What it checks:** chip coverage per zone (table, vise jaws, tool setter, part faces), chips
@@ -518,11 +520,11 @@ or more cameras inside the enclosure:
   number. A learned segmentation model can come later; image differencing against a clean
   reference is enough to start (unverified on real coolant scenes).
 - **What it does with the answer:** if a zone is dirty when the model says clean, repeat the
-  cleaning cycle once (the program carries a conditional branch through a macro variable the Pi
-  can set, on controls that allow writes; otherwise the Pi raises an alarm the operator sees), and
+  cleaning cycle once (the program carries a conditional branch through a macro variable
+  SolidCraft Edge can set, on controls that allow writes; otherwise SolidCraft Edge raises an alarm the operator sees), and
   log the miss so the evacuation rates for that machine are corrected. This is Self-tuning CAM
   Operations applied to chips.
-- **Safety principle (same as the inspection file):** the Pi never moves the machine. It can
+- **Safety principle (same as the inspection file):** SolidCraft Edge never moves the machine. It can
   set a flag the program reads at a defined point, or stop and alert; the cycle that runs is one
   CAM already wrote and the simulation already checked.
 
@@ -626,7 +628,7 @@ Additions to the machine library file's schema (opinion):
 3. **Cleaning operations:** chip clear, washdown, part wash and dry, tool clean, setter clean as
    operations with machine-library requirements and post-processor codes; end-of-program default.
 4. **Chip model level 0:** bookkeeping per region, findings, automatic chip clear insertion.
-5. **Cameras on the Pi box:** reference images, coverage per zone, repeat-once branch, rate
+5. **Cameras on SolidCraft Edge:** reference images, coverage per zone, repeat-once branch, rate
    correction (self-tuning).
 6. **Chip model level 1 and speed matching (R4)** where machines report what they need.
 
