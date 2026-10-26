@@ -101,6 +101,13 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    it. ISO 8062-3 gives the tolerance and allowance grades; datum targets (ISO 5459) locate the
    raw part for the first setup. SolidCraft's configurations are a natural home for "as cast"
    and "as machined" states of one design.
+8. **Design once at final size; derive the stock** (Jason's idea). From the final part with its
+   tolerances, derive the raw blank for the process (casting, forging, 3D-printed preform, bar)
+   and any intermediate states (before and after heat treatment). CAM loads the blank, ideally
+   as measured, and machines it to the final part. Heat treatment changes size (D2 grew 0.08 %
+   in one direction in a published example, with a recommended 0.15 % per side allowance), so a
+   "before heat treatment" state carries extra material that is re-machined to final tolerance
+   afterwards, checked against the case depth that the finishing must not remove.
 
 ## Fundamentals
 
@@ -353,6 +360,160 @@ scale and sand. The planner should (opinion):
 2. plan the first pass at least `skin + casting variation` deep where force and power allow, and
 3. use a tool and grade chosen for interrupted, abrasive cuts on that pass only.
 
+## From the final part to the stock and back (Jason's idea)
+
+Jason's request: **design the part once, at final size with its tolerances; from it, produce the
+stock design for the process that makes the blank (a casting, a forging, a 3D-printed preform, or
+bar and plate); load that stock into CAM and machine it to final size; and where the part is heat
+treated, which changes its size, plan the extra material and re-machine it to the final tolerance
+after heat treatment.**
+
+### The chain of states
+
+One part passes through several **states**, each a body with its own geometry, tolerances and
+properties:
+
+| State | Geometry | Who uses it |
+|---|---|---|
+| **Final** (the design) | nominal size, tolerances, property regions | the designer, inspection |
+| **Before finishing** (one per finishing step) | final + finishing allowance on each finished face | CAM for the step before; the heat treater |
+| **Raw blank** | final + all allowances, plus what the blank process needs (draft, fillets, filled small holes, supports) | CAM's stock for the first setup; the foundry, forge or printer |
+| **Pattern / die / build file** | raw blank scaled or compensated for the process (casting shrink, print warping) | the pattern maker, die maker or build preparation |
+
+**The final part is the master; every other state is derived from it**, so a change to the design
+flows down to the blank, the pattern and the CAM stock. Opinion: SolidCraft's configurations
+already switch materials and appearances per state ([docs/configurations.md](../docs/configurations.md));
+a "stock state" could be a configuration whose extra features are the derivation steps below,
+and CAM picks the configuration it needs as its stock and the next one down as its target.
+
+### Deriving the raw blank, per process
+
+Every face of the final part is tagged, using the property regions of this file, as **machined**
+(it gets an allowance) or **left raw** (as cast, as forged, as printed; no allowance, and its
+tolerance must be achievable by the blank process). Then, per process (fact for the allowance
+types; values are illustrative or as cited):
+
+- **Casting.** Classic pattern allowances are shrinkage, draft, machining (finish), distortion and
+  rapping ([NPTEL, metal casting lecture 3](https://archive.nptel.ac.in/content/storage2/courses/112107144/metalcasting/lecture3.htm)).
+  In SolidCraft terms: offset each machined face by its required machining allowance (ISO 8062-3
+  RMA grade, or per face); add draft to faces parallel to the pull direction away from the parting
+  line; raise inside corners to a minimum fillet radius; fill holes below the smallest diameter
+  the foundry can core; then, for the **pattern only**, scale by the contraction allowance. The
+  NPTEL table gives, for patterns up to 2 ft, 0.125 in/ft for grey cast iron (about 1.0 %),
+  0.251 in/ft for cast steel (about 2.1 %) and 0.155 in/ft for aluminium (about 1.3 %), falling for
+  larger patterns. The cast part is the raw blank; the pattern is a separate, scaled state.
+- **Forging.** The same steps with forging rules: draft on die walls, a parting (flash) line,
+  larger corner and fillet radii, filled holes and pockets the die cannot form, machining allowance
+  over scale and the decarburised layer (see "Unmachined stock surfaces"), and the forging
+  tolerance standard for the raw faces (EN 10243-1 in Europe; unverified as current).
+- **3D-printed preform** (metal powder bed or DED). Allowance only on machined faces, usually
+  small for powder bed and larger for DED; extra material on support-side faces that will be
+  cleaned up; **sacrificial features** added for the machining: probe and datum pads, fixturing
+  tabs or a clamping boss, removed in the last operation. Shrink and warp compensation belongs to
+  build preparation (the additive file, #1626), so the build file is its own state.
+- **Bar, plate or sawn blank.** The smallest standard size that contains the final part plus
+  allowances and the clamping material the workholding plan needs (the workholding file); this is
+  the simplest derivation and the one CAM programs usually do today.
+
+Opinion: these are mostly existing modelling operations. SolidCraft already has
+`solid.offset_face`, `solid.draft`, `solid.scale` and `solid.shell` commands; a derivation is a
+recorded chain of them driven by the face tags, so it updates when the design changes (the faces
+are found by their persistent names, [docs/face-attachments.md](../docs/face-attachments.md)).
+Nothing here needs the paused kernel work beyond what those commands already do; where they fail
+(for example draft on complex faces), the derivation reports which face and leaves the rest.
+
+**Checks only this link makes possible** (opinion):
+- a face left raw whose tolerance is tighter than the casting or forging grade must be machined;
+- a machined face with less allowance than the blank's tolerance plus the skin depth will not
+  clean up (worked example 4 above);
+- a sacrificial feature that collides with a finished face or with the workholding;
+- the raw blank's weight and volume against the foundry's or printer's limits, using the material
+  density already on the material card.
+
+### Heat treatment changes size: the re-machining step
+
+Hardening moves a part in three ways: a **size change** (growth or shrink, from the change of
+structure; it can differ by direction relative to the steel's rolling direction), **distortion**
+(bending, bowing, out-of-round from residual stress and uneven cooling; see the stock integrity
+file), and, for case hardening, a hard case that the finishing step must not remove. **Fact.**
+
+Published example: a 3.15 in (80 mm) cube of D2, vacuum hardened, **grew 0.08 % in one direction
+and shrank in the other two**; size changes from hardening and from tempering add together, and
+tempering temperature (so the hardness asked for) changes the result. The recommended **minimum
+machining allowance was 0.15 % per side**, assuming a stress relief between roughing and
+semi-finishing, and more without it. The article's main advice is to make the size change
+**repeatable** by controlling the heat treatment, and to know the part's orientation to the
+mill's grain direction ([Production Machining, predicting size change from heat treatment](https://www.productionmachining.com/articles/predicting-size-change-from-heat-treatment)).
+**Fact** for these numbers; they are one steel and one process.
+
+**Worked example (D2 die block, 80 mm, illustrative).** Size change 0.08 % of 80 mm is 0.064 mm.
+Allowance 0.15 % per side is 0.12 mm per side, 0.24 mm on the size. So the semi-finished block
+before hardening is 80.24 mm (shifted by the predicted size change in the direction that grows or
+shrinks, if it is known), and after hardening the hard-milling or grinding step removes about
+0.12 mm per side to reach 80 mm within tolerance. That last step cuts material at maybe 58–62 HRC,
+so its cutting data come from the hardened state through the property field above, not from the
+annealed material the roughing used.
+
+**For a case-hardened part the allowance has a ceiling as well as a floor.** The finishing
+allowance must exceed size change plus distortion plus a clean-up minimum, but must stay below
+what the case can lose and still meet its finished depth (worked example 2). Software that holds
+both the size-change model and the case specification can show the window, or show that there is
+none.
+
+**What the model needs** (opinion):
+1. A **heat-treatment step** in the job (it is not a machine operation): the process, its
+   specification, and a **size-change model** for the material and process: expected change per
+   material axis (the material card's `material123` axes can carry the rolling direction), a
+   distortion band, and its source (steel maker's data, the heat treater's records, the shop's own
+   measurements).
+2. A **"before heat treatment" stock state** derived from the final part: each finished face
+   offset by the planned finishing allowance and shifted by the predicted size change. CAM
+   machines the raw blank to this state before heat treatment.
+3. An **"after heat treatment" stock state** = the before state with the size change applied and
+   the distortion band attached as uncertainty. CAM's finishing operations start from it.
+4. A **clean-up check** on the real part after heat treatment: probe or scan it (the inspection
+   file), place the final part inside the measured part by best fit, and confirm there is enough
+   material on every finished face, before any finishing cut. If not, stop and report; it is
+   cheaper to find a scrap part with a probe than with the last cut.
+5. **Learning:** measured size change per heat-treat batch goes back into the size-change model,
+   the same closed loop the overview file calls Self-tuning CAM Operations.
+
+### Loading the real stock into CAM
+
+The derived blank is **nominal**. A real casting, forging or printed preform differs from it, so
+CAM should locate the final part inside the **measured** blank, not the nominal one:
+
+- **Probe or scan, then best-fit.** For AM parts, a trade article describes touch probing of datum
+  features for location, multipoint best-fit when there are no clean datum planes, a half-depth
+  "gauge cut" to measure deflection and apply an offset, and on-machine scanning to build a model of
+  the as-built part from which an adaptive toolpath is generated, with re-probing to catch drift
+  ([Manufacturing Engineering, April 2026, adaptive measurement-driven machining of AM parts](https://digitaleditions.walsworth.com/article/Adaptive%2C+Measurement%E2%80%91Driven+Machining+for+Additively+Manufactured+Parts/5123110/861841/article.html)).
+- **Per-operation placement.** For cast near-net blanks, Cserteg, Kovács and Váncza (CIRP Annals,
+  2023) place each operation's group of features with its own part zero instead of one rigid
+  placement for the whole part, under a minimum allowance and the tolerances between operations.
+  In their case study (an automotive casting, four operations) the largest achievable allowance
+  rose from about 0.15 mm to about 0.33 mm, about 2.2 times, and the average tolerance error at a
+  0.14 mm allowance fell from 14.7–19.8 % to 3.4 %
+  ([CIRP 2023 paper](https://akovacs.pages.sztaki.hu/publications/CIRP2023.pdf)). **Fact** (their
+  results; physical tests were still in progress when published).
+- **The measured blank becomes the stock.** Whatever is measured replaces the nominal raw state as
+  CAM's starting stock, with the property regions (skin, case) carried over by face, so the
+  property field and the limits engine work on the real part.
+
+### Commands this suggests (opinion)
+
+In SolidCraft's own command style, each with a contract and output schema:
+
+| Command | Does |
+|---|---|
+| `stock.derive.casting` | raw blank from tagged faces: allowance per face or RMA grade, pull direction and parting line, draft, minimum fillet and cored-hole size; optional pattern state with shrink |
+| `stock.derive.forging` | the same with forging rules |
+| `stock.derive.additive` | allowance on machined faces, support-side allowance, sacrificial probe pads and tabs |
+| `stock.derive.bar` | smallest standard bar or plate plus allowance and clamping material |
+| `stock.stage.add` | a stock state between operations (finishing allowance, heat treatment with size-change model, coating) |
+| `stock.check` | the checks above: raw-face tolerances, clean-up, allowance window against case depth, collisions of sacrificial features |
+| `stock.measured.set` | replaces a nominal state with a probed or scanned one and records the fit |
+
 ## What exists today
 
 ### In SolidCraft
@@ -561,7 +722,11 @@ hardness keeps its scale.
    targets; stock regions for skin, scale and thermal-cut edges.
 5. **CAM property field** on the in-process stock; hardness in the cut per move; treatment steps
    between setups on the traveller.
-6. **Closed loop**: measured hardness and coating thickness from inspection update the field;
+6. **Derived stock states**: bar and casting derivations from tagged faces with the existing
+   offset, draft and scale commands; a heat-treatment stage with a size-change model; the
+   clean-up check after heat treatment.
+7. **Closed loop**: measured hardness, coating thickness and heat-treat size change from
+   inspection update the field and the size-change model; measured blanks replace nominal ones;
    work-hardening layers (Level 2).
 
 ## Glossary
@@ -603,6 +768,10 @@ hardness keeps its scale.
    that the machined one is derived from (and which owns the foundry's revisions)?
 7. Can hardness per hardness band be added to the shared tool library's cutting data without
    multiplying records unmanageably?
+8. Should a derived stock state be a configuration of the design or its own linked design (a
+   foundry often owns the casting drawing and its revisions)?
+9. Where do size-change models come from in an open project: steel makers' data sheets, heat
+   treaters, or only the shop's own measurements?
 
 ## Sources
 
@@ -629,6 +798,15 @@ hardness keeps its scale.
 - [Machining-induced work hardening behaviour of Inconel 718 considering edge geometries,
   Materials 2022](https://pmc.ncbi.nlm.nih.gov/articles/PMC8780571).
 - [Effect of heat input on the hardness of plasma cut edges, VŠB thesis (abstract)](https://dspace.vsb.cz/items/1fc82278-38c4-41a9-a904-fcd6bc51e6fb).
+
+### Derived stock and heat-treat size change (accessed 2026-10-26)
+
+- [Production Machining, predicting size change from heat treatment](https://www.productionmachining.com/articles/predicting-size-change-from-heat-treatment).
+- [NPTEL, metal casting, lecture 3: pattern allowances](https://archive.nptel.ac.in/content/storage2/courses/112107144/metalcasting/lecture3.htm).
+- [Cserteg, Kovács, Váncza, multi-operation optimal blank localization for near net shape
+  machining, CIRP Annals 2023](https://akovacs.pages.sztaki.hu/publications/CIRP2023.pdf).
+- [Manufacturing Engineering, April 2026, adaptive, measurement-driven machining for additively
+  manufactured parts](https://digitaleditions.walsworth.com/article/Adaptive%2C+Measurement%E2%80%91Driven+Machining+for+Additively+Manufactured+Parts/5123110/861841/article.html).
 
 ### Vendor, finisher and forum pages (accessed 2026-10-26)
 
