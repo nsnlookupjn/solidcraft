@@ -454,6 +454,46 @@ The formats:
 **Opinion:** generate QIF as the master record and render AS9102-style or customer-style PDFs
 from it; do not invent another format.
 
+**Selectable report levels: a marketplace model (from Jason).** Jason points out that Xometry
+sells inspection as tiers: an optional Standard Inspection Report covering up to 20 critical
+dimensions, then formal CMM dimensional reports and AS9102 First Article Inspection (FAIR).
+Xometry's public inspection-options article for CNC and sheet metal confirms this and lists more
+tiers:
+
+| Xometry tier (public article) | What it covers | Documentation |
+|---|---|---|
+| Standard Inspection | material, features and finish against the quote, CAD or print; with a print, up to 20 critical dimensions | "Documentation will not be shipped with your parts" |
+| Formal Inspection with Dimensional Report | all dimensions, attributes, locations and print notes, calibrated tools, sampled to ANSI/ASQ Z1.4 Level II with zero rejects | dimensional report with a ballooned print |
+| CMM Inspection with Dimensional Report | same scope, measured on a CMM | dimensional report |
+| First Article Inspection (AS9102 or equivalent) | sampled to Z1.4 Level II, 2.5 % AQL, full lot built first, capped at 100 inspection points | AS9102 forms |
+| Source Inspection | audit at the supplier before shipment | per audit |
+| Build and Hold First Article | one part or a small batch approved before the rest is made | per agreement |
+| Custom | non-destructive testing, serialisation, custom sampling, customer datasheets | per agreement |
+
+Not found on the public pages checked: the Standard tier being called a "Standard Inspection
+*Report*". The article says that tier ships no documentation, so it is an inspection without a
+report.
+
+**What SolidCraft can take from it (opinion):** the per-part record is always kept. The *report
+level* is a setting on the job that decides what gets measured and what gets printed:
+
+1. **Critical only:** the characteristics flagged critical (or the top N), pass/fail plus
+   values, on the traveller label. Fits on-machine probing and quick hand checks.
+2. **Full dimensional:** every characteristic, including the ones covered by the general-tolerance
+   profile, with method and instrument per value and a ballooned view generated from the model's
+   PMI (no manual ballooning).
+3. **CMM-backed:** the same, with the acceptance values coming from a CMM (imported as QIF
+   Results or DMIS output). On-machine values stay as in-process evidence.
+4. **First article (AS9102):** Forms 1–3 generated from the record, with Form 2 entries for
+   material and process certificates attached to the record.
+5. **Sampling:** for lots, a sampling plan (for example ANSI/ASQ Z1.4 or ISO 2859-1) picks which
+   serials get the full level. The rest get the critical level, and the record says which plan
+   was used.
+
+Because the characteristics, limits and balloons all come from the model, moving up a level
+costs measuring time but no extra paperwork. Today each step up a tier also means another round
+of manual ballooning and form filling.
+
 ### The part traveller across setups
 
 A traveller (router, job card) lists the operations in order and collects sign-offs and results
@@ -1077,7 +1117,8 @@ Connectivity and the edge device:
 - CNC coolant monitoring sensors comparison: https://industrialmonitordirect.com/blogs/knowledgebase/cnc-coolant-monitoring-sensors-technical-comparison
 - Anton Paar L-Rix inline refractometers: https://manufacturingchemist.com/anton-paar-launches-l-rix-2100-and-l
 - Vaisala, metalworking and machining: https://www.vaisala.com/ko/node/82806
-- Xometry, manufacturing standards (US): https://www.xometry.com/manufacturing-standards
+- Xometry, manufacturing standards (US; reference suggested by Jason): https://www.xometry.com/manufacturing-standards/
+- Xometry community, CNC machining and sheet fabrication inspection options: https://community.xometry.com/kb/articles/673-cnc-machining-sheet-fabrication-inspection-options
 - Xometry, ISO 2768 resource page: https://www.xometry.com/resources/certifications/iso-2768
 - Xometry Pro, standard tolerances (ISO 2768, ISO 286, GD&T): https://xometry.pro/en/?p=16868
 - Xometry community, standard threads chart: https://community.xometry.com/kb/articles/724
