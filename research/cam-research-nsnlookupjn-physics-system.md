@@ -359,9 +359,15 @@ every link's margin together, with these properties (from those files):
 
 Machine and stock links (topics 4 and 5) add their own rows to that table in their files.
 
-### The closed loop: measuring what was predicted
+### The closed loop: Self-tuning CAM Operations (Jason's name)
+
+Jason calls this loop **Self-tuning CAM Operations**: the machine's measured behaviour, lined
+up with the program, tunes the libraries the CAM plans from, so each run of a job (and each
+new job on the same machine, hold and material) is planned from better data.
 
 The system makes predictions that the shop can check:
+
+Summary of what Self-tuning CAM Operations measures against the plan:
 
 | Prediction | Measured by | Feeds back into |
 |---|---|---|
@@ -374,6 +380,16 @@ The system makes predictions that the shop can check:
 in-process inspection file could also read **vibration, spindle load, axis loads and torques in
 real time** from machines whose control publishes them (through MTConnect, OPC UA or the
 control maker's interface; which signals each control publishes belongs in the machine library).
+**Aligned with the G-code and the timeline (Jason's point).** Every sample is stored against
+the program it belongs to: the program and its version, the **block (line) number** and the
+toolpath segment that line came from, the operation, the tool, and a timestamp on the cycle
+timeline. Most controls publish the executing block or line number alongside load data
+(unverified per control; MTConnect defines a block/line data item). With that, an event (a
+load spike, a vibration peak, a stall) is located on the exact move in the program, shown on the
+simulation's timeline next to the predicted value for that move, and tied to the operation and
+setup in the design. Without alignment the data shows *that* something happened but not
+*where*.
+
 Uses, in order of risk (opinion):
 
 1. **Record and compare** (first): measured vs predicted torque, power and force per segment,
@@ -437,7 +453,7 @@ in the CAM core from the start.
 | 4. Machine | axis thrust and stiffness, rotary clamp torque, machine modes | 5 | the same job judged correctly on different machines |
 | 5. Stock integrity | stock stiffness as it is cut, deflection and wall modes, cut-order planning, re-clamp before finishing | 4 (+ FEA #1620) | thin parts; balancing stock against tool and hold |
 | (every phase) Simulation gate | each phase's checks run over the final program in simulation, and *Stop* findings block posting | all | novice errors are caught before they reach the machine, from the first phase on |
-| 6. Closed loop | spindle load and probing feedback into shop instances | inspection file | lets the shop trust and move the slider |
+| 6. Self-tuning CAM Operations | live load, torque and vibration (edge box), aligned to G-code lines and the timeline, plus probing, feeding back into shop instances | inspection file | lets the shop trust and move the slider |
 
 ### The request to the maintainers
 
@@ -472,6 +488,8 @@ leave room for it in the right places.
 - **Capacity envelope:** the allowed force and moment in each direction for a hold (topic 3) or
   a link generally.
 - **Compliance:** inverse of stiffness (µm/N); compliances add in a series load path.
+- **Self-tuning CAM Operations:** Jason's name for the closed loop in which live machine data,
+  aligned with the G-code lines and the cycle timeline, tunes the shop's library entries.
 - **Gate (simulation gate):** the rule that a program cannot be posted while the physics-checked
   simulation has unaccepted *Stop* findings.
 - **Engagement:** how much of the tool is in the material (radial width `ae`, axial depth `ap`,
