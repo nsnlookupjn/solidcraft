@@ -89,7 +89,11 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    lubricant and has not reached its thermal size (Okuma 2020). The machine entry carries its
    warm-up routine and an idle time after which it must run again; until it has, CAM derates
    spindle torque, power and speed, and the slider cannot lift that derating.
-8. **3D models are the hard part legally.** Users have asked builders for machine models for
+8. **Lock a machine to its materials (Jason's requirement).** Many shops have a machine that
+   only ever cuts 6061 aluminium, and tool libraries kept for aluminium only. A machine (and a
+   tool library) can be locked to one or several materials, or to a range; rarely to all.
+   CAM then offers only the machines and tools approved for the part's material.
+9. **3D models are the hard part legally.** Users have asked builders for machine models for
    at least 15 years; they are often withheld, paid or only STL (eMastercam forum, 2011). A
    shared library should hold specifications (facts), kinematics and openly licensed or
    community-built simplified models, and point to builder models rather than copy them.
@@ -449,6 +453,46 @@ Each field records its **source** (builder spec, dealer listing, paper, shop mea
 **quality** (published, estimated, measured) and a date. Estimated or missing values pull the
 slider toward conservative for the limits that use them (the rule in the cutting physics file).
 
+### Locking a machine to one or several materials (Jason's requirement)
+
+*Jason: "In the machine library and tool library be able to lock to one or several materials.
+For example many people have a machine that only cuts aluminum 6061 and many people have a
+library of tools for only aluminum. It would be possible for a machine or tool library to be
+good for a range of materials, but rarely all materials."*
+
+- **Why (opinion, common shop practice; unverified as a survey).** Shops dedicate machines to a
+  material to avoid cross-contamination of chips and coolant (aluminium chips in a steel
+  machine's coolant, or the reverse; titanium and magnesium fire risk; medical or aerospace
+  material segregation rules), because a high-speed, low-torque spindle suits aluminium but not
+  steel, and because the coolant concentration, way covers and chip conveyor are set up for one
+  chip type. The physics already hint at it: the VF-2 example above only has its full torque
+  below about 1750 rpm, which steel needs and aluminium rarely does.
+- **Where the lock lives.** On the **shop instance**, not the catalogue model: a VF-2 can cut
+  steel, but *this* VF-2 is the aluminium machine. The catalogue model may carry a builder's
+  *suitability* note (e.g. a high-speed router "for non-ferrous and plastics"), which is a
+  default for the instance, not a lock.
+- **Proposed field (opinion, same shape as the tool library's).** `material_scope`: a list of
+  entries, each either an ISO 513 group or subgroup (e.g. N, wrought aluminium) or a specific
+  grade (e.g. 6061-T6), linked to SolidCraft's physical material cards where one exists, plus a
+  mode:
+  - `locked`: only these materials. CAM refuses others and says why ("Machine 3 is locked to
+    6061-T6, 7075-T6; part material is 304 stainless").
+  - `preferred`: others allowed with a warning, logged in the job.
+  - empty: no restriction.
+- **Combining scopes.** For a job, the allowed set is the intersection of the machine's scope,
+  the tool library's scope (tool library file) and, if set, the workholding's scope (e.g. soft
+  jaws machined for one part family). If the intersection is empty, CAM says which item excludes
+  the material instead of failing silently. When several machines qualify, the ranking in "Using
+  the library in the negotiation" picks among them.
+- **Effect on the physics.** A material-locked machine can carry **measured, material-specific
+  data** with more confidence: measured `kc` for 6061 from its own spindle-load history,
+  stability lobes tap-tested with its usual aluminium tools, a warm-up and coolant setup tuned to
+  that work. Opinion: data measured on a locked machine is tagged with the material it was
+  measured in and is not reused for other materials without a warning.
+- **Changing a lock.** A permission, like the tool library's locked fixed load: only a named
+  role changes it, the change is logged with a date and reason (e.g. "machine cleaned, coolant
+  changed, now steel"), and measured material-specific data stays tagged to its material.
+
 ### Machine entry schema (opinion)
 
 Which calculation needs each field: **P** power/torque, **T** thrust, **K** stiffness and
@@ -458,6 +502,7 @@ deflection, **C** chatter, **V** feed/cycle time, **G** geometry/collision, **W*
 | Group | Field | Unit | Used by |
 |---|---|---|---|
 | Identity | builder, model, year range, options, control, source, licence of each part | | |
+| Material scope | catalogue: builder suitability note; shop instance: `material_scope` (ISO 513 groups and/or grades) with mode `locked` / `preferred`, editors, change log; machine group membership (shared with the tool library) | – | job filter |
 | Kinematics | ordered chain of axes from bed to tool and bed to table: type (linear/rotary), direction, travel min/max, home, which component moves | mm, rad | G V |
 | Spindle (per gear/winding range) | `n_min`, `n_max`; table of `(n, M_S1, P_S1, M_S6, P_S6)`; duty definition (e.g. S6-40 % of 10 min); range-change rule | rpm, N·m, W | P H |
 | Spindle | taper/interface, max tool mass and length, orientation, coolant (through-spindle pressure) | | G H |
@@ -487,6 +532,7 @@ physics file's "Machine" row).
 | Machine → stock integrity / workholding | `k_X`, `k_Y`, `k_Z` at tool point (and table), optional position map | N/µm | series compliance chain |
 | Machine → cutting physics (chatter) | modes `(f_n, ζ, k)` or spindle receptances for RCSA | Hz, –, N/µm | tool-point FRF with the tool library's tool and holder |
 | Machine → workholding | rotary brake/clamp torque, table load, mounting frames | N·m, kg, frame | brake is part of the hold |
+| Machine ↔ tool library / workholding | `material_scope` and machine group; job's allowed set is the intersection | – | refuses or warns, naming the item that excludes the material |
 | Machine → simulation | kinematics, travel limits, 3D model and axis mapping | mm, rad | collision and travel checks |
 | Cutting physics → machine check | `Mc`, `Pc`, `Fx`, `Fy`, `Fz`, `n` per step | N·m, W, N, rpm | compared with the limits above |
 | Machine → closed loop / edge box | list of signals the control publishes, with units and rates; added sensors | –, Hz | what can be measured on this machine |
@@ -536,6 +582,8 @@ miss by a third or more.
   machine in a shop with its options and measurements.
 - **Base speed:** spindle speed where constant torque gives way to constant power.
 - **S1 / S6-40 %:** continuous rating / rating for 40 % load in each 10-minute period.
+- **Material scope / lock:** the materials a machine or library is approved for; *locked* refuses
+  others, *preferred* only warns.
 - **Gear or winding range:** a spindle mode with its own torque/power curve and speed range.
 - **Thrust:** the maximum force an axis drive can push with.
 - **Warm-up routine:** a builder-defined spindle (and axis) run before cutting, to spread
@@ -553,6 +601,9 @@ miss by a third or more.
 - **Ballbar:** a circular test of a machine's contouring accuracy.
 
 ## Open questions
+
+0. Should a material lock also follow from the coolant and chip setup (e.g. "coolant: aluminium
+   only"), or always be set by hand?
 
 1. Will builders contribute catalogue entries, or should the community transcribe public specs?
    How are conflicting sources (builder vs dealer vs measurement) shown?
