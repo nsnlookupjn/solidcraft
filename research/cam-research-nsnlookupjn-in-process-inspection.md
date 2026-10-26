@@ -713,8 +713,12 @@ finishing pass on the pocket wall, 41.2 s into Op 20, part SN000123".
 
 **Keys every record carries (opinion):** wall-clock time (UTC, with the box's clock synchronised
 by NTP, or PTP where the plant has it), machine, program name and revision, **block or line
-number**, **CAM segment ID**, tool number, active work offset, spindle speed, feed and override,
-part serial and operation.
+number**, **CAM segment ID**, operation, tool number, machine position, active work offset,
+spindle speed, feed and override, and the part serial. The physics predictions are indexed by the
+same keys, so measured and predicted values line up row by row (the same scheme as the
+[CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
+file's self-tuning loop). Clock drift between the box and the control is corrected at known
+events: program start, each tool change and each reported block number.
 
 **Where the program position comes from:**
 
