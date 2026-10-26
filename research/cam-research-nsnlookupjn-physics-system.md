@@ -145,7 +145,7 @@ during cutting". There are three ways to read that, and the system needs all thr
 2. **Planned, per operation and per setup.** Choices that cannot change mid-cut: which tool,
    which hold and torque, which machine, which order of operations. These are chosen by trying
    candidates and running (1) for each.
-3. **Measured, on the machine (later).** Adaptive control: the control or an edge device reads
+3. **Measured, on the machine (later).** Adaptive control: the control or **SolidCraft Edge** (the edge device, below) reads
    spindle load (or force from a sensor) during the cut and trims the feed. The planned model is
    then the **starting point and the safety net** (the measured value is only allowed to raise
    feed where the model says every link still has margin). Spindle load is available from many
@@ -376,15 +376,17 @@ Summary of what Self-tuning CAM Operations measures against the plan:
 | finished size and form | in-process and final inspection (per-part record) | the whole chain's accuracy |
 | chatter-free depth | sound or vibration, surface finish | tool-tip FRF, machine modes |
 
-**Real-time feedback from the edge box (Jason's idea).** The Raspberry Pi edge device from the
-in-process inspection file could also read **vibration, spindle load, axis loads and torques in
+**Real-time feedback from SolidCraft Edge (Jason's idea and name).** **SolidCraft Edge** is the
+Raspberry Pi edge device from the in-process inspection file. Jason's name for it reflects its
+role: it sits on the edge of CAM and brings the machine and its automation back into CAM for
+closed-loop process improvement. It could also read **vibration, spindle load, axis loads and torques in
 real time** from machines whose control publishes them (through MTConnect, OPC UA or the
 control maker's interface; which signals each control publishes belongs in the machine library).
 **Aligned with the G-code and the timeline (Jason's point).** Every sample is stored against
 the program it belongs to: the program and its version, the **block (line) number** and the
 toolpath segment that line came from, the operation, the tool, the machine position, and a
 timestamp on the cycle timeline. The simulation's predictions are indexed the same way (line,
-segment, time), and clock drift between the box and the control is corrected from known events
+segment, time), and clock drift between SolidCraft Edge and the control is corrected from known events
 (program start, tool changes, the reported block number). Most controls publish the executing block or line number alongside load data
 (unverified per control; MTConnect defines a block/line data item). With that, an event (a
 load spike, a vibration peak, a stall) is located on the exact move in the program, shown on the
@@ -393,7 +395,7 @@ setup in the design. Without alignment the data shows *that* something happened 
 *where*.
 
 Controls publish load and position far too slowly to see chatter, so vibration needs an added
-accelerometer sampled in the kHz range by the edge box itself; the machine library lists, per
+accelerometer sampled in the kHz range by SolidCraft Edge itself; the machine library lists, per
 control, which signals it publishes and how finely they can be aligned (per block, per position
 sample, or by time only).
 
@@ -403,10 +405,10 @@ Uses, in order of risk (opinion):
    stored with the part record; the gap corrects the shop instance (material coefficients,
    friction at the jaws, the spindle curve).
 2. **Detect and alarm**: an unexpected jump in load or a vibration peak near a predicted part,
-   fixture or wall mode suggests slip, lift or chatter; the box flags it and, where the control
+   fixture or wall mode suggests slip, lift or chatter; SolidCraft Edge flags it and, where the control
    allows, can request a feed hold through the control's own safe input (unverified per control).
 3. **Adjust feed** (later): only through the control maker's adaptive-control interface, inside
-   the envelope the planned model allows, after a safety review. The box never bypasses the
+   the envelope the planned model allows, after a safety review. SolidCraft Edge never bypasses the
    control's own limits.
 
 The in-process inspection file covers the probing, gauging and per-part record on the same
@@ -460,7 +462,7 @@ in the CAM core from the start.
 | 4. Machine | axis thrust and stiffness, rotary clamp torque, machine modes | 5 | the same job judged correctly on different machines |
 | 5. Stock integrity | stock stiffness as it is cut, deflection and wall modes, cut-order planning, re-clamp before finishing | 4 (+ FEA #1620) | thin parts; balancing stock against tool and hold |
 | (every phase) Simulation gate | each phase's checks run over the final program in simulation, and *Stop* findings block posting | all | novice errors are caught before they reach the machine, from the first phase on |
-| 6. Self-tuning CAM Operations | live load, torque and vibration (edge box), aligned to G-code lines and the timeline, plus probing, feeding back into shop instances | inspection file | lets the shop trust and move the slider |
+| 6. Self-tuning CAM Operations | live load, torque and vibration (SolidCraft Edge), aligned to G-code lines and the timeline, plus probing, feeding back into shop instances | inspection file | lets the shop trust and move the slider |
 
 ### The request to the maintainers
 
@@ -495,6 +497,8 @@ leave room for it in the right places.
 - **Capacity envelope:** the allowed force and moment in each direction for a hold (topic 3) or
   a link generally.
 - **Compliance:** inverse of stiffness (µm/N); compliances add in a series load path.
+- **SolidCraft Edge:** Jason's name for the Raspberry Pi edge device at the machine that records
+  inspection results and machine data and feeds them back into CAM.
 - **Self-tuning CAM Operations:** Jason's name for the closed loop in which live machine data,
   aligned with the G-code lines and the cycle timeline, tunes the shop's library entries.
 - **Gate (simulation gate):** the rule that a program cannot be posted while the physics-checked
@@ -520,8 +524,8 @@ leave room for it in the right places.
 4. Should the slider be one value per setup, or per link with one master control?
 5. Beyond the warm-up gate, is thermal behaviour (spindle growth, part heating, release
    distortion after unclamping) inside this system or a later topic?
-6. Where should real-time adaptive control live: in the control's own option, in an edge device
-   (the inspection file's Pi), or not in SolidCraft at all?
+6. Where should real-time adaptive control live: in the control's own option, in SolidCraft Edge
+   (the inspection file's Raspberry Pi device), or not in SolidCraft at all?
 7. Does lathe and mill-turn work fit the same setup (chuck as hold, turret as tool holder), or
    does it need its own model?
 
