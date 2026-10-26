@@ -218,7 +218,7 @@ absorbers and a moving support fixture to suppress it).
 - Tooth-passing frequency from the cutting physics file: `f_tp = n · z / 60`. A 3-flute tool at
   10 000 rpm gives 500 Hz; its fourth harmonic (2 kHz) is close to the wall's mode.
 - CAM can flag when `f_tp` or a low harmonic lands near the part's estimated mode, and suggest a
-  different speed, leaving stock, or a support. (Opinion: a warning is enough at first; full
+  different speed (re-checked against the spindle torque and power curves at the new speed), leaving stock, or a support. (Opinion: a warning is enough at first; full
   part-dynamics stability lobes are research-grade.)
 
 ### Worked example: is the vise tight enough?
@@ -454,6 +454,13 @@ How CAM can do this (opinion on the method, mechanics as above):
    thickness grows with feed per tooth, so a feed scale of about
    `s = (F_allow(u) / |F|)^(1 / (1 − m_c))` brings the force to the limit (approximate; capped by
    the tool, spindle and machine limits and by the slider).
+   **The spindle's torque curve is always respected (Jason's point):** at the step's spindle speed
+   `n`, the cutting torque must stay under the curve from the machine library,
+   `M_c ≤ M_spindle(n)` and `P_c ≤ P_spindle(n)` (with the slider's margin), read from the
+   torque and power curves of that machine's spindle, including its gear or winding range.
+   A spindle often has less torque at low speed (unverified for any given machine; it depends
+   on the curve), so the workholding check never "frees up" load that the spindle cannot deliver
+   at that speed.
 5. Where a different choice would point the force into a strong direction (cut toward the fixed
    jaw, climb instead of conventional, ramp instead of plunge, a different entry side), suggest
    it, or let the path planner prefer it, instead of only slowing down.
