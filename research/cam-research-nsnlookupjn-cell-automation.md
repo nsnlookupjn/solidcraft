@@ -1,4 +1,4 @@
-# CAM research: a Raspberry Pi that drives the cell, robot part handling and tool setting
+# CAM research: SolidCraft Edge, a Raspberry Pi that drives the cell (robot part handling and tool setting)
 
 Research for [#1621](https://github.com/tangency-labs/solidcraft/issues/1621) (Research Request
 for Plugin: CAM). This file covers one part of that request: **using the small edge computer at
@@ -6,16 +6,23 @@ the machine (a Raspberry Pi) for more than collecting measurements: coordinating
 loading and unloading, and carrying tool-setting data from the presetter and the on-machine tool
 setter into the machine**, and how SolidCraft CAM could plan such a cell before anything moves.
 
-The single most important finding is a boundary, not a feature: **the Pi can supervise, sequence
+The single most important finding is a boundary, not a feature: **the Edge can supervise, sequence
 and record a cell, but it must never be part of the safety chain and should not be part of the
 real-time handshake between the robot and the machine.** Those belong to certified safety
-hardware and to the robot and machine controls. Everything the Pi does sits above them.
+hardware and to the robot and machine controls. Everything the Edge does sits above them.
+
+**The name: SolidCraft Edge (Jason's name).** The box is called **SolidCraft Edge** because it
+sits at the edge of CAM: CAM plans the work, and the Edge brings what the machine, the robot and
+the tool setters actually did back into CAM, so each run improves the next (closed-loop process
+improvement). "Raspberry Pi" is the hardware it runs on today; "the Edge" in this file means the
+box and its software. Using the SolidCraft name on a device or product needs the maintainers'
+agreement (the trademark question in the inspection file); until then it is a working name.
 
 It builds on earlier files from the same author and does not repeat them:
 
 - [In-process inspection](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md):
-  **owns the Pi box** (hardware, interfaces to the control, the "how could it be offered"
-  question) and its rule "**the Pi records, the control corrects**". This file extends the same
+  **owns the box itself** (hardware, interfaces to the control, the "how could it be offered"
+  question) and its rule "**the Edge records, the control corrects**". This file extends the same
   box and keeps the same rule.
 - [Shared cloud tool library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-tool-library/research/cam-research-nsnlookupjn-tool-library.md):
   tool assemblies, the shop layer with measured offsets, and **tool tags** (RFID to DIN 69873,
@@ -63,18 +70,18 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 
 > **[TODO Jason: personal experience]** Which machines you would automate first, whether you
 > have run a robot or a parts loader (Haas APL, a cobot cart, a bar feeder), how often a typed
-> offset turns out wrong, and what you would trust the Pi to do unattended. Label this as
+> offset turns out wrong, and what you would trust the Edge to do unattended. Label this as
 > personal experience.
 
 ## Summary
 
-1. **Three layers, and the Pi lives only in the top one.** A machine-tending cell has a
+1. **Three layers, and the Edge lives only in the top one.** A machine-tending cell has a
    **safety layer** (fences, interlocked doors, area scanners, E-stops, the robot's own safety
    controller; certified to ISO 13849-1 / IEC 62061 and ISO 10218-2), a **real-time handshake
    layer** (robot and machine telling each other "door open", "part clamped", "cycle start",
    in milliseconds, over discrete I/O, M-codes, a fieldbus or a vendor robot interface), and a
    **supervision layer** (which job, which program, how many parts, which tools, what to record).
-   The Pi belongs in the third. Opinion, strongly held: a Linux single-board computer is not a
+   The Edge belongs in the third. Opinion, strongly held: a Linux single-board computer is not a
    safety-rated device and should not sit in the second layer either, because a crash, an SD
    card failure or an update would stop or confuse the cell mid-move.
 2. **The handshake already has an open standard.** MTConnect Part 5 "Interfaces" defines
@@ -90,8 +97,8 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    FANUC QSSR runs a robot from M-codes in the CNC program over one Ethernet cable, with robot
    jog and a production monitor on the CNC screen
    ([FANUC](https://fanuc.co.jp/en/product/robot/application/machining/qssrforcnc.html)).
-   The Pi should **work alongside these, not replace them**: they own the motion and the
-   handshake; the Pi gives the job, records what happened and feeds SolidCraft.
+   The Edge should **work alongside these, not replace them**: they own the motion and the
+   handshake; the Edge gives the job, records what happened and feeds SolidCraft.
 4. **Tool setting is a data problem first.** The presetter (or the on-machine tool setter)
    measures the tool; the measured length and diameter must reach the right offset register,
    for the right tool, in the right machine, without retyping. Paths exist: RFID or DataMatrix
@@ -99,7 +106,7 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    ([Haas UK, G10](https://www.haas.co.uk/?p=1287)). MTConnect's **CuttingTool** asset already
    carries measured assembly values with ISO 13399 codes (OAL, DC, LF…), tool life, pot number
    and status ([MTConnect Part 4.1](https://docs.mtconnect.org/MTC_Part4_1_CuttingTools_1_4_0.pdf)).
-5. **The Pi's job in tool setting: identity, staging and verification.** Scan the tool tag, look
+5. **The Edge's job in tool setting: identity, staging and verification.** Scan the tool tag, look
    the assembly up in the tool library, check it is the tool the CAM program expects (number,
    stick-out, length window), **stage** the offsets for the control, and record the on-machine
    check against the presetter value. Writing offsets directly is a separate, explicit, logged
@@ -126,7 +133,7 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 | Gripper | holds the part; may have sensors (closed, part present, width) | robot controller I/O |
 | Stations | raw-part table or drawers, finished-part rack, regrip stand, blow-off, gauge or CMM, reject chute | robot (positions), sensors on I/O |
 | Safeguards | fence, interlocked gate, area scanner or light curtain, E-stops, mode selector | safety controller / safety PLC |
-| Cell coordination | job order, program select, counts, tool life, alarms, records | today: robot controller, a PLC or the CNC; proposed: the Pi supervises |
+| Cell coordination | job order, program select, counts, tool life, alarms, records | today: robot controller, a PLC or the CNC; proposed: SolidCraft Edge supervises |
 
 Fact: the hardwired version needs at minimum load command / load complete and unload command /
 unload complete signals each way, plus E-stop and door interlock wiring and often a
@@ -154,9 +161,9 @@ machine's own manual, (unverified)).
 3. **Supervision layer.** Slow, rich and networked: which job is next, which program and robot
    recipe go with it, how many raw parts are left, whether the tools have life for the batch,
    what each part's record says, when to call a person. Seconds, not milliseconds. **This is the
-   Pi's layer.**
+   Edge's layer.**
 
-### Why the Pi stays out of the safety and handshake layers
+### Why the Edge stays out of the safety and handshake layers
 
 - **Certification (fact).** Safety functions must be built from components whose reliability is
   known (PL/SIL, diagnostic coverage, common-cause measures). A Raspberry Pi has none of this;
@@ -171,13 +178,13 @@ machine's own manual, (unverified)).
   stopping time and `C` an intrusion allowance. Every 50 ms of extra response time adds
   `1600 × 0.05 = 80 mm` to the minimum distance. Linux without real-time tuning can stall for
   tens of milliseconds (opinion); a safety function must have a guaranteed `T`.
-- **Robustness (opinion).** If the Pi is only supervising and it fails, the cell finishes the
-  current part and stops at the next job boundary. If the Pi were in the handshake and failed,
+- **Robustness (opinion).** If the Edge is only supervising and it fails, the cell finishes the
+  current part and stops at the next job boundary. If the Edge were in the handshake and failed,
   the cell could stop with the robot inside the machine and the door open.
 - **Cybersecurity (fact).** ISO 10218-2:2025 adds cybersecurity requirements related to robot
   safety ([A3 FAQ](https://www.automate.org/robotics/blogs/updated-iso-10218-faq)). A
   network-connected computer that could command robot motion widens what must be assessed.
-  Keeping the Pi to supervision, behind the robot's and machine's own "remote allowed" modes,
+  Keeping the Edge to supervision, behind the robot's and machine's own "remote allowed" modes,
   keeps that surface small.
 
 ### Robot safety standards in 2025–2026 (from public summaries)
@@ -250,7 +257,7 @@ Reporter, 5-axis checks) and is not repeated here. What matters for tool setting
   laser's NCi-6 interface gives the control a solid-state relay signal
   ([Renishaw NC4](https://www.renishaw.com/en/nc4-non-contact-tool-setter--6099)). Either way
   the measurement happens **inside the control**: the probe only triggers, the control latches
-  the axis position, the macro computes. That is why the Pi can record results but cannot
+  the axis position, the macro computes. That is why the Edge can record results but cannot
   measure tools itself (same reason as in the inspection file).
 - **What the software covers (fact).** Renishaw's tool-setting software sets length and/or
   diameter for single and multi-point tools on machining centres and static and powered tools on
@@ -269,18 +276,18 @@ Reporter, 5-axis checks) and is not repeated here. What matters for tool setting
   tool offsets are not changed by the broken-tool check
   ([Renishaw/Haas manual PDF](https://www.haascnc.com/content/dam/haascnc/en/service/manual/probe/english---renishaw-contact-tool-setting---programming-manual---2002.pdf)).
 
-**Fit with the Pi and with CAM (opinion).** CAM should emit **calls to the shop's existing
+**Fit with the Edge and with CAM (opinion).** CAM should emit **calls to the shop's existing
 cycle library** (Renishaw, WIPS, the control maker's own), never its own probing arithmetic, the
 same position the inspection file takes for part probing. Concretely: a `B1` length setting the
 first time each tool is used, and an `H…` broken-tool check after the risky tools (small drills,
 taps, long-reach end mills), using the **flag form** so the program can send the part to the
 reject station instead of stopping the whole lights-out cell, and print the flag (DPRNT) for the
-Pi to record. The tolerance `H` comes from CAM (for example, a fraction of the finishing stock
+Edge to record. The tolerance `H` comes from CAM (for example, a fraction of the finishing stock
 for that tool), so it is explained like every other number.
 
 **How offsets are written in G-code (fact for Haas mills).** `G10 L10 G90 P5 R250.` sets tool 5's
 length geometry, `L11` (or `L1`) its length wear, `L12` diameter geometry, `L13` diameter wear
-([Haas UK, programmable offsets](https://www.haas.co.uk/?p=1287)). A presetter or a Pi can
+([Haas UK, programmable offsets](https://www.haas.co.uk/?p=1287)). A presetter or the Edge can
 therefore deliver offsets as an **ordinary program** the operator loads and runs, which every
 control understands and which leaves a trace. Fanuc-family controls use the same `G10 L10–L13`
 form for their tool-offset memory types (unverified per memory type), and FOCAS can write offsets
@@ -401,12 +408,12 @@ are labelled.
 
 ## What users need
 
-### The Pi's role in the cell (opinion)
+### The Edge's role in the cell (opinion)
 
 The same box as the [in-process inspection](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md)
 file, with more jobs, all in the supervision layer:
 
-| Function | What the Pi does | What it never does |
+| Function | What the Edge does | What it never does |
 |---|---|---|
 | Safety | Reads safety status if a non-safe status output is provided (gate open, scanner muted, E-stop) and records it | Is wired into any safety circuit; bypasses, mutes or resets a safety function |
 | Robot ↔ machine handshake | Records each MTConnect Interface transition, or the I/O and M-code events, with time and block number | Drives the handshake signals |
@@ -418,7 +425,7 @@ file, with more jobs, all in the supervision layer:
 | Part record | Appends handling events (loaded at, unloaded at, gauge station, reject chute) to the part's record and traveller | — |
 | Alerts | Calls a person (stack light via a non-safety output, message, label) | — |
 
-**Write tiers (opinion), the same ladder for every function the Pi could act on:**
+**Write tiers (opinion), the same ladder for every function the Edge could act on:**
 
 1. **Record** (default): read and log only.
 2. **Advise**: show a recommendation ("tool 12 has life for 9 more parts; batch needs 14").
@@ -431,7 +438,7 @@ file, with more jobs, all in the supervision layer:
    refused), read-back verification, and a log entry. **Off by default.**
 
 This is the inspection file's "Pi records, control corrects" rule widened: corrections inside a
-cycle stay in the control's macro; job and setup data can be staged by the Pi and committed by
+cycle stay in the control's macro; job and setup data can be staged by the Edge and committed by
 the control or a person.
 
 ### Tool setting flow (opinion)
@@ -456,18 +463,18 @@ step SolidCraft can remove:
    holder, stick-out from CAM's collision check). The presetter measures it; the measured values
    go into the shop instance of the record (not into the tag). The tag (RFID ID or DataMatrix
    label in the DIN 69873 position, tool-library file) carries only the assembly's ID.
-2. **At the machine:** the operator or the robot loads the tool; the Pi scans the tag (handheld
+2. **At the machine:** the operator or the robot loads the tool; the Edge scans the tag (handheld
    scanner, or a reader at the spindle on machines with RFID) and checks: is this assembly in
    the program's tool list, at this tool number, with stick-out ≥ the CAM minimum, length in the
    CAM window?
-3. **Stage:** the Pi writes a `G10` block set (or the control's offset file) for exactly the
+3. **Stage:** the Edge writes a `G10` block set (or the control's offset file) for exactly the
    tools that changed, with the assembly IDs in comments, and puts it where the control reads
    programs. The operator runs it (tier 3), or the shop has enabled commit (tier 4).
 4. **Verify:** the first use of the tool in the program calls the machine's tool-setter cycle
    (generated by CAM, see below); the control macro compares with the staged value and the
-   declared window, alarms if outside, and prints the result (DPRNT or equivalent); the Pi
+   declared window, alarms if outside, and prints the result (DPRNT or equivalent); the Edge
    records both numbers.
-5. **Life:** as the batch runs, tool life comes back from the control; the Pi compares it with
+5. **Life:** as the batch runs, tool life comes back from the control; the Edge compares it with
    the CAM tool budget and warns early.
 
 ### Robot part handling flow (opinion)
@@ -480,7 +487,7 @@ step SolidCraft can remove:
    language. Opinion: generating TP, KRL, RAPID or URScript is a later, per-maker post-processor
    job, and the safety-relevant parts (zones, speeds) stay in the robot's safety configuration,
    set by the integrator.
-3. The Pi queues the job; the robot and CNC run it through their own handshake; the Pi records
+3. The Edge queues the job; the robot and CNC run it through their own handshake; the Edge records
    every MaterialLoad/MaterialUnload and attaches it to each part's record (serial from the
    marking step in the inspection file).
 4. Probing after load (inspection file) catches a badly seated part before cutting.
@@ -527,7 +534,7 @@ step SolidCraft can remove:
 
 **Fit with SolidCraft's rules (from AGENTS.md):** everything is a command, so this would be
 commands such as `cam.cell.check` or `cam.cell.recipe.export` (illustrative ids, our own dotted
-form); programmatic calls never open dialogs; the Pi software, if written to share the record
+form); programmatic calls never open dialogs; the Edge software, if written to share the record
 model, would be Rust like the rest of SolidCraft; and nothing below the UI may depend on robot
 or machine connections, so live connections belong in a separate service, not in the CAD crates
 (opinion).
@@ -552,7 +559,7 @@ CellRecipe (per job, generated by CAM)
   tool_budget[]: { program_tool_group, parts_per_tool, tools_needed, tools_loaded }
   readiness: { warmup, raw_count, probes, toolsetter_checks, inspection_plan }
 
-CellEvent (recorded by the Pi, appended to the part record)
+CellEvent (recorded by the Edge, appended to the part record)
   time, part_serial, interface: MaterialLoad|..., state: ACTIVE|COMPLETE|FAIL, block, source
 ToolSetEvent
   time, assembly_id, tool_number, presetter: {L, D}, machine: {L, D, method}, window, result
@@ -578,6 +585,8 @@ ToolSetEvent
 - **PL / SIL**: performance level (ISO 13849-1) / safety integrity level (IEC 62061).
 - **Presetter**: off-machine instrument that measures tool assemblies.
 - **QSSR**: FANUC's "Quick & Simple Startup of Robotization" for running a robot from the CNC.
+- **SolidCraft Edge**: (Jason's name) the Raspberry Pi box at the machine that supervises the
+  cell, records what happened and feeds it back into CAM; never part of safety or the handshake.
 - **SRCI**: Standard Robot Command Interface, PI's vendor-neutral PLC-to-robot command set.
 - **Tool setter**: on-machine device (contact or laser) that measures tools in the spindle.
 
@@ -590,7 +599,7 @@ ToolSetEvent
    wires and M-codes? (This file says yes.)
 3. Where does URDF import sit in the roadmap? `docs/urdf.md` lists it as not done; robot
    simulation in CAM would need it.
-4. How much of the Pi software belongs in the SolidCraft project? The inspection file's open
+4. How much of the Edge software belongs in the SolidCraft project? The inspection file's open
    question about an official hardware path applies here too, with a bigger liability question:
    a box that can select robot jobs must come with clear documentation that it is not a safety
    device.
