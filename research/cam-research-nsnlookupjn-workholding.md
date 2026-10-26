@@ -33,10 +33,22 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 - **Marking:** "(unverified)" marks a claim not confirmed against a source. **Fact**,
   **opinion** and **marketing** are labelled where they mix.
 
-> **[TODO Jason: personal experience]** How you hold parts today (vises, soft jaws, vacuum,
-> dovetails, fixture plates, zero-point), how you decide vise torque or how deep to grip, and any
-> part you have seen move, lift, chatter or spring out of tolerance because of the hold. Label
-> this as personal experience.
+> **Personal experience (Jason):**
+>
+> - **Turning:** on a CNC lathe the hold is almost always a 3-jaw chuck with straight jaws, a
+>   3-jaw chuck with custom soft jaws, or a collet; rarely anything else.
+> - **Milling:** the default is a vise, with straight jaws for the first setup and custom soft
+>   jaws for later setups. For production I use rail systems for single and multi-part setups
+>   where I can. I often set up extra vises on the table at angles so the spindle can reach
+>   several faces without the cost of a 4th or 5th axis.
+> - **Rotating the vise for heavy roughing:** I often turn a vise to an angle where the fixed jaw
+>   takes most of the force vector. This cuts workpiece vibration and chatter and stops the work
+>   slipping.
+> - **Dovetails** for smaller parts. I try to **avoid fixture plates** because of accuracy and
+>   wear. **Zero-point systems** are excellent but generally expensive and mostly for large
+>   production runs.
+> - **The real problems:** pull-out under heavy roughing, and deformation of the stock in later
+>   setups when the clamping force exceeds the structural integrity of the already-machined stock.
 
 ## Summary
 
@@ -297,8 +309,10 @@ From the sources above (more from Jason's experience to come):
   (Kurt manual): a sign that people guess at torque.
 - Vacuum tables losing hold through leaks and small parts (Mekanika).
 
-> **[TODO Jason: personal experience]** Parts that moved, lifted, chattered or came out of
-> tolerance because of the hold; what you wish CAM had told you before the cut.
+- **Pull-out under heavy roughing** is the most common real failure, and **crushing or
+  distorting already-machined stock** in a later setup when the clamp force is higher than the
+  thinned part can take (Jason, personal experience). Both are exactly what the slip check and
+  the torque window's upper limit are meant to catch.
 
 ## What users need
 
@@ -367,7 +381,40 @@ and are placeholders, not a design):
    version of this rule, covering tool, spindle, machine and stock limits, is in the
    [CAM Physics System](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
    file.
-8. **No dialogs from scripts:** like every SolidCraft command, the check and the recommendation
+8. **Suggesting the workholding itself, not only checking it (Jason's ideas).**
+   - **Orientation.** A hold can be rotated on the table, for example a vise at 45°, so the
+     fixed jaw takes most of the roughing force (Jason does this for heavy roughing; see
+     personal experience). CAM can search orientations: for each candidate angle, rotate the
+     predicted force vectors into the hold's frame and pick the angle where the largest share
+     of the load goes into the positive stop and the friction utilisation is lowest, then check
+     the angle fits the table and the travels (machine library).
+   - **Choice by volume.** The best hold depends on how many parts are made: a one-off uses what
+     the shop has (vise, straight jaws); low volume justifies soft jaws or a dovetail; high volume
+     justifies rails, multi-part fixtures, tombstones or a zero-point system. CAM asks for the
+     quantity and ranks holds by **cost per part**: setup time and cycle time (from the physics
+     check, since a stronger hold allows faster cuts) plus the hold's purchase or machining cost
+     spread over the run.
+   - **Investment case.** When a hold the shop does not own would win, CAM shows the payback:
+     "a second vise and rail would save N minutes per part; at this quantity it pays for itself
+     after M parts". Better workholding is often one of the largest productivity and
+     profitability gains available (Jason's point), and the library can carry list prices and
+     links so the case is concrete.
+   - **A catalogue of options** for the suggestion engine: angled vise jaws, angled parallels,
+     soft jaws (with an automatic designer, below), soft jaws or fixture plates with extra
+     hardware (pins, stops, toe clamps, supports under thin walls), dovetails, rails, vacuum,
+     zero-point. Each is a workholding library entry with its physics.
+   - **Automatic soft jaw designer.** From the part's shape at that setup (the in-process stock),
+     generate the jaw pocket: contact faces chosen so the main force direction goes into a
+     shoulder, pocket depth from the tip and grip checks, relief for burrs and corners, and a
+     clamp force that passes the slip check without crushing the part (torque window). The jaw
+     is then a CAM job of its own on the same machine.
+   - **Multi-vise, multi-angle setups.** Several vises on one table, one in the normal XY
+     orientation, one rotated 90°, another rotated 90° the other way and so on (or on angle
+     plates), so a part moves from vise to vise and is machined on all sides in one machine
+     without a 4th or 5th axis (Jason does this; see personal experience). The soft jaw designer
+     should design the set together, each jaw holding the part as it is after the previous
+     station, and the checks run per station with that station's force directions.
+9. **No dialogs from scripts:** like every SolidCraft command, the check and the recommendation
    run from the JSON form, so agents and scripts can use them.
 
 ### A shared (cloud) workholding library
@@ -538,6 +585,15 @@ coolant concentration by refractometer and coolant temperature) matters for work
 coolant changes the friction at the jaws (see "Friction holds"), so a measured concentration
 lets the check pick the right friction value instead of assuming one. The package itself is
 covered in the machine monitoring topics.
+
+**Cameras and machine connections (Jason's ideas).** Cameras on the edge box (covered in the
+inspection and cell automation topics) could one day watch the part and the hold and detect
+slip or lift directly, as a change in the part's position against the jaws (aspirational:
+chips, coolant and lighting make this hard). The connections themselves, such as a CAM program
+talking to a Haas mill over Ethernet for in-process control and probing, what interfaces
+machine makers offer today, and the suggestion that makers add an MCP interface so an edge
+device can monitor and control the machine, are researched in the separate "Research CNC
+machine monitoring and control interfaces" topic.
 
 **Aligned with the G-code and the timeline (Jason's point).** Every recorded sample is stamped
 so it can be placed on the program: the time, the G-code line or block number being executed,
