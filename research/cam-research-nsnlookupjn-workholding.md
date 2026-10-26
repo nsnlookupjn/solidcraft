@@ -592,8 +592,9 @@ slip or lift directly, as a change in the part's position against the jaws (aspi
 chips, coolant and lighting make this hard). The connections themselves, such as a CAM program
 talking to a Haas mill over Ethernet for in-process control and probing, what interfaces
 machine makers offer today, and the suggestion that makers add an MCP interface so an edge
-device can monitor and control the machine, are researched in the separate "Research CNC
-machine monitoring and control interfaces" topic.
+device can monitor and control the machine, are researched in the separate
+[machine interfaces](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#what-each-control-maker-offers)
+topic. Slip and lift detection from those signals stays in this file.
 
 **Aligned with the G-code and the timeline (Jason's point).** Every recorded sample is stamped
 so it can be placed on the program: the time, the G-code line or block number being executed,
