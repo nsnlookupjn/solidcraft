@@ -370,8 +370,24 @@ The system makes predictions that the shop can check:
 | finished size and form | in-process and final inspection (per-part record) | the whole chain's accuracy |
 | chatter-free depth | sound or vibration, surface finish | tool-tip FRF, machine modes |
 
-The in-process inspection file covers the probing, gauging and per-part record, and the edge
-device that could also log spindle load. Opinion: feedback should **update the shop instance**
+**Real-time feedback from the edge box (Jason's idea).** The Raspberry Pi edge device from the
+in-process inspection file could also read **vibration, spindle load, axis loads and torques in
+real time** from machines whose control publishes them (through MTConnect, OPC UA or the
+control maker's interface; which signals each control publishes belongs in the machine library).
+Uses, in order of risk (opinion):
+
+1. **Record and compare** (first): measured vs predicted torque, power and force per segment,
+   stored with the part record; the gap corrects the shop instance (material coefficients,
+   friction at the jaws, the spindle curve).
+2. **Detect and alarm**: an unexpected jump in load or a vibration peak near a predicted part,
+   fixture or wall mode suggests slip, lift or chatter; the box flags it and, where the control
+   allows, can request a feed hold through the control's own safe input (unverified per control).
+3. **Adjust feed** (later): only through the control maker's adaptive-control interface, inside
+   the envelope the planned model allows, after a safety review. The box never bypasses the
+   control's own limits.
+
+The in-process inspection file covers the probing, gauging and per-part record on the same
+device. Opinion: feedback should **update the shop instance**
 (this machine, this vise, this material lot), never silently change the shared catalogue; a shop
 can choose to contribute measured values back, labelled as measured.
 
