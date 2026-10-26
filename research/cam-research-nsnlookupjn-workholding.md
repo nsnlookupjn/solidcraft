@@ -500,7 +500,7 @@ tool works as hard as the weakest of tool, machine, stock and hold allows in **e
 not as hard as the worst direction of the whole operation allows. A further step is closing the loop on the machine with measured data (adaptive control); the
 planned model would then be the starting point and the safety net.
 
-**Live feedback from the machine (Jason's idea).** Some controls publish spindle load, axis
+**Live feedback from the machine: "self-tuning CAM operations" (Jason's name and idea).** Some controls publish spindle load, axis
 loads or torques and vibration while cutting (for example over an open machine-data protocol
 such as MTConnect; which machines publish which signals is unverified and belongs in the
 machine library). The Raspberry Pi edge box from the in-process inspection topic could collect
