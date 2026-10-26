@@ -497,9 +497,23 @@ How CAM can do this (opinion on the method, mechanics as above):
 The result is a feed that changes **along the path** (written into the program as varying
 feed per segment, the way feed optimisers already work, see the cutting physics file), so the
 tool works as hard as the weakest of tool, machine, stock and hold allows in **each** direction,
-not as hard as the worst direction of the whole operation allows. A further step, outside this
-file, is closing the loop on the machine with measured spindle load or force (adaptive control);
-the planned model would then be the starting point and the safety net.
+not as hard as the worst direction of the whole operation allows. A further step is closing the loop on the machine with measured data (adaptive control); the
+planned model would then be the starting point and the safety net.
+
+**Live feedback from the machine (Jason's idea).** Some controls publish spindle load, axis
+loads or torques and vibration while cutting (for example over an open machine-data protocol
+such as MTConnect; which machines publish which signals is unverified and belongs in the
+machine library). The Raspberry Pi edge box from the in-process inspection topic could collect
+these in real time and feed them back. For workholding this gives three things:
+- **validation:** compare measured loads with the predicted force per step, so the friction
+  values and the torque curves in the library get corrected from real cuts, shop by shop;
+- **slip and lift detection:** a part that moves shows as a sudden change in load or a
+  vibration signature that the model did not predict; the box can raise an alarm or, where
+  the control allows it, ask for a feed hold;
+- **part and fixture modes:** vibration spectra show where the hold or a thin wall rings,
+  which checks the frequency estimates above.
+(Opinion: start with recording and comparison only; letting the box change feeds on the machine
+is a later step that needs the control maker's interface and its own safety review.)
 
 **2. A torque window, not a single number.** Torque `T` sets clamp force `F_N(T)` through the
 vise curve. Two constraints bound it:
