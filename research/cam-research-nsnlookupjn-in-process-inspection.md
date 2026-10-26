@@ -152,6 +152,63 @@ or ±0.3 (m). ISO 2768-2 covers general geometric tolerances (H, K, L). **Fact**
 moving general specifications to ISO 22081, and ISO 2768-2 is withdrawn in some catalogues
 (unverified; check before implementing).
 
+**Evidence that general tolerances should be a per-process default (from Jason).** Jason points
+out that Xometry, an on-demand manufacturing marketplace, standardises on ISO 2768 for general
+tolerances, metals at ISO 2768 medium or fine and plastics at medium. Checked against Xometry's
+public pages:
+
+- Xometry's US manufacturing standards page: features of size and location "+/- .005" (metals)
+  or +/- .010 (plastics and composites) following ISO 2768 unless otherwise specified".
+- A Xometry Pro article on standard tolerances: "All other dimensions without specific
+  tolerances will follow the general ISO 2768-medium tolerances"; it recommends ISO 2768 medium
+  (with ISO 286 IT8 or coarser) for plastic parts and offers fine as an option.
+- Not found on the public pages: a rule that metals default to *fine*. Medium is the stated
+  default, fine is available on request (so "medium/fine" is best read as "medium, fine when
+  asked").
+
+Observation (computed for this file): the inch default and the ISO class are not the same
+thing. ±0.005" is ±0.127 mm. ISO 2768-m allows ±0.2 mm for 6–30 mm and ±0.3 mm for 30–120 mm,
+and ISO 2768-f allows ±0.1 mm and ±0.15 mm. So for most machined sizes the ±0.005" figure is
+tighter than medium and close to fine. A modeller should store the rule exactly as the supplier
+states it, not translate it into the nearest ISO class.
+
+Jason also summarised Xometry's defaults by process. The table below puts his summary next to
+what Xometry's public US standards page says (accessed 2026-10-26, inch values as published):
+
+| Process | Jason's summary | Xometry public page | Standard that governs it in general |
+|---|---|---|---|
+| CNC machining | ±0.005" (±0.127 mm), ISO 2768 m/f | ±.005" metals, ±.010" plastics and composites, "following ISO 2768"; 125 µin Ra or better; form and angularity by part length | ISO 2768-1/-2 |
+| Sheet metal | ±0.010" flat, ±0.030" bends, ISO 2768-m | ±.010" feature to feature on one surface; ±.015" edge or hole to bend; ±.030" across bends and edge to edge on formed parts; bend angle ±1° | ISO 2768-m is common for sheet metal (Xometry's ISO 2768 page) |
+| Injection moulding | ±0.005" + ±0.002"/in, DIN 16742 | mould machining ±.005" plus ±.002"/in shrink allowance; repeatability under ±.004" | DIN 16742 (tolerances for plastic mouldings); the page itself does not cite it |
+| Die casting | ±0.005" + ±0.002"/in, ISO 8062 | mould machining ±.010" plus ±.001"/in shrink; repeatability under ±.004" | ISO 8062-3 (casting tolerance grades); the page itself does not cite it |
+| SLS / MJF | ±0.3 % with a ±0.012" floor | SLS nylon ±.015" or ±.002"/in, whichever is greater; MJF prototype bands by size (e.g. under 30 mm ±0.70 mm), tighter for engineer-reviewed production | process-specific; no general ISO class |
+| DMLS / FDM | ±0.1 % to ±0.5 % | DMLS ±.005" first inch + ±.002" each additional inch; FDM ± one layer first inch + ±.002"/in; SLA ±.005" XY / ±.010" Z first inch + ±.002"/in | process-specific |
+
+Differences between the two columns are expected: Jason's table may come from another Xometry
+region or page, and the published numbers change. Either way the point stands: **the default
+general tolerance depends on the process and material**, and it comes in a few rule shapes.
+
+**Proposal: general-tolerance profiles (opinion).**
+
+- A design (or each body) carries a **process**: CNC metal, CNC plastic, sheet metal, injection
+  moulding, die casting, SLS, MJF, DMLS, FDM, SLA and so on.
+- Each process has a **general-tolerance profile** that gives every untoleranced dimension its
+  limits. Rule shapes seen above: an ISO 2768 class; a fixed ± value; "± first inch plus ± per
+  additional inch"; "± percentage, with a minimum"; "whichever is greater" of two rules; separate
+  XY and Z values for layer processes; separate form and angularity by part length.
+- SolidCraft ships profiles for the **standards** (ISO 2768 f/m/c/v, ISO 8062 grades, DIN 16742
+  groups). Users add **supplier profiles** as data they enter or import (for example a
+  supplier's published standards), labelled with source and date. The project does not need to
+  bless any supplier.
+- The profile feeds the rest of this file. Drawings and PMI show the general-tolerance note. The
+  inspection plan checks untoleranced features against the profile. A warning appears when an
+  explicit tolerance is tighter than the process can hold (for example ±0.05 mm on an SLS part).
+- For additive processes the profile ties into the
+  [additive process physics](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-j72y6h/research/3d-printing-research-nsnlookupjn-process-physics.md)
+  research. That file covers why each process holds the accuracy it does (shrinkage, layer
+  height, melt pool), and could predict a tolerance band per feature rather than one number per
+  process.
+
 **Geometric tolerances (GD&T / GPS).** Two families describe the same ideas with different rules:
 
 - **ISO GPS**: ISO 1101 (geometric tolerancing: form, orientation, location, run-out), ISO 5459
@@ -177,6 +234,23 @@ no-go acceptance wording is in ISO 1502). UNC/UNF threads use classes 2B/3B and 
 (ASME B1.1). SolidCraft's thread catalogue currently stores designation and pitch but not class
 (docs/thread-catalogue.md: "thread classes, handedness and sealing behavior are outside this
 tranche").
+
+**Threads follow a named standard (from Jason).** Jason notes that Xometry requires all internal
+and external threads to follow ISO metric or ANSI/ASME unified standards. Xometry's public
+standards page says threads "will be fully formed and cut to specified size and class indicated
+in provided drawings", and its standard threads chart lists UNC/UNF sizes. The exact "must adhere
+strictly" wording was not found on the public pages checked (unverified). For 3D-printed parts
+the same page warns that modelled threads "may have limited functionality as printed" and
+recommends tapping or threaded inserts. What this means for the model (opinion):
+
+- Every thread carries its **system** (ISO metric: ISO 261/965; unified: ASME B1.1) and its
+  **class** explicitly, not just a designation.
+- When the user gives no class, use the usual general-purpose defaults and show them: 6H/6g for
+  metric and 2B/2A for unified (common practice; check against the standards before implementing).
+- The class drives the inspection plan (which go/no-go gauges), the CAM thread-milling target
+  (pitch diameter in the middle of the class band), and the report.
+- On additive processes, a modelled thread prompts "tap after printing or use an insert" and
+  becomes a post-process step on the traveller.
 
 **Surface texture.** A face can carry a roughness requirement, e.g. Ra 1.6 µm, with lay
 direction and machining allowance. Standards changed recently: **ISO 21920-1/-2/-3 (2021)
@@ -1003,6 +1077,11 @@ Connectivity and the edge device:
 - CNC coolant monitoring sensors comparison: https://industrialmonitordirect.com/blogs/knowledgebase/cnc-coolant-monitoring-sensors-technical-comparison
 - Anton Paar L-Rix inline refractometers: https://manufacturingchemist.com/anton-paar-launches-l-rix-2100-and-l
 - Vaisala, metalworking and machining: https://www.vaisala.com/ko/node/82806
+- Xometry, manufacturing standards (US): https://www.xometry.com/manufacturing-standards
+- Xometry, ISO 2768 resource page: https://www.xometry.com/resources/certifications/iso-2768
+- Xometry Pro, standard tolerances (ISO 2768, ISO 286, GD&T): https://xometry.pro/en/?p=16868
+- Xometry community, standard threads chart: https://community.xometry.com/kb/articles/724
+- Additive process physics (same author): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-j72y6h/research/3d-printing-research-nsnlookupjn-process-physics.md
 - Revolution Pi products: https://revolutionpi.com/en/products
 - Raspberry Pi Integrator Programme and Powered by Raspberry Pi: https://www.raspberrypi.com/for-industry/integrator-programme/
 - Zebra CUPS driver configuration: https://support.zebra.com/cpws/docs/cups/cups_driver1_4_configure.pdf
