@@ -476,7 +476,8 @@ program settings, and choose the action. Where a control allows the limit to cha
 program (by macro variable or a command; unverified per control), the post can lower it for
 light finishing segments, where a single per-tool limit set for roughing is far too high to
 notice anything. The fast reaction stays inside the control, where it is deterministic; the
-CAM only supplies better numbers.
+CAM only supplies better numbers. How the limits get into each control is in the interfaces note's section
+[Posting limits into the control](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#posting-limits-into-the-control).
 
 **Why the edge box cannot be the breakage guard.** At 1,200 mm/min the tool moves 10 mm in a
 0.5 s poll (computed). A broken end mill can be dragged that far before the box even sees the
