@@ -54,10 +54,17 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
   (notably Haas's online manuals) could not be fetched for this research; claims that depend on
   them are marked.
 
+> **Jason's experience (personal, October 2026): how offsets are loaded today.** Either the tool
+> is set to a known length with a tool setter (presetter) and the offsets are **typed into the
+> machine by hand**, or the **machine's own tool setter measures length, and optionally
+> diameter, using the built-in macros**. Both need a **rough tool length first, measured with a
+> tape measure**, so the setting cycle does not waste time creeping down from far away. The
+> tool-setting flow below uses this.
+
 > **[TODO Jason: personal experience]** Which machines you would automate first, whether you
-> have run a robot or a parts loader (Haas APL, a cobot cart, a bar feeder), how tools get from
-> the presetter (if any) into your Haas controls today, how often an offset gets typed wrong, and
-> what you would trust the Pi to do unattended. Label this as personal experience.
+> have run a robot or a parts loader (Haas APL, a cobot cart, a bar feeder), how often a typed
+> offset turns out wrong, and what you would trust the Pi to do unattended. Label this as
+> personal experience.
 
 ## Summary
 
@@ -428,6 +435,22 @@ cycle stay in the control's macro; job and setup data can be staged by the Pi an
 the control or a person.
 
 ### Tool setting flow (opinion)
+
+**Starting from how it is done today (Jason's experience above).** Both of today's paths have a
+step SolidCraft can remove:
+
+- **Typing presetter values** is replaced by staging (step 3): the numbers go from the
+  presetter's record to a `G10` program without being retyped.
+- **The tape-measured rough length** is replaced by the **expected length from the tool
+  library**: the assembly record holds the holder's gauge length plus the tool's stick-out,
+  which CAM already chose for its collision check. That nominal length (for example 125 mm,
+  good to a millimetre or two if the tool was set to the planned stick-out) is what the
+  machine's setting cycle needs to approach fast and only slow down for the last few
+  millimetres. CAM can write it into the setting call or pre-load it as the starting length
+  offset, so the built-in macro runs without the tape measure. If the measured length then
+  differs from the nominal by more than the stick-out tolerance, the tool was set wrong, which
+  is itself a useful check (opinion; how each machine's built-in macro uses a starting length
+  is to be checked per control, (unverified)).
 
 1. **In the presetter room:** the assembly is built from the tool library's record (tool,
    holder, stick-out from CAM's collision check). The presetter measures it; the measured values
