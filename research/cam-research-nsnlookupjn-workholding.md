@@ -461,6 +461,15 @@ How CAM can do this (opinion on the method, mechanics as above):
    A spindle often has less torque at low speed (unverified for any given machine; it depends
    on the curve), so the workholding check never "frees up" load that the spindle cannot deliver
    at that speed.
+   **Warm up before maximum torque (Jason's point):** a cold spindle has unevenly spread
+   lubricant and has not yet grown to its working size, so early heavy cuts wear the bearings
+   and parts drift in size; "just a few minutes of warm-up" is the maker's advice
+   ([Okuma, 2020-12-14](https://www.okuma.com/blog/the-benefits-of-a-proper-spindle-warm-up-routine)).
+   The per-step limit should therefore carry a **machine-state gate**: until the machine
+   library's warm-up routine has run (or the spindle has been running recently), the spindle
+   torque and power limits are derated and the slider cannot move them up; the program can
+   start with the warm-up routine or with light operations. The warm-up routine itself, and how
+   long the machine may stand before it is needed again, belong to that machine's library entry.
 5. Where a different choice would point the force into a strong direction (cut toward the fixed
    jaw, climb instead of conventional, ramp instead of plunge, a different entry side), suggest
    it, or let the path planner prefer it, instead of only slowing down.
