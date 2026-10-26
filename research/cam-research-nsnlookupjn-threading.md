@@ -52,6 +52,18 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
   from hole-making through threading [...] This is where I break the most tools because no other
   software does the physics, it is kind of just point and splat." Source research and writing
   done with an AI assistant (Claude) in October 2026.
+- **Author's experience (personal experience, not a cited source):**
+  - **Shop floor since 1987:** a machine shop apprenticeship from 1987 to 1991, starting on
+    manual machines, then writing G-code at the control on early CNC machines (Milacron and
+    similar, with no way to save a program).
+  - **CAD/CAM over about 35 years:** most major packages. In automotive work: Unisurf, Siemens,
+    Sketchpad and NX, with programs stored on punch cards, then tape, then floppy disks; later
+    CATIA, AutoCAD and Pro/Engineer. Currently fluent in Fusion, Mastercam, SOLIDWORKS and NX.
+  - **Engineering and software:** BTEC HND in Electrical and Mechanical Engineering, MEng, PhD
+    in Materials Science, certified welder. Programming since childhood (machine code, BASIC,
+    C++, C#, assembler, web and database technologies). Owns engineering and software companies.
+  - **Current work:** engineering and manufacturing spare parts for defence and aerospace,
+    including flight-safety components.
 - **How it was produced:** web searches of public sources (tool makers' technical pages and
   catalogues, gauge makers' technical notes, trade press such as Modern Machine Shop and
   Production Machining, peer-reviewed papers, CAM programs' public help pages). No commercial
