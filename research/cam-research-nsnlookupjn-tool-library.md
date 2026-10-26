@@ -515,6 +515,13 @@ not cloud-only; holders with real geometry; one source of truth for tool numbers
     setup (opinion: vendor data is partly marketing; see the facts/opinion/marketing rule in
     "About this research").
 
+12. **Custom profile tools are poorly supported.** Tool libraries generally lack features for
+    custom profile (form) tools, which is a shame because they can save serious time and money
+    in production.
+13. **Vendors under-invest in CAM data.** Tool vendors should recognise that the best marketing
+    is excellent data for CAM, so that their tool can be picked automatically by the CAM's
+    analysis to get the most productivity out of a job (opinion).
+
 **How the proposal answers each (opinion):**
 
 - **(6) Missing parameters:** the field list is ISO 13399's, not a program's own subset, and a
@@ -545,6 +552,20 @@ not cloud-only; holders with real geometry; one source of truth for tool numbers
   risk slider from the
   [cutting physics file](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md),
   and records shop-proven values as a third source that, over time, outranks both.
+- **(12) Custom profile tools:** a custom tool is a SolidCraft design (see "Adding tools"), so
+  any profile that can be sketched can be a tool. The cutting profile drives toolpaths
+  (profile-following passes, form depth, minimum radius it can produce) and the full model
+  drives collision checks. A form tool can also be **proposed from the part**: select the
+  feature's profile (e.g. a chamfer-plus-radius edge or a groove), and SolidCraft drafts a
+  matching form-tool profile for the user to send to a toolmaker, then compares the cycle time
+  against standard tools (opinion; needs the cycle-time estimate from the CAM physics files).
+- **(13) Data as the vendor's best marketing:** if the CAM picks tools by analysis (the
+  tool that meets the job's tolerances and finish at the shortest predicted time within the
+  machine's limits), then **complete, accurate catalogue data is what gets a vendor's tool
+  chosen**. The shared catalogue can make this visible: a public **data completeness score**
+  per catalogue item (geometry, 3D model, substrate and coating, cutting data with valid range,
+  verified by shop results), and tools with incomplete data are derated and ranked lower. This
+  gives vendors a direct reason to publish good data instead of aggressive headline numbers.
 
 ## What users need
 
