@@ -79,6 +79,10 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    part cut from that stock inherit the link. EN 10168 already defines the fields of such a
    document; a structured (machine-readable) certificate format would let this happen without
    retyping.
+   For defence work the request also carries the **melt-origin requirement** (DFARS specialty
+   metals; the often-quoted 252.225-7014 was replaced by 252.225-7008/-7009 in 2009), and the
+   receipt check decides from the heat's own chemistry whether the metal is a specialty metal and
+   holds it if the certificate's melt country is not allowed.
 5. **The hard rules shape the design.** SolidCraft must work offline and in the browser, never
    crash on hostile input and never open dialogs from programmatic calls. So supplier access is
    an **optional, sandboxed plugin** (the planned Wasm plugin system, #1221, with a network
@@ -161,7 +165,91 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
   does), presumably because customers flow down domestic-source requirements beyond the clause
   (opinion; ask the supplier what the claim covers). The stock request should carry the
   requirement in words the supplier uses ("domestic melt", "DFARS 252.225-7009"), and the check
-  on receipt should read the melt country from the certificate.
+  on receipt should read the melt country from the certificate. The full treatment is in the
+  next section.
+
+### Melt origin and DFARS specialty metals
+
+Jason's addition: raw CNC stock for defence work falls under the DFARS **specialty metals**
+rules, so the stock request and the certificate check must capture **where the metal was
+melted**, not only what it is.
+
+**Which clause applies (fact, from the Federal Register and the current DFARS text):**
+
+| Clause | Status | What it requires |
+|---|---|---|
+| 252.225-7014, Preference for Domestic Specialty Metals | **Removed and reserved** by the final rule effective **29 July 2009** | (the older rule; still quoted on old purchase orders and supplier quality clauses, unverified how often) |
+| 252.225-7008, Restriction on Acquisition of Specialty Metals | current | used when the contract delivers **specialty metals themselves as end items** (for example mill products): "Any specialty metal delivered under this contract shall be melted or produced in the United States or its outlying areas" |
+| 252.225-7009, Restriction on Acquisition of Certain Articles Containing Specialty Metals | current | used for aircraft, missile and space systems, ships, tank and automotive items, weapon systems and ammunition, **and their components**: specialty metal melted or produced in the US, its outlying areas **or a qualifying country**, with listed exceptions (commercial items, a 2 % minimal-content exception, and others) |
+| 252.225-7010, Commercial Derivative Military Article | current | the contractor's certification for that exception |
+
+A machine shop making a component under a 7009 flowdown is the common case. The practical
+consequence is the same for the stock: the shop needs evidence of the melt country for every
+heat of specialty metal it machines. Because purchase orders often quote clause numbers as
+written years ago, the stock request should **keep the clause exactly as the customer cited it**
+and show, next to it, which current clause SolidCraft reads it as ("252.225-7014 was replaced by
+252.225-7008/-7009 in 2009; treated as -7009"), for the person to confirm. Legal responsibility
+for compliance stays with the contractor; SolidCraft records and checks, it does not certify
+(opinion, and important to state in the interface).
+
+**Does the material count as a specialty metal?** The clause decides by chemistry, so the check
+can be automatic from the certificate's chemistry (EN 10168 group C):
+
+- Steel with **manganese over 1.65 %**, **silicon or copper over 0.60 %**, or **more than 0.25 %**
+  of any of aluminium, chromium, cobalt, molybdenum, nickel, niobium, titanium, tungsten or
+  vanadium. So 4140 (about 0.8 to 1.1 % Cr) and every stainless steel count; plain 1018 or 12L14
+  normally does not (typical chemistry; the actual heat decides).
+- Nickel and iron-nickel alloys, and cobalt alloys, with more than 10 % of other metals.
+- Titanium and its alloys; zirconium and its alloys.
+- **Not aluminium alloys.** A "DFARS" request on 6061 plate is a customer flowdown or a
+  domestic-melt preference, not this clause; the request should say which (see above).
+
+From the material card SolidCraft can predict the answer when the request is made (4140: yes),
+and from the certificate it can confirm it for the actual heat.
+
+**What the stock request carries:**
+
+- `origin.clause_cited`: the text from the customer's order, unchanged (for example "DFARS
+  252.225-7014").
+- `origin.clause_read_as`: the current clause SolidCraft maps it to, confirmed by the person.
+- `origin.allowed`: "US and outlying areas" (7008), or "US, outlying areas and qualifying
+  countries" (7009). The qualifying-country list is in DFARS 225.003 and changes; it is kept as
+  dated data that can be updated, never written into code (opinion).
+- `origin.specialty_metal`: predicted from the material card (yes / no / unknown).
+- Whether the shop accepts a supplier's **certificate of conformance** for origin, or requires
+  the **mill's** test report showing the melt location (customer quality clauses differ).
+
+**What a supplier offer must state:** the melt-origin claim for that product ("domestic melt",
+"DFARS compliant", "melted in country X"). An offer for a specialty metal with no claim is
+shown, but flagged, and sorted below compliant ones when the request has an origin requirement.
+
+**The check on receipt:**
+
+1. Read the **melt country** and the **melting mill** from the certificate (US mill reports
+   commonly say "melted and manufactured in USA" or name the melt country; the field and its
+   wording vary by mill, so extraction must be reviewed by a person).
+2. Recompute **specialty metal yes/no** from the heat's own chemistry.
+3. If it is a specialty metal and the melt country is not in `origin.allowed`, or is missing,
+   the stock is **held**: it cannot be issued to a job with that requirement. A person can
+   release it only with a recorded reason (for example "covered by the 2 % minimal-content
+   exception", which is a contract-level judgement, not a per-piece one).
+4. If the supplier's certificate is a distributor's certificate of conformance and the request
+   requires the mill's report, the check says so.
+
+**Traceability back from a heat.** Because every part records the stock instance and its heat
+(see "The certificate on the stock instance and in the traveller"), if a mill's origin claim is
+later found false, the shop can list every part, serial and shipment cut from that heat. This
+is the main value of putting origin in the record rather than in a filing cabinet (opinion).
+
+**Related standards Jason listed (for the defence workflow, not all about stock):**
+
+| Discipline | Military / federal | Commercial equivalent | How it touches this file |
+|---|---|---|---|
+| Drawings and CAD data | MIL-STD-31000 (technical data packages) | ASME Y14.100, Y14.5 | the drawing or model calls the material specification and any origin note the request reads |
+| Castings | MIL-STD-2175 | AMS-STD-2175 | casting grade and radiographic inspection; belongs to the raw-part model in the physical properties file |
+| Forgings | MIL-F-7190 | SAE AMS series | forging stock integrity; same |
+| Raw CNC stock | DFARS specialty metals (now 252.225-7008/-7009) | | this section |
+| First article inspection | DI-NDTI-80809B | AS9102 | AS9102's raw material and specification accountability (Form 2) can be filled from the stock instance and its certificate (unverified field-by-field; inspection file) |
 
 ### Digital certificates
 
@@ -389,7 +477,14 @@ StockRequest {
   min_size_mm,                       // finished envelope + clean-up + grip, before rounding
   material: { alloy, temper, specs: [..], form: "cold-finished" | "rolled" | "cast-tooling" | .. },
   quantity: { parts, blanks, allow_longer_piece: bool },
-  certificate: { required: "none" | "CoC" | "EN10204-3.1" | "MTR" | .., origin: "any" | "domestic-melt" | "DFARS-252.225-7009" },
+  certificate: { required: "none" | "CoC" | "EN10204-3.1" | "MTR" | .., mill_report_required: bool },
+  origin: {                          // see "Melt origin and DFARS specialty metals"
+    clause_cited: "DFARS 252.225-7014", // as written on the customer's order
+    clause_read_as: "DFARS 252.225-7009", // confirmed by a person
+    allowed: "any" | "domestic-melt" | "us-outlying" | "us-outlying-qualifying",
+    qualifying_list_as_of: date,
+    specialty_metal: "yes" | "no" | "unknown", // predicted from the material card
+  },
   allowances: [ { face, mm, source: "Op10 face pass" } ],
 }
 
@@ -431,6 +526,8 @@ StockInstance {                       // the physical piece on the rack
 - **Drop / remnant:** a leftover piece kept for later jobs.
 - **EDI:** electronic data interchange, structured business documents (purchase order, order
   acknowledgement, ship notice, invoice) exchanged between company systems.
+- **DFARS specialty metals:** US defence rules (252.225-7008/-7009) requiring certain steels, nickel,
+  cobalt, titanium and zirconium alloys to be melted or produced in the US or allowed countries.
 - **Heat number:** the identifier of one melt of metal at the mill; traceability links a part to it.
 - **MTR / mill cert:** mill test report, the certificate of chemistry and properties for a heat.
 - **Punchout:** a link from a buyer's purchasing system into a supplier's web store that returns
@@ -485,6 +582,10 @@ All accessed 2026-10-26.
 
 - EN 10168:2004, steel products, inspection documents, list of information (catalogue preview): https://iteh.es/catalog/standards/sist/9dcd36dc-b1c1-402d-b4b7-3bbb643f3b62/sist-en-10168-2004
 - DFARS 252.225-7009, restriction on acquisition of certain articles containing specialty metals: https://www.law.cornell.edu/cfr/text/48/252.225-7009
+- DFARS 252.225-7008, restriction on acquisition of specialty metals: https://qafcs.acquisition.gov/dfars/252.225-7008-restriction-acquisition-specialty-metals.
+- Final rule adding 252.225-7008/-7009/-7010 and removing 252.225-7014, Federal Register 74 FR (29 July 2009): https://www.govinfo.gov/content/pkg/FR-2009-07-29/html/E9-17967.htm
+- Proposed rule (21 July 2008) to remove 252.225-7014: https://www.acq.osd.mil/DPAP/dars/dfars/changenotice/2008/20080721/E8-16675.htm
+- MIL-STD-31000, ASME Y14.100, MIL-STD-2175 / AMS-STD-2175, MIL-F-7190, DI-NDTI-80809B, AS9102: listed by Jason; not reviewed in detail here.
 - Material Identity CoA schemas (AGPL-3.0; README only, code not read): https://github.com/material-identity/CoA-schemas
 
 ### SolidCraft
