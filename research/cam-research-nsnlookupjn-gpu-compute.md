@@ -39,6 +39,24 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
   **opinion**, **estimate** and **marketing** are labelled where they mix. Prices change often;
   every price here is "as published on the date shown" and only an order of magnitude.
 
+**Author's experience (personal experience, not a cited source):**
+
+- **Shop floor since 1987:** a machine shop apprenticeship from 1987 to 1991, starting on manual
+  machines, then writing G-code at the control on early CNC machines (Milacron and similar, with
+  no way to save a program).
+- **CAD/CAM over about 35 years:** most major packages. In automotive work: Unisurf, Siemens,
+  Sketchpad and NX, with programs stored on punch cards, then tape, then floppy disks; later
+  CATIA, AutoCAD and Pro/Engineer. Currently fluent in Fusion, Mastercam, SOLIDWORKS and NX.
+- **Engineering and software:** BTEC HND in Electrical and Mechanical Engineering, MEng, PhD in
+  Materials Science, certified welder. Programming since childhood (machine code, BASIC, C++,
+  C#, assembler, web and database technologies). Owns engineering and software companies.
+- **Current work:** engineering and manufacturing spare parts for defence and aerospace,
+  including flight-safety components.
+
+**This research is not complete.** It is a starting point: the author will keep researching
+and adding to it, and others are encouraged to do the same, correct it and contribute their own
+findings and shop experience.
+
 > **[TODO Jason: personal experience]** CAM jobs you have waited on (which operations, how long,
 > on what computer), whether your CAM uses the GPU or all CPU cores, whether a shop you know has a
 > spare GPU workstation or server that sits idle overnight, and any rules you work under about
