@@ -531,7 +531,7 @@ jaws), rising vibration at the same cut on the same machine (spindle bearings, l
 loads drifting from prediction on a known job (tool wear, wrong material). The monitor can flag
 the likely cause and order a maintenance check (for example "inspect vise screw and jaw
 plates" or "spindle vibration trend") before parts are scrapped. The machine-side detail
-belongs with the machine library and the CAM Physics System topics.
+belongs to the separate "Predict machine failure and order maintenance" topic (in progress), with the machine library and the CAM Physics System topics.
 
 **Aligned with the G-code and the timeline (Jason's point).** Every recorded sample is stamped
 so it can be placed on the program: the time, the G-code line or block number being executed,
