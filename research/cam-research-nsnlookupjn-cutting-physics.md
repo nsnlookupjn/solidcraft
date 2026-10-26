@@ -600,8 +600,28 @@ Converting vendor PDFs into CAM presets by hand; re-doing presets for each engag
 to find a feed that does not chatter; broken tools when a preset meets a corner it was not written
 for.
 
-> **[TODO Jason: personal experience]** Which of these cost you the most, and how you would
-> want the slider to behave on your machines.
+**From the author's shop (personal experience, not a cited source):**
+
+- **Broken tools and guesswork cost the most:** the biggest losses are broken tools and the time
+  spent working out the best speed and feed for a given tool in a given material.
+- **Short overload spikes are common and avoidable:** tight corners and lead-ins overload the
+  tool for an instant, caused by incomplete simulation and poor toolpaths. The computer has the
+  geometry and should know the physics, so these spikes should not happen.
+- **Under-loaded tools waste time:** low tool load when the cut could be deeper and faster, and
+  time spent cutting air. Every second counts; the goal is the most out of both the machine and
+  the tool.
+- **Tools are cheap compared with machine time,** so load them to their full ability. In the
+  author's experience machines do not wear faster under high steady load; what they hate is
+  sudden, crash-type load.
+- **The target:** every cut smooth, steady and loaded to the maximum.
+
+What this means for SolidCraft (opinion): the default goal is **steady maximum load, not just a
+safe average**. That needs three things from this file working together: constant-engagement
+path shaping so corners and lead-ins do not spike (Programs); a per-segment check of peak force,
+not only average force (sections 4 and 5, step 6 of the pipeline), so a momentary overload in a
+corner is found before posting; and feed raised wherever the load is low, including rapid or
+fast feed through air where the stock model shows no material. The slider then sets how close
+to the maximum that steady load sits, and the hard limits stop the crash-type loads.
 
 ## Glossary
 
