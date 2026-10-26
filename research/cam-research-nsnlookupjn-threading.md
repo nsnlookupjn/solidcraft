@@ -10,7 +10,8 @@ multi-flute, single-profile, multi-form), lead-ins, partial threads, external th
 pipe threads (NPT, NPTF, BSPT), thread classes, the physics of each process, how threads fail
 and how to prevent it, in-machine tricks (a fixed brush that cleans the tap, a cup of tapping
 compound the tap dips into), wear compensation that sets the thread fit, and a feedback loop with
-the Raspberry Pi box at the machine that dials in a thread cutter and keeps that compensation
+**SolidCraft Edge** (Jason's name for the Raspberry Pi computer at the machine,
+which sits on the edge of CAM and brings machine and automation data back into it) that dials in a thread cutter and keeps that compensation
 between jobs and machines.
 
 Companion files (same author, same fork):
@@ -24,7 +25,7 @@ Companion files (same author, same fork):
 - [In-process inspection](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md):
   thread classes on the model, go/no-go gauging, the Xometry rule that threads follow a named
   standard, the compensation-in-cycle pattern (target, dead band, feedback fraction, limit), the
-  Pi box and "Self-tuning CAM operations". This file is the thread-specific case of that loop.
+  Raspberry Pi box (now named SolidCraft Edge) and "Self-tuning CAM operations". This file is the thread-specific case of that loop.
 - [Cloud tool library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-tool-library/research/cam-research-nsnlookupjn-tool-library.md):
   tool tags and the shop instance of each tool, where a thread cutter's saved compensation lives.
 - [Tool holding](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-4aoliy/research/cam-research-nsnlookupjn-tool-holding.md):
@@ -104,7 +105,7 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 6. **Failure modes map to signals and to rules.** Undersize or shallow hole, chip packing, tap
    bottoming, misalignment, synchronisation thrust, reversal shear, worn tap, holder slip, part
    rotation, form tap in brittle material, thread mill deflection, chatter. Each has a
-   prevention rule in the planner and a signal the Pi box can watch (spindle load envelope per
+   prevention rule in the planner and a signal SolidCraft Edge can watch (spindle load envelope per
    hole, missing drill load, torque trend).
 7. **In-machine tricks become stations in the machine library** (Jason's ideas): a fixed tap
    cleaning brush, a cup of tapping compound, an air blast to empty blind holes before tapping, a
@@ -121,7 +122,7 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    machine (servo lag, synchronisation), and with the material lot (spring-back). Moving a tool
    to another machine keeps the first three and swaps only the machine term, which is what makes
    "permanent compensation between jobs and machines" possible. Indicating thread gauges with
-   digital output (or operator entry) give the Pi box a number instead of pass/fail.
+   digital output (or operator entry) give SolidCraft Edge a number instead of pass/fail.
 
 ## Fundamentals
 
@@ -290,7 +291,7 @@ Worked example, M8×1.25 in 42CrMo4 (kc 2600), at 10 m/min (n ≈ 400 rpm) (deri
 undeformed chip thickness about 0.12 mm per tooth, the largest chip on the first tooth that cuts
 to full depth, radial forces about half the tangential, and **torque rising with depth in blind
 holes because chips are removed against the feed direction**, which their force model did not
-capture. This is the signature the Pi box should watch: steady torque after the chamfer is
+capture. This is the signature SolidCraft Edge should watch: steady torque after the chamfer is
 engaged, plus a depth-dependent rise from chip friction. A steeper rise than the hole's own
 history means packing.
 
@@ -318,7 +319,7 @@ that is 0.16 mm that the flanks or the holder must absorb.
 sheared at their roots and can jam behind the cutting edges; "breakage can also occur on
 reversal from chip drag or abrupt reversing" (Protool). Commercial tap monitoring learns the
 forward power profile and goes into a "hold mode" during reversal to ignore its spikes (Caron
-TMAC description), which also means reversal is a blind spot; the Pi box should record reversal
+TMAC description), which also means reversal is a blind spot; SolidCraft Edge should record reversal
 torque separately and trend it (opinion).
 
 **Wear.** As a tap wears, torque rises and the thread it cuts gets smaller (fact: dull taps
@@ -516,7 +517,7 @@ derived above):
 **Gauges.** Go/no-go plug and ring gauges (ISO 1502; ASME B1.2 for unified, catalogue name)
 answer pass or fail. **Indicating** gauges give a number: tri-roll comparators for external
 threads and segment-type indicating plugs for internal threads exist (unverified names and
-availability per size); with a digital indicator and a data port they can feed the Pi box
+availability per size); with a digital indicator and a data port they can feed SolidCraft Edge
 (see in-process inspection, "Manual gauging"). For taper threads, the standoff in turns read off
 the gauge is already a number.
 
@@ -565,8 +566,8 @@ single-flute mill, multi-flute mill, straight tap, forming tap, spiral tap, etc.
 prevent thread cutting failure. Think of tricks like an operation to clean a tap with a fixed
 brush in machine and dipping tap into threading compound in machine. Think about lead-ins,
 partial threads, chamfers, external threading, tapered threading like NPT [...] Think hard about
-wear compensation in machine to adjust thread fits. Can there be a feedback loop with [the Pi]
-box to dial in a cutter for a thread and save compensations permanently between jobs and even
+wear compensation in machine to adjust thread fits. Can there be a feedback loop with [SolidCraft Edge]
+to dial in a cutter for a thread and save compensations permanently between jobs and even
 machines."
 
 ### The module: from feature to plan (opinion)
@@ -623,7 +624,7 @@ umbrella file's rule):
 
 ### Preventing failure: modes, signals, rules
 
-| Failure | Physics / cause | Rule in the planner | Signal at the machine (Pi box) |
+| Failure | Physics / cause | Rule in the planner | Signal at the machine (SolidCraft Edge) |
 |---|---|---|---|
 | Hole not drilled / broken drill | upstream tool lost | drill load must reach expected power before tapping (Caron) | drill power below the learned envelope → stop before the tap |
 | Undersize hole | wrong drill, worn drill | drill diameter in class limits, form-tap tolerance | tap torque from the first full tooth above model |
@@ -661,7 +662,7 @@ calibration sphere is a fixed object (opinion):
   so it coats all flutes, then waits a moment for excess to drip (opinion). Interval from film
   life (holes per dip; learned). Cautions: tapping compound must suit the material (chlorinated
   compounds are commonly avoided on titanium; unverified as a universal rule) and must not ruin
-  the machine's coolant; the cup's level needs a check (a level sensor on the Pi box, or a
+  the machine's coolant; the cup's level needs a check (a level sensor on SolidCraft Edge, or a
   count of dips since refill).
 - **Air blast before tapping**: blow drilling chips out of blind holes before the tap goes in
   (common practice). A through-spindle air or coolant flush works too.
@@ -712,7 +713,7 @@ so the user can see what safety costs.
   pattern from the inspection file: target, dead band, feedback fraction, correction limit, and
   re-cut.
 
-**Wear model.** The Pi box records, per thread cutter, every thread cut (helix length in that
+**Wear model.** SolidCraft Edge records, per thread cutter, every thread cut (helix length in that
 material) and every gauge result. The slope of size against helix length is the wear rate (µm
 per metre); the module applies predicted wear between gauged parts and gauges every N parts,
 where N comes from how fast the predicted drift reaches the dead band (opinion). This is the
@@ -748,7 +749,7 @@ Then:
 Storage: in the **shop instance** of the tool in the tool library (keyed by the tool tag), with
 history, who approved each change and the evidence (gauge results, part IDs), never in the
 shared catalogue (the same rule as the physics system and inspection files). The control's
-own wear offsets are written by the post-processor or the Pi box at the start of the job from
+own wear offsets are written by the post-processor or SolidCraft Edge at the start of the job from
 this record, so the control and SolidCraft never disagree (opinion; needs the control
 integration the inspection file describes).
 
@@ -783,7 +784,7 @@ ThreadCompRecord      tool_tag, ground_size, wear_rate, wear_since_new, deflecti
    single-profile tools; taper threads by turns.
 5. **Stations**: brush, compound cup, air blast, hole check in the machine library; automatic
    visits.
-6. **Loop**: Pi box torque envelopes per hole, gauge entry (manual and indicating gauges), the
+6. **Loop**: SolidCraft Edge torque envelopes per hole, gauge entry (manual and indicating gauges), the
    compensation record and its transfer between jobs and machines.
 
 ### Fit with SolidCraft
