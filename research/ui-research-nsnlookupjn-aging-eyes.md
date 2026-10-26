@@ -38,6 +38,23 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 - **Marking:** "(unverified)" marks a claim not confirmed against a source in this session.
   **Fact**, **opinion** and **marketing** are labelled where they mix.
 
+**Author's experience (personal experience, not a cited source):**
+
+- **Shop floor since 1987:** a machine shop apprenticeship from 1987 to 1991, starting on manual
+  machines, then writing G-code at the control on early CNC machines (Milacron and similar, with
+  no way to save a program).
+- **CAD/CAM over about 35 years:** most major packages. In automotive work: Unisurf, Siemens,
+  Sketchpad and NX, with programs stored on punch cards, then tape, then floppy disks; later
+  CATIA, AutoCAD and Pro/Engineer. Currently fluent in Fusion, Mastercam, SOLIDWORKS and NX.
+- **Engineering and software:** BTEC HND in Electrical and Mechanical Engineering, MEng, PhD in
+  Materials Science, certified welder. Programming since childhood (machine code, BASIC, C++,
+  C#, assembler, web and database technologies). Owns engineering and software companies.
+- **Current work:** engineering and manufacturing spare parts for defence and aerospace,
+  including flight-safety components.
+- **Why this topic:** after more than 35 years at screens and machines, the author needs
+  particular colours, brightness and text sizes to work comfortably, as many experienced
+  machinists do.
+
 > **[TODO Jason: personal experience]** What changed for you and roughly when: which text became
 > hard to read first, whether you prefer light or dark screens now (and whether that differs in
 > the shop and at home), which colours are hard to tell apart, how glare from shop lights or
