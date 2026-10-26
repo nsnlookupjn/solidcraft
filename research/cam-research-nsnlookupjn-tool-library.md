@@ -35,8 +35,9 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 - **Current work:** engineering and manufacturing spare parts for defence and aerospace,
   including flight-safety components.
 
-> **[TODO Jason: personal experience]** How your shop manages tools today: where the tool list
-> lives, who enters tool data, how tools are labelled, and what goes wrong.
+- **How the author's shop manages tools today:** every tool has a barcoded 3D-printed tag, and
+  the CAM tool libraries are set up both by machine and by material, with each tool tracked by
+  its tag ID (details under "Tool identification" below).
 
 ## Summary
 
@@ -200,9 +201,35 @@ entry instead of each typing their own copy.
   library stays the single source of truth. Scanning it opens the assembly: catalogue items,
   stick-out, measured offsets, life used.
 
-> **[TODO Jason: personal experience]** How you label tools today, whether your holders have the
-> DIN 69873 bore, whether you have used the MakerWorld label holder, label printer used and label
-> size, and what you would want to see when you scan a tool.
+**Author's practice today (personal experience):**
+
+- Every tool has a **3D-printed tool tag** with a **barcode carrying an ID**.
+- The tag also shows, for people: the **vendor**, **part number**, **applicable materials as
+  colour-coded dots**, the **tool-setter length**, and optionally the **insert family and grade**.
+- **The tag stays with the tool.** When the tool is loaded into a machine, its tag goes into a
+  **tag rack on that machine, in the slot for its pocket number**, so the rack is a physical
+  copy of the machine's tool table.
+- In CAM, the **ID tracks the tool** through libraries set up **by machine and by material**,
+  which is the same structure as the machine-scoped and material-scoped libraries below.
+
+**What this suggests for SolidCraft (opinion):**
+
+- **The barcode carries only the ID; the printed text is a convenience.** This refines the point
+  above: human-readable fields on the tag are useful at the machine, but the library is the
+  record. SolidCraft should print the tag from the library (barcode + vendor + part number +
+  material dots + length + insert), and flag a tag for reprinting when a printed field changes
+  (new insert grade, new measured length).
+- **Material dots come from the `material_scope`** (see "Material-scoped libraries"): one colour
+  per ISO 513 group (the usual P blue, M yellow, K red, N green, S orange, H grey convention
+  is (unverified) here), so the tag, the library and the job's material check agree.
+- **The tag rack becomes the drift check.** Scanning the rack left to right (or each tag as it
+  goes in) gives the machine's actual tool load, which SolidCraft compares with the locked
+  machine library and the program's tool list before the job runs.
+- **Load and unload are scan events:** scanning a tag into a rack slot assigns the tool to that
+  machine and pocket in the library; scanning it out releases it.
+
+> **[TODO Jason: personal experience]** Optional: whether your holders have the DIN 69873 bore,
+> the tag's size and how it attaches to the tool, and the barcode type (1D, QR, DataMatrix).
 
 ### Indexable tools: inserts and grades
 
