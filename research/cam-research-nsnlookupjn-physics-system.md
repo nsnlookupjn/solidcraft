@@ -326,6 +326,10 @@ What that means in practice (opinion on the method):
   An expert can accept a *Stop* item deliberately, with a reason, and the acceptance is recorded
   with the program and printed on the setup sheet or part traveller (inspection file). The
   slider changes where *Warn* starts; it never removes a *Stop* on a hard limit.
+- **Soft findings are fixed automatically where possible.** *Warn* items the feed optimiser can
+  solve (slow these moves, split this cut) are fixed and listed; only what needs a person's
+  choice is left open. The setup sheet carries the assumptions the simulation used (friction,
+  torque, machine state, estimated data).
 - **Novice default.** New users start conservative, with the gate on; the gate cannot be
   switched off globally, only accepted item by item.
 
@@ -473,7 +477,9 @@ leave room for it in the right places.
    distortion after unclamping) inside this system or a later topic?
 6. Where should real-time adaptive control live: in the control's own option, in an edge device
    (the inspection file's Pi), or not in SolidCraft at all?
-7. Does lathe and mill-turn work fit the same setup (chuck as hold, turret as tool holder), or
+7. Should an expert be allowed to accept a *Stop* finding on a hard limit at all, or only on
+   limits that carry a safety factor?
+8. Does lathe and mill-turn work fit the same setup (chuck as hold, turret as tool holder), or
    does it need its own model?
 
 ## Sources
