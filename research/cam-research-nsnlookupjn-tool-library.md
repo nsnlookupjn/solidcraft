@@ -335,6 +335,35 @@ preloaded with a set load of tools which do not change."*
     file, or live via the controller) and list differences: wrong tool in a pocket, offset
     changed, insert changed (see above).
 
+### Material-scoped libraries
+
+*Jason's requirement: "In the machine library and tool library be able to lock to one or several
+materials. For example many people have a machine that only cuts aluminum 6061 and many people
+have a library of tools for only aluminum. It would be possible for a machine or tool library to
+be good for a range of materials, but rarely all materials."*
+
+- **Why:** tools bought for one material (for example 2- or 3-flute polished, uncoated or
+  DLC-coated carbide for aluminium) are often wrong for others, and some shops keep a machine
+  for one alloy so chips and coolant don't mix (opinion; reasons vary by shop and are
+  (unverified) as general practice).
+- **Proposal (opinion):**
+  - A library (tool or machine) carries a **material scope**: a list of entries, each either an
+    ISO 513 group (P, M, K, N, S, H; see "Indexable tools" above), a material family
+    (e.g. "wrought aluminium"), or a specific material and temper (e.g. "6061-T6"). A scope
+    can mix levels: "6061-T6, 7075-T6" or "N group only". No scope means "any".
+  - Each tool can also carry its **own** suitable materials (from the vendor's ISO 513 icons, the
+    insert grade's group, or the shop's choice); the library's scope is a filter on top.
+  - **When a job's stock material is set**, SolidCraft only offers tools and machines whose scope
+    includes it. Using an out-of-scope tool or machine needs an explicit override, which is
+    flagged on the setup sheet.
+  - **Scope also picks the physics:** the cutting-data sets used for a library are only those
+    for its materials, so an aluminium-only library never falls back to steel coefficients.
+  - **Locking works like the machine lock:** only named editors can widen a locked scope, and
+    changes are logged.
+  - **Machine and tool scopes combine:** a job on an aluminium-only machine with a mixed tool
+    library sees only the tools whose scope includes the job material. The machine side is in
+    the [machine library file](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md).
+
 ### Where tool data meets the machine
 
 - Machine controls keep their own tool table. LinuxCNC's `tool.tbl` has tool number `T`, pocket
@@ -463,7 +492,9 @@ Assembly        id, cutter -> CatalogueItem, holder -> CatalogueItem, stickout_m
                 measured { DC, length }, notes
 MachineGroup    id, machines [machine_id], interface (e.g. CAT40), limits
                 { max_length, max_diameter, max_mass, max_rpm }
-Library         id, scope (user|shop|machine|machine_group), locked, editors, change_log
+Library         id, scope (user|shop|machine|machine_group),
+                materials [ iso513_group | material_family | material_spec ] (empty = any),
+                locked, editors, change_log
 MachineTool     machine_id, T, pocket, fixed (bool), assembly -> Assembly, offsets,
                 life_used (per insert edge for indexable tools)
 Tag             tag_id -> Assembly | MachineTool
@@ -523,6 +554,7 @@ vise clamping-torque curves could sit in the shared catalogue next to holders (o
 | ISO 513 group | application group, P/M/K/N/S/H | A letter class of work materials a cutting material is meant for. | P steel, M stainless, K cast iron, N non-ferrous, S superalloys, H hardened. |
 | Machine group | machine cell | A named set of machines that share an interface and limits. | A library can be scoped to it. |
 | Fixed tool load | standard tool load, permanent tools | A set of tools kept in a machine's magazine across jobs. | Programmed against first. |
+| Material scope | material lock | The set of work materials a library or machine is allowed to be used for. | Empty means any material. |
 | Gauge point | gauge line, tool reference point | The point on the tool axis where tool length is measured from. | Usually the holder face. |
 
 ## Open questions
@@ -548,6 +580,8 @@ vise clamping-torque curves could sit in the shared catalogue next to holders (o
    (same licence question as 2).
 10. How controllers expose the current tool table for a drift check (file export, MTConnect,
     maker API); see the machine library file.
+11. Which material naming to use for scopes (ISO 513 groups, UNS/EN alloy numbers, or a shared
+    material list), so tool, machine and workholding libraries agree.
 
 > **[TODO Jason: personal experience]** Anything you know that answers the above.
 
