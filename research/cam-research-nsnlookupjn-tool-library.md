@@ -409,6 +409,37 @@ to verify the tool assembly geometry against the library.*
   rule as tool data (see "Closing the loop with SolidCraft Edge"); a verified scan of a
   catalogue tool can be offered to the shared catalogue as an *exact* model.
 
+### Detailed setup sheet for operator verification
+
+*Jason's requirement: the tool library, with its images and photos, should be available in a
+detailed setup sheet for operator verification.*
+
+**Proposal (opinion):** the setup sheet is generated from the library, not typed, and has one
+block per tool in the program, in tool-change order:
+
+- **Identity:** tool number and pocket, tag ID and barcode (scan to confirm), vendor and part
+  number, description, and for indexable tools the insert code, grade and ISO 513 group.
+- **Pictures:** the vendor image, a rendered side view of the **whole assembly** with gauge
+  length, stick-out and flute length dimensioned, and the shop's own **verification photo or
+  scan** with its date (from "Exact geometry" above). The operator compares the real tool with
+  the pictures before loading it.
+- **Numbers to check:** computed gauge length and the measured tool-setter length with the
+  allowed difference, diameter, minimum stick-out the program needs (from the deepest cut) and
+  maximum stick-out allowed (from deflection limits), holder type and nut, coolant mode.
+- **Use in this job:** operations that use the tool, material, cutting values and their source
+  (shop-proven, vendor-measured, vendor, generic), cutting time, and life used vs remaining.
+- **Status flags:** exactness level (exact / parametric / envelope), "not yet verified",
+  "out of material scope (override)", "extra tool, not in the machine's fixed load".
+- **Sign-off:** a check box per tool, or a tag scan that records the check with operator and
+  time, so the setup sheet doubles as the setup record. Scanning every tool's tag into the
+  machine's tag rack can complete the sheet automatically (see "Tool identification").
+- **Formats:** printed (SolidCraft Edge can print it at the machine) and on screen (Edge
+  dashboard or a tablet), with pictures large enough to read at the machine (see the
+  UI-for-aging-eyes research topic, where relevant).
+- **Only tool data:** like the sharing rule, a setup sheet that leaves the shop carries no part
+  geometry unless the job allows it; for restricted jobs the part views are omitted and the
+  tool blocks remain.
+
 ### Machine-scoped libraries and fixed tool sets
 
 *Jason's requirement: "Tool library should be able to be locked to a particular machine as we
