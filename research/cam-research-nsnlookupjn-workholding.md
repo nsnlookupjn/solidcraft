@@ -525,6 +525,14 @@ finishing passes still recover the size; finishing stays within the deflection a
 budget the measurements confirm. (Opinion: tuning should only ever use measured evidence from
 the same setup type, and the hard floors still apply.)
 
+**Predicting failure and bad work (Jason's point).** The same recorded history can show trends
+before they become failures: a hold that needs more torque each week to pass (worn screw or
+jaws), rising vibration at the same cut on the same machine (spindle bearings, loose gibs), or
+loads drifting from prediction on a known job (tool wear, wrong material). The monitor can flag
+the likely cause and order a maintenance check (for example "inspect vise screw and jaw
+plates" or "spindle vibration trend") before parts are scrapped. The machine-side detail
+belongs with the machine library and the CAM Physics System topics.
+
 **Aligned with the G-code and the timeline (Jason's point).** Every recorded sample is stamped
 so it can be placed on the program: the time, the G-code line or block number being executed,
 and the machine position. The simulation's per-step predictions are indexed the same way, so a
