@@ -430,6 +430,13 @@ It returns per setup: the maximum allowed force in each direction and moment bef
 or tip (after its safety factor), the lowest natural frequency of part plus fixture, and part
 wall deflection limits. The feed calculation treats these as one more limit.
 
+The two sides negotiate per force vector (Jason's idea, detailed in the workholding file): CAM
+recommends a vise torque window whose low end is the least clamp force that passes the slip
+checks for the cutting forces above, and whose high end is set by part deformation, jaw marks or
+the vise maker's limit. If the window is empty, the feed calculation lowers the load, or a
+different hold is suggested. Assumed values (estimated `Fr`/`Fa`, default friction, unknown
+dynamics) are labelled as assumed wherever a result depends on them.
+
 ### Tool library parameter schema (opinion; ISO 13399 symbols where one exists)
 
 Which calculation needs each field: **S** speed/feed, **T** chip thinning, **F** force/power/
