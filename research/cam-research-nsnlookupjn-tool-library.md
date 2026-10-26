@@ -228,9 +228,6 @@ entry instead of each typing their own copy.
 - **Load and unload are scan events:** scanning a tag into a rack slot assigns the tool to that
   machine and pocket in the library; scanning it out releases it.
 
-> **[TODO Jason: personal experience]** Optional: whether your holders have the DIN 69873 bore,
-> the tag's size and how it attaches to the tool, and the barcode type (1D, QR, DataMatrix).
-
 ### Indexable tools: inserts and grades
 
 *Jason's requirement: "Tool library and tool tags system should handle indexable insert grades so
@@ -507,9 +504,6 @@ shared with the community. Proposed (opinion):
   confirm this split with its own export-control and contract terms (e.g. ITAR/EAR,
   DFARS clauses); this file does not give legal advice (opinion).
 
-> **[TODO Jason: personal experience]** Optional: rough numbers for the drill example (diameter,
-> material, speed and feed used, cycles achieved by each drill).
-
 ## Programs
 
 | Program | Library storage | Sharing | Vendor catalogues | Cutting data | Tool ID |
@@ -523,8 +517,6 @@ shared with the community. Proposed (opinion):
 | LinuxCNC | `tool.tbl` text file | — | — | — | — |
 | SolidCraft (open PR #4158) | Library in the data folder, 8 tool kinds, `manufacture.tool.*` and `manufacture.library.*` commands ([PR #4158](https://github.com/tangency-labs/solidcraft/pull/4158), open) | Not described | No | Not described | No |
 | SolidCraft (RFC #1153) | Machine-wide `tools.json` beside the recovery folder, overridable by `SOLIDCRAFT_TOOLS` ([#1153](https://github.com/tangency-labs/solidcraft/issues/1153)) | Not described | No | Not described | No |
-
-> **[TODO Jason: personal experience]** What you like and dislike in the tool libraries you've used.
 
 ## Complaints and requests
 
@@ -723,9 +715,6 @@ fixture plates) in the companion file
 [cam-research-nsnlookupjn-workholding.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-workholding/research/cam-research-nsnlookupjn-workholding.md);
 vise clamping-torque curves could sit in the shared catalogue next to holders (opinion).
 
-> **[TODO Jason: personal experience]** Your own step-by-step workflow from new job to first cut,
-> and which step costs the most time.
-
 ## Glossary
 
 | Term | Other names | Definition | Note |
@@ -782,8 +771,6 @@ vise clamping-torque curves could sit in the shared catalogue next to holders (o
     maker API); see the machine library file.
 11. Which material naming to use for scopes (ISO 513 groups, UNS/EN alloy numbers, or a shared
     material list), so tool, machine and workholding libraries agree.
-
-> **[TODO Jason: personal experience]** Anything you know that answers the above.
 
 ## Sources
 
