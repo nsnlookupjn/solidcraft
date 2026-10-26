@@ -391,8 +391,17 @@ be good for a range of materials, but rarely all materials."*
 - The shop-data layer above (tool number, pocket, measured offsets) is what a post processor or
   a future "send tool table" export would write.
 
-> **[TODO Jason: personal experience]** On your Haas machines: how offsets get into the control
-> (typed, presetter, probe), and whether you would want SolidCraft to export a Haas offset table.
+**Author's experience (personal experience):** offsets get into the control in one of two ways
+today. Either the tool is set to a known length on an offline tool setter and the values are typed
+into the machine by hand, or the machine's own tool setter measures length (and optionally
+diameter) with its built-in macros. Both need a rough tool length first, taken with a tape
+measure, to save setting time.
+
+**What this suggests (opinion):** the library already knows the assembly's nominal length
+(catalogue `OAL`/`LF` plus holder gauge length plus stick-out), so it can replace the tape
+measure: the tool tag or tool table gives the machine macro a rough length to start probing
+from, and the measured result is written back to the assembly. Typing presetter values is the
+step a scanned tag plus a tool-table export removes.
 
 ## Accuracy
 
