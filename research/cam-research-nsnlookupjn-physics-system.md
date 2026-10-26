@@ -323,9 +323,12 @@ What that means in practice (opinion on the method):
   the fix the solver found (lower feed on these moves, cut toward the fixed jaw, re-order these
   operations, raise vise torque to X N·m).
 - **A gate before posting.** Posting G-code requires a simulation with no open *Stop* items.
-  An expert can accept a *Stop* item deliberately, with a reason, and the acceptance is recorded
-  with the program and printed on the setup sheet or part traveller (inspection file). The
-  slider changes where *Warn* starts; it never removes a *Stop* on a hard limit.
+  **Any** *Stop* item, including one on a hard limit, can be overridden (Jason's decision), but
+  only item by item, after a **disclaimer** that names the limit, the step and the margin by
+  which it is exceeded, and with a **recorded approval**: who, when, which limit, by how much
+  and the reason. The record is stored in the design with the program and printed on the setup
+  sheet and part traveller (inspection file). The slider changes where *Warn* starts; it never
+  removes a *Stop* by itself.
 - **Soft findings are fixed automatically where possible.** *Warn* items the feed optimiser can
   solve (slow these moves, split this cut) are fixed and listed; only what needs a person's
   choice is left open. The setup sheet carries the assumptions the simulation used (friction,
@@ -440,8 +443,9 @@ designed around this system from the start:
    that set it and whether its inputs are measured, catalogue or assumed.
 6. **Physics in the simulation, as a gate.** The toolpath simulation uses the same setup, stock
    and limits engine, checks every move of the final program (including hand edits and linking
-   moves), and posting G-code requires no open *Stop* findings unless an expert accepts them
-   with a recorded reason.
+   moves), and posting G-code requires no open *Stop* findings. Any finding, hard limits
+   included, can be overridden item by item after a disclaimer, with the approval recorded in
+   the design and on the setup sheet.
 
 None of this requires the physics itself to be finished first; it asks that the first CAM code
 leave room for it in the right places.
@@ -477,9 +481,7 @@ leave room for it in the right places.
    distortion after unclamping) inside this system or a later topic?
 6. Where should real-time adaptive control live: in the control's own option, in an edge device
    (the inspection file's Pi), or not in SolidCraft at all?
-7. Should an expert be allowed to accept a *Stop* finding on a hard limit at all, or only on
-   limits that carry a safety factor?
-8. Does lathe and mill-turn work fit the same setup (chuck as hold, turret as tool holder), or
+7. Does lathe and mill-turn work fit the same setup (chuck as hold, turret as tool holder), or
    does it need its own model?
 
 ## Sources
