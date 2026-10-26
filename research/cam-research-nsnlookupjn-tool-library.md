@@ -496,7 +496,16 @@ shared with the community. Proposed (opinion):
   class, cutting values, outcome, cycles) can be pooled in the shared catalogue, so the community
   sees "this Haas jobber drill ran N cycles at vendor data in 6061 across M shops". Pooling needs
   outlier rejection, a minimum number of shops before a value is shown, and the vendor's
-  right of reply (opinion). Export-controlled or customer-confidential jobs never share.
+  right of reply (opinion).
+- **What may be shared, including from defence work:** in the author's experience, tool data
+  from defence jobs can be shared, because only the **part, design, test and inspection data**
+  is restricted (personal experience). So the shared record carries only tool part number,
+  material grade, machine class, holder and stick-out, cutting values and outcome (cycles,
+  events), and **never** part geometry, drawings, toolpaths or G-code, job or customer names,
+  inspection results or test data. The record is built from a fixed whitelist of fields, not by
+  removing fields from a job, and the shop can review it before it leaves. Each shop should
+  confirm this split with its own export-control and contract terms (e.g. ITAR/EAR,
+  DFARS clauses); this file does not give legal advice (opinion).
 
 > **[TODO Jason: personal experience]** Optional: rough numbers for the drill example (diameter,
 > material, speed and feed used, cycles achieved by each drill).
