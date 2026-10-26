@@ -347,15 +347,19 @@ be good for a range of materials, but rarely all materials."*
   for one alloy so chips and coolant don't mix (opinion; reasons vary by shop and are
   (unverified) as general practice).
 - **Proposal (opinion):**
-  - A library (tool or machine) carries a **material scope**: a list of entries, each either an
-    ISO 513 group (P, M, K, N, S, H; see "Indexable tools" above), a material family
-    (e.g. "wrought aluminium"), or a specific material and temper (e.g. "6061-T6"). A scope
-    can mix levels: "6061-T6, 7075-T6" or "N group only". No scope means "any".
+  - A library (tool or machine) carries a **`material_scope`**: a list of entries, each either an
+    ISO 513 group or subgroup (P, M, K, N, S, H; e.g. N1 wrought aluminium, (unverified)
+    subgroup numbering; see "Indexable tools" above) or a specific grade and temper
+    (e.g. 6061-T6, linked to SolidCraft's physical material card). A scope can mix levels:
+    "6061-T6, 7075-T6" or "N only". An empty scope means all materials.
+  - The scope has a **mode**: `locked` (only these; anything else is refused with the reason) or
+    `preferred` (others allowed with a warning).
   - Each tool can also carry its **own** suitable materials (from the vendor's ISO 513 icons, the
     insert grade's group, or the shop's choice); the library's scope is a filter on top.
-  - **When a job's stock material is set**, SolidCraft only offers tools and machines whose scope
-    includes it. Using an out-of-scope tool or machine needs an explicit override, which is
-    flagged on the setup sheet.
+  - **When a job's stock material is set**, the effective scope is
+    machine scope ∩ tool library scope ∩ workholding scope. SolidCraft only offers tools and
+    machines inside it; an empty intersection is reported as "no machine/tool set approved for
+    this material". Overriding a `preferred` scope is flagged on the setup sheet.
   - **Scope also picks the physics:** the cutting-data sets used for a library are only those
     for its materials, so an aluminium-only library never falls back to steel coefficients.
   - **Locking works like the machine lock:** only named editors can widen a locked scope, and
@@ -493,7 +497,8 @@ Assembly        id, cutter -> CatalogueItem, holder -> CatalogueItem, stickout_m
 MachineGroup    id, machines [machine_id], interface (e.g. CAT40), limits
                 { max_length, max_diameter, max_mass, max_rpm }
 Library         id, scope (user|shop|machine|machine_group),
-                materials [ iso513_group | material_family | material_spec ] (empty = any),
+                material_scope { mode (locked|preferred),
+                  entries [ iso513_group | material_card_ref ] } (empty = all),
                 locked, editors, change_log
 MachineTool     machine_id, T, pocket, fixed (bool), assembly -> Assembly, offsets,
                 life_used (per insert edge for indexable tools)
