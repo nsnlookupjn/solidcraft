@@ -419,6 +419,34 @@ so the user learns why a cut is slow.
 compared with predicted power would show whether the shop can move the slider, and could refine
 `kc1.1` for that material over time.
 
+### Manual feeds and speeds: sanity check before posting (Jason's idea)
+
+*"If manual feeds and speeds are entered by the operator, do a sanity check through physics so
+that you don't run a tool at too high an RPM or feed too fast into the work. There is a sane
+limit to everything and it should be caught before posting code."*
+
+Opinion: the same checks that pick feeds automatically also **check** feeds a person typed. They
+run on every operation when it is edited and again, block by block, on the final program just
+before the post processor writes it, so no number reaches the machine unchecked. Results come in
+two levels:
+
+| Level | Meaning | Examples |
+|---|---|---|
+| **Error: blocks posting** | Physically unsafe or impossible; fix the value (or the tool data, if that is what is wrong) | RPM above the lowest of tool `RPMX`, holder balance speed and machine maximum; feed above the machine's maximum; plunging straight down with a tool that is not centre-cutting (Haas product pages list "center cutting" per tool); torque or power above the spindle curve at that RPM; force above the tool's or the workholding's limit |
+| **Warning: post allowed after acknowledgement** | Outside the sane range, but not certain to fail | `vc` outside the vendor or generic range; chip load per tooth (after chip thinning) above the vendor maximum, or below the minimum chip thickness (rubbing); plunge or ramp feed above the vendor's plunge rate; deflection larger than the finishing tolerance; recut risk (coolant section) |
+
+Each finding names the operation, the program block, the limit and the value that would pass
+("Block N1240: 9000 rpm exceeds the holder's G2.5 rating of 8000 rpm; 8000 rpm or less passes").
+
+Warnings are where the slider applies: at Conservative a warning needs an explicit override, at
+Aggressive it is shown but does not stop the post. Errors are hard limits and ignore the slider.
+An override is logged with the operator's name and reason, so a later broken tool can be traced
+back (opinion).
+
+Two common mistakes the check should catch specifically (opinion): **units**, a feed entered in
+in/min where mm/min was meant (or the reverse) is off by a factor of 25.4, which the chip load
+check exposes at once; and **feed per tooth vs feed per revolution**, off by the flute count.
+
 ### Tools with unknown physics (Jason's question)
 
 *"What if a tool is unknown for its physics? Can we have standard physics for like a 1/2" HSS end
