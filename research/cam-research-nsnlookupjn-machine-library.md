@@ -602,24 +602,24 @@ miss by a third or more.
 
 ## Open questions
 
-0. Should a material lock also follow from the coolant and chip setup (e.g. "coolant: aluminium
+1. Should a material lock also follow from the coolant and chip setup (e.g. "coolant: aluminium
    only"), or always be set by hand?
 
-1. Will builders contribute catalogue entries, or should the community transcribe public specs?
+2. Will builders contribute catalogue entries, or should the community transcribe public specs?
    How are conflicting sources (builder vs dealer vs measurement) shown?
-2. What are safe default stiffness and mode values per machine class (small VMC, 40-taper VMC,
+3. What are safe default stiffness and mode values per machine class (small VMC, 40-taper VMC,
    50-taper, trunnion 5-axis, router) when nothing is measured, and who reviews them?
-3. Can 3D machine models be shared at all? Which builders allow redistribution? Should the
+4. Can 3D machine models be shared at all? Which builders allow redistribution? Should the
    library ship simplified community models (envelope boxes per moving part) by default?
-4. Which kinematic description should SolidCraft use: STEP AP242 kinematics, ISO 14649-201, or
+5. Which kinematic description should SolidCraft use: STEP AP242 kinematics, ISO 14649-201, or
    its own, with import from the others?
-5. What cold derating is reasonable when the builder gives none, and should SolidCraft's post
+6. What cold derating is reasonable when the builder gives none, and should SolidCraft's post
    insert the builder's warm-up routine automatically when the machine has been idle?
-6. How should the duty rating be chosen automatically: from the predicted load over a 10-minute
+7. How should the duty rating be chosen automatically: from the predicted load over a 10-minute
    window, or always S1 unless the user opts in?
-7. Is an optional stiffness/FRF map over the work envelope worth its measurement effort for
+8. Is an optional stiffness/FRF map over the work envelope worth its measurement effort for
    typical VMCs?
-8. Can MTConnect load data refine the shop instance automatically, and how is a bad reading
+9. Can MTConnect load data refine the shop instance automatically, and how is a bad reading
    (e.g. a dull tool) kept from corrupting the library?
 
 ## Sources
