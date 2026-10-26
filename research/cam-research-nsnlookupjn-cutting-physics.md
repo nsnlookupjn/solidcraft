@@ -195,7 +195,7 @@ formulas above; inputs are illustrative, not a recommendation):
 Each result is checked against a limit: `Pc` and `Mc` against the spindle's **power and torque
 curves at that speed**, read from the machine library
 ([cam-research-nsnlookupjn-machine-library.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md)),
-never against a single rated value. Below the spindle's base speed the available power falls
+never against a single rated value, and in the active gear range where the spindle has one; any speed change (for chatter or the slider) is re-checked against the curve. Below the spindle's base speed the available power falls
 with RPM, so a cut that passes on rated power can stall at low speed (opinion, general spindle
 behaviour; curve shapes are in the machine library). `Mc` is also checked against the tool's
 and the holder's rated torque (`TQ` in ISO 13399), and force against the tool's breakage
