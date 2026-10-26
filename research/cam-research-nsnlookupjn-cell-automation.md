@@ -227,9 +227,49 @@ COMPLETE" reads the same whatever the wiring.
 | Source | Measures | Typical accuracy | Where the number goes |
 |---|---|---|---|
 | **Off-machine presetter** (Zoller, Speroni, Haimer, Kelch…) | length, diameter, radius, run-out, edge condition, under magnification, before the tool reaches the machine | microns (vendor claims; unverified per model) | label/RFID, post-processor or DNC file, network to the control (Zoller: RFID, post-processor through DNC, higher-level systems, or a DataMatrix label read at the control, [SIAMS news](https://www.siams.ch/news-en/Data-Transfer-Securely-to-the-Machine-at-Top-Speed/6475)) |
-| **Contact tool setter in the machine** (Haas WIPS tool setter, Renishaw OTS/TS27R class) | length, broken tool; diameter on some cycles | single microns (unverified per model) | written to the offset by the control's macro (Haas WIPS: sets tool length offsets, broken-tool detection, [Haas UK](https://www.haas.co.uk/wips/); WIPS hardware is Renishaw's, [Renishaw](https://www.renishaw.com/en/39930.aspx)) |
+| **Contact tool setter in the machine** (Renishaw OTS, RTS, TS27R, TS34, LTS; APC arm on lathes; Haas WIPS tool setter) | length and diameter (3D touch-trigger setters); length only (LTS); turning, grooving, threading and boring tools (APC); broken tool on all | 1.00 µm 2σ (OTS, RTS, TS27R, TS34); 0.75 µm (LTS); 1.50 µm (APC) ([Renishaw contact tool setters](https://www.renishaw.com/ots)) | written to the offset by the control's macro (Renishaw macros, below; Haas WIPS sets tool length offsets and detects broken tools, [Haas UK](https://www.haas.co.uk/wips/); WIPS hardware is Renishaw's, [Renishaw](https://www.renishaw.com/en/39930.aspx)) |
 | **Non-contact laser setter** (e.g. Renishaw NC4) | length, diameter, radius of ball and radius tools, broken or chipped edges, swarf on the tool, spindle thermal growth; run-out with an advanced package | NC4: 1.0 µm 2σ repeatability; NC4+ Blue F100 "down to ±0.1 µm 2σ" ([Renishaw](https://www.renishaw.com/en/nc4-non-contact-tool-setter--6099)) | the setter's interface sends a relay signal to the CNC; Renishaw's macros compute and write offsets (same page) |
 | **Manual** (touch-off, height gauge) | length | tens of microns (opinion) | typed in: the error the rest of this section removes |
+
+**Renishaw as the reference (Jason's pointer).** Jason names Renishaw as the gold standard for
+on-machine probing and tool setting; the [in-process inspection file's "Reference products for
+on-machine probing"](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md#reference-products-for-on-machine-probing)
+section covers Renishaw's whole stack (Inspection Plus macros, GoProbe, the Set and Inspect GUI,
+Reporter, 5-axis checks) and is not repeated here. What matters for tool setting:
+
+- **Transmission and interface (fact).** OTS is infrared optical, RTS is radio (2.4 GHz
+  frequency hopping), TS27R, TS34, LTS and APC are hardwired; every contact setter needs a
+  separately sold interface to the control ([Renishaw](https://www.renishaw.com/ots)). The NC4
+  laser's NCi-6 interface gives the control a solid-state relay signal
+  ([Renishaw NC4](https://www.renishaw.com/en/nc4-non-contact-tool-setter--6099)). Either way
+  the measurement happens **inside the control**: the probe only triggers, the control latches
+  the axis position, the macro computes. That is why the Pi can record results but cannot
+  measure tools itself (same reason as in the inspection file).
+- **What the software covers (fact).** Renishaw's tool-setting software sets length and/or
+  diameter for single and multi-point tools on machining centres and static and powered tools on
+  turning centres, by manual or programmed positioning; contact setters reseat to within 1 µm
+  after triggering and support broken-tool detection; non-contact adds radial and linear
+  profile checks and cutting-edge condition monitoring
+  ([Renishaw tool-setting software](https://www.renishaw.com/en/tool-setting-software--6251)).
+  The Set and Inspect GUI also covers contact and non-contact tool setting (inspection file).
+- **What a macro call looks like (fact, from a 2002 Renishaw manual for Haas VF controls,
+  H-2000-6223-00-A, hosted by Haas; newer packages may number things differently,
+  (unverified)).** `O9851` manual length setting and length calibration against a reference
+  arbor; `O9852` diameter setting and stylus XY calibration; `O9853` automatic setting:
+  `G65 P9853 B1 T5` sets the length of tool 5 (`B2` diameter, `B3` both); with `H0.05` it is a
+  broken-tool check at ±0.05 mm, which either raises alarm 1099 BROKEN TOOL and stops, or, with
+  `M` naming a flag register, writes 1 (broken) or 0 (good) there and lets the program decide;
+  tool offsets are not changed by the broken-tool check
+  ([Renishaw/Haas manual PDF](https://www.haascnc.com/content/dam/haascnc/en/service/manual/probe/english---renishaw-contact-tool-setting---programming-manual---2002.pdf)).
+
+**Fit with the Pi and with CAM (opinion).** CAM should emit **calls to the shop's existing
+cycle library** (Renishaw, WIPS, the control maker's own), never its own probing arithmetic, the
+same position the inspection file takes for part probing. Concretely: a `B1` length setting the
+first time each tool is used, and an `H…` broken-tool check after the risky tools (small drills,
+taps, long-reach end mills), using the **flag form** so the program can send the part to the
+reject station instead of stopping the whole lights-out cell, and print the flag (DPRNT) for the
+Pi to record. The tolerance `H` comes from CAM (for example, a fraction of the finishing stock
+for that tool), so it is explained like every other number.
 
 **How offsets are written in G-code (fact for Haas mills).** `G10 L10 G90 P5 R250.` sets tool 5's
 length geometry, `L11` (or `L1`) its length wear, `L12` diameter geometry, `L13` diameter wear
@@ -570,6 +610,11 @@ ToolSetEvent
 - Haas UK, WIPS: <https://www.haas.co.uk/wips/>; Renishaw, Haas WIPS:
   <https://www.renishaw.com/en/39930.aspx>
 - Renishaw, NC4 non-contact tool setter: <https://www.renishaw.com/en/nc4-non-contact-tool-setter--6099>
+- Renishaw, contact tool setters (OTS, RTS, TS27R, TS34, LTS, APC): <https://www.renishaw.com/ots>
+- Renishaw, tool-setting software: <https://www.renishaw.com/en/tool-setting-software--6251>
+- Renishaw, "Contact tool setting for machining centres for Haas VF series controls",
+  programming manual H-2000-6223-00-A, February 2002 (hosted by Haas):
+  <https://www.haascnc.com/content/dam/haascnc/en/service/manual/probe/english---renishaw-contact-tool-setting---programming-manual---2002.pdf>
 - Universal Robots+, VersaBuilt Robot2CNC Haas:
   <https://www.universal-robots.com/plus/products/versabuilt-robotics/robot2cnc-haas-legacy/>
 - Universal Robots marketplace, SRCI:
