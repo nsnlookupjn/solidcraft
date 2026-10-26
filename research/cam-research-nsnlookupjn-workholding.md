@@ -512,6 +512,19 @@ these in real time and feed them back. For workholding this gives three things:
   the control allows it, ask for a feed hold;
 - **part and fixture modes:** vibration spectra show where the hold or a thin wall rings,
   which checks the frequency estimates above.
+**Tied to in-process inspection, so the process can go harder without losing accuracy
+(Jason's point).** The [in-process inspection](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md)
+topic measures the part on the machine (probing, gauging). Linking those measurements to the
+recorded loads shows, cut by cut, what a given load did to size, flatness and surface finish:
+for example, that a wall finished at 1.2× the predicted force still measured in tolerance, or
+that a higher clamp torque cost 0.01 mm of flatness. Over time that evidence lets the
+confidence slider, and the clamp torque window, move toward aggressive **for that shop, machine,
+hold and material** while the measured accuracy and finish stay in tolerance, and pulls them
+back automatically when a measurement drifts. Roughing can go harder where inspection shows the
+finishing passes still recover the size; finishing stays within the deflection and finish
+budget the measurements confirm. (Opinion: tuning should only ever use measured evidence from
+the same setup type, and the hard floors still apply.)
+
 **Aligned with the G-code and the timeline (Jason's point).** Every recorded sample is stamped
 so it can be placed on the program: the time, the G-code line or block number being executed,
 and the machine position. The simulation's per-step predictions are indexed the same way, so a
