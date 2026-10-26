@@ -111,6 +111,13 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
     the next run where both have margin, and backs off where either does not. Inspection is the
     guard that lets the shop **go harder without losing accuracy or finish**. See
     [Self-tuning CAM operations](#self-tuning-cam-operations).
+11. **Close the loop back to the design (Jason's vision).** Existing CAD/CAM inspection tools
+    (Fusion's is the closest public example) can probe and record, but results mostly stop at a
+    report. The goal here is a complete, well-designed inspection system whose results and machine
+    data flow **back into the design during manufacturing**. It would suggest tolerance, feature
+    and process changes that improve performance, time, cost and quality, and route each change
+    through a controlled revision and release. See
+    [From inspection back to the design](#from-inspection-back-to-the-design).
 
 ## Fundamentals
 
@@ -571,7 +578,7 @@ Public descriptions only; no program was run for this file.
 | Area | What exists (public descriptions) |
 |---|---|
 | Probe macro packages | Renishaw Inspection / Inspection Plus, Haas WIPS (VPS templates), Blum, Marposs, Heidenhain touch-probe cycles on TNC controls (unverified for Blum/Marposs/Heidenhain details). Run on the control; correct offsets; print results. |
-| CAM with probing | Several commercial CAM programs output probing moves and cycle calls from the CAM setup (e.g. an Autodesk blog on using Fusion with a Renishaw spindle probe). Not used or inspected here. |
+| CAM with probing | Several commercial CAM programs output probing moves and cycle calls from the CAM setup (e.g. an Autodesk blog on using Fusion with a Renishaw spindle probe). Fusion's help pages describe Probe WCS, Probe Geometry, Inspect Surface, part alignment and manual inspection; see [From inspection back to the design](#from-inspection-back-to-the-design). Not run for this file. |
 | PC-based on-machine inspection | Probe makers sell PC software that plans and reports probing on the machine from the CAD model (unverified details). |
 | CMM software | Reads PMI or QIF, runs DMIS, writes QIF/PDF reports. |
 | FAI/ballooning software | Balloons a drawing or model and produces AS9102 forms (multiple vendors). |
@@ -941,6 +948,104 @@ events: program start, each tool change and each reported block number.
 (unverified; prices move). Mount position and cable routing away from coolant matter more than
 sensor grade for chatter detection.
 
+### From inspection back to the design
+
+**Jason's vision:** the inspection features in Fusion (automatic probing, manual measuring and
+gauging) are a wonderful idea, but they were never fully developed. They rely on fully manual
+entry or on a machine connector that was always clunky. SolidCraft should have a beautiful,
+comprehensive inspection system that **drives back into the design during manufacturing**, so
+the design gets iteratively better in performance, time, cost and quality.
+
+#### What Fusion offers today (public help pages only; Fusion was not run for this file)
+
+- **Probe WCS:** probing cycles locate the stock and update the setup's work offset.
+- **Probe Geometry** (Manufacturing Extension): probing cycles or a probe path check holes,
+  bosses, walls, channels and corners in process.
+- **Inspect Surface** (Manufacturing Extension): a probe path over free-form surfaces, with an
+  in- or out-of-tolerance result per point.
+- **Part alignment / live part alignment** (Manufacturing Extension): computes the part's real
+  position from probing to compensate for imprecise fixturing of castings and forgings.
+- **Manual inspection:** an inspection plan in Fusion where measurements from calipers,
+  micrometers and height gauges are entered by hand.
+- **Getting results back:** either import a results file the machine writes, or use a live
+  connection through a separate Machine Connector application installed for that machine.
+  Results can be saved as a report.
+
+**Gaps (Jason's experience as a user, and what the public sources show):**
+
+- **Connection.** Results come back by file import or a per-machine connector app. Public forum
+  thread titles show the friction, for example "Live Inspection Fusion 360 and my Machine wont
+  connect", "Surface Inspection DEPRINT Error on Haas NGC", "Fanuc Inspection Connector",
+  "INSPECTION RESULTS PROBLEM", and a Tormach forum asking whether machine connect is supported
+  at all. Thread titles only; the Autodesk forum pages could not be fetched for details.
+- **Paywall split.** Most probing inspection needs the paid Manufacturing Extension, while manual
+  inspection does not, so many shops have half of the loop (fact, per the help page).
+- **Results stop at a report.** The public pages describe recording and reporting. They do not
+  describe feeding results into the next part's offsets, a per-serial record across setups, SPC,
+  or changes back to the design (gap as far as the public documentation shows; Fusion may do more
+  than its overview pages say).
+- **Tolerances.** The inspection checks against tolerances set on the operation, not semantic
+  PMI that the design owns (unverified; based on the help pages' description of the strategies).
+
+#### UX goals: what "beautiful and comprehensive" means (opinion)
+
+1. **One inspection plan generated from the model.** Every characteristic gets a balloon number,
+   limits and a method (probe, gauge, CMM) automatically. The user reviews and edits; nothing is
+   typed twice.
+2. **No connector setup.** Results arrive through whichever path the machine already has (DPRNT,
+   network, file share, operator entry on the edge box). Adding a machine is choosing its control
+   family from a list.
+3. **Results on the model.** Each feature is coloured by its result (centred, drifting, out),
+   with the trend across serials one click away. A surface inspection shows a deviation map, not
+   a table.
+4. **Manual gauging as fast as probing.** The screen shows the next characteristic to check with
+   its limits and a picture of the feature. A gauge button press or a go/no-go tap records it, and
+   the traveller updates.
+5. **Every setup, every machine, one record.** Scan the traveller and the right plan for this
+   operation appears.
+6. **Explanations, not just numbers.** "Bore 7 drifting +4 µm per 10 parts, matching T12 wear;
+   offset corrected 3 times" beats a red cell.
+7. **Reports as a by-product** at the chosen [report level](#the-per-part-record-and-report), with
+   no manual ballooning.
+8. **Works with no extension, subscription or cloud.** SolidCraft is open source; the record
+   format is open.
+
+#### The design-feedback loop (opinion)
+
+Inspection results and machine data (aligned to segments, as above) answer four questions per
+feature. Each answer can become a **suggestion** on the design or the process:
+
+| Evidence | Suggests | Improves |
+|---|---|---|
+| A feature is always centred with a small spread (high Cpk) | keep the tolerance (it may be functional) and use the margin: faster settings (self-tuning), fewer checks (lower report level or sampling), or a cheaper process | time, cost |
+| A feature drifts or scatters near a limit (low Cpk) | tighten the process (finish pass, tool, hold), or **propose a wider tolerance** if the function allows it (checked against the fit or stack-up that set it) | quality, cost |
+| A feature is always out of tolerance until compensated | change the **nominal** in CAM (or the design if the feature is a fit) to the measured bias, or change the feature (deeper relief, larger corner radius, thicker wall) | quality, time |
+| A thin wall chatters or deflects (vibration, probed thickness) | thicker wall, rib, different hold, different order of operations | quality, time |
+| A feature takes most of the cycle time (machine data per segment) | larger internal radius (bigger tool), shallower pocket, a standard hole size or thread, a draft | time, cost |
+| Measured loads far below limits on all segments | more aggressive defaults for this material and machine (shop instance) | time |
+| Rejects cluster on one feature across machines | design review: is the tolerance achievable for the process (general-tolerance profile)? | cost, quality |
+| Performance tests (from the user or FEA) show margin | reduce material or relax a tolerance; or, without margin, add it back | performance, cost |
+
+Rules for the loop (opinion):
+
+- **Suggestions, never silent edits.** The design changes only by a person accepting a proposal.
+- **Every accepted change is a new design revision** with the evidence attached (the
+  characteristics, serials, machine data and charts that justified it). It goes through the
+  revision and release workflow in the
+  [compliance research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-ymp2ma/research/compliance-research-nsnlookupjn-itar-quality.md) (section "2. Revision and release workflow"), so travellers and
+  inspection records always point at one exact released revision. A change that affects fit,
+  form or function triggers a partial (delta) FAI on the changed characteristics only. That file
+  owns the workflow, signatures and nonconformance/corrective action (section "8"); this file
+  supplies the evidence.
+- **Process-only changes** (feeds, offsets, tool choice, report level) stay outside the design
+  revision but are still versioned with the CAM program.
+- **Cost and time are tracked per feature.** Machine time per segment, inspection time per
+  characteristic, scrap and rework per feature give a cost per feature. A proposal can then show
+  "this change saves 2 min 40 s and USD 6 per part" next to "Cpk 0.9 → 1.6".
+- **The loop runs during production, not after.** The suggestions appear while the lot is still
+  running, so the next lot (or the next revision) benefits at once. This is what makes the design
+  "iteratively better" rather than reviewed once a year.
+
 ### Self-tuning CAM operations
 
 **Jason's idea:** call it *self-tuning CAM operations*: the live machine data from the edge box,
@@ -1123,6 +1228,11 @@ Connectivity and the edge device:
 - Xometry Pro, standard tolerances (ISO 2768, ISO 286, GD&T): https://xometry.pro/en/?p=16868
 - Xometry community, standard threads chart: https://community.xometry.com/kb/articles/724
 - Additive process physics (same author): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-j72y6h/research/3d-printing-research-nsnlookupjn-process-physics.md
+- Autodesk Fusion help, Inspection for manufacturing: https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-PROBING-OVERVIEW.htm
+- Autodesk Fusion help, Workflow: inspecting a surface using probing: https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-HOW-TO-INSPECT-SURFACE-WORKFLOW.htm
+- Autodesk forum thread titles (pages not fetched): https://forums.autodesk.com/t5/fusion-manufacture-forum/live-inspection-fusion-360-and-my-machine-wont-connect/m-p/12330730 ; https://forums.autodesk.com/t5/fusion-support-forum/surface-inspection-deprint-error-on-haas-ngc/td-p/9575587 ; https://forums.autodesk.com/t5/fusion-manufacture-forum/fanuc-inspection-connector/m-p/12806864 ; https://forums.autodesk.com/t5/fusion-support-forum/inspection-results-problem/m-p/9786577
+- Tormach forum, Fusion machine connect support question: https://forums.tormach.com/t/fusion-360-machine-connect-supported-on-tormach/872
+- Compliance research (same author; revision/release, FAI, NCR/CAPA): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-ymp2ma/research/compliance-research-nsnlookupjn-itar-quality.md
 - Revolution Pi products: https://revolutionpi.com/en/products
 - Raspberry Pi Integrator Programme and Powered by Raspberry Pi: https://www.raspberrypi.com/for-industry/integrator-programme/
 - Zebra CUPS driver configuration: https://support.zebra.com/cpws/docs/cups/cups_driver1_4_configure.pdf
