@@ -85,6 +85,15 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    The Pi box becomes an in-scope CUI asset: hardened image, wired-only, pull-only sync to the
    shop's own server, encrypted storage, the same hash-chained log. Cloud tool/workholding/machine
    libraries become **pull-only** mirrors; nothing about what the shop uses goes out.
+7. **A per-design ITAR switch.** Online manufacturers that take ITAR work (Xometry, Jiga,
+   RapidMade) all do the same few things: the customer flags the job, controlled files go to a
+   separate US-only store (Xometry and Jiga say AWS GovCloud), only vetted US persons and
+   ITAR-registered US suppliers see them, and partners are bound by contract not to release them.
+   SolidCraft can do the same at the source: one **Export controlled (ITAR)** switch per design
+   that, once on, **sticks**. It follows the design into copies, assemblies and every export, it
+   blocks the paths that would release it, and it can only be turned off by a logged, reasoned
+   decision. On the desktop the switch is a guardrail plus evidence. In a future collaboration
+   cloud the server enforces it, the way the marketplaces do.
 
 ## Fundamentals
 
@@ -173,6 +182,8 @@ How existing tools handle this (from their public pages; no product was run):
 | Desktop CAD with licence servers | Most traditional CAD/CAM | Run air-gapped with an offline or on-premises licence server; update checks and telemetry are switched off by IT; PDM vaults are hosted on-premises or in GovCloud (general knowledge; unverified per product). |
 | Secure file sharing for CUI/ITAR | PreVeil, Virtru, Kiteworks, Tresorit | Market **end-to-end encryption** with FIPS-validated modules to use the ITAR 120.54 carve-out (marketing; they are the authors of several of the guides cited). |
 | Collaboration clouds | Microsoft GCC High, AWS GovCloud, Azure Government | US-person-only administration, US-only data residency, FedRAMP High, IL4/5. GCC High is the Microsoft 365 tier usually needed for CUI-Specified (Knox Systems summary). |
+| Online manufacturing marketplaces | Xometry, Jiga | Customer flags ITAR/EAR/DFARS at quote or by enabling the account; controlled files stored in **AWS GovCloud**; access limited to US persons and ITAR-registered US partners; contract flow-down to partners. Details in "What users need", section 13. |
+| ITAR-registered shops | RapidMade (Portland, Oregon) | ITAR registration and "secure U.S.-based operations and strict controls for handling export-controlled technical data"; no public detail on how files are submitted or stored. |
 | Open source CAD | FreeCAD, others | Run offline by nature; no published security profile found. (FreeCAD is GPL; only its public website was considered, no code.) |
 
 **Gap (opinion):** no CAD program found publishes an **egress inventory**, a **machine-readable
@@ -467,6 +478,130 @@ From the [NSN library research](https://github.com/nsnlookupjn/solidcraft/blob/c
   entries stay local or go to the mirror; the self-tuning feedback loops in the cutting-physics
   and inspection research run **locally**.
 
+### 13. A per-design ITAR switch that locks in restrictions
+
+Jason's idea: a switch on each design that, once set, **locks in** ITAR restrictions, so the
+restrictions don't depend on everyone remembering them. It matters most if SolidCraft ever has a
+collaboration cloud, because a cloud can share a design with a click.
+
+#### How three manufacturers handle ITAR designs (public pages, October 2026)
+
+**Xometry** (online manufacturing marketplace; the customer uploads CAD and the job is routed to
+independent partner shops):
+
+- **Flagging:** buyers mark ITAR, DFARS or EAR projects with **Add Certifications** in the
+  instant-quote site. The site also asks about this at the start of the quote and again at
+  checkout (Xometry help article 666). Their drawing guidance asks for explicit export wording on
+  drawings, because unclear drawings delay restricted jobs (help article 853, preview only).
+- **Storage:** "ITAR-controlled data is stored on AWS GovCloud". All customer data is "encrypted
+  in transit and at rest". Access "is strictly controlled and logged". Employees use MFA, and
+  customers can turn MFA on (Xometry data-protection page).
+- **Company status:** ITAR registered (registration letter on the legal page, expiring
+  30 June 2027). CMMC Level 2 certified by a C3PAO, with a public announcement in March 2025 and
+  a certificate expiring 13 Feb 2028. Also on the JCP (DD 2345) list. AS9100D.
+- **Routing:** when an order needs a certification, Xometry says it routes the work "only to
+  verified shops with that active certification" (certifications page). Partners apply with
+  their certifications, and ITAR registration opens more job types (supplier page). Whether ITAR
+  jobs are hidden from non-registered or foreign partners is not stated publicly (unverified).
+- **Partner contract** (Partner Terms §2.4): data may be "accessible only by persons authorized
+  under the U.S. Trade Laws", possibly limited to "U.S. citizens, lawful U.S. permanent
+  residents". Partners must not release it to foreign nationals without written authorization,
+  must keep procedures to prevent release, must report suspected violations, and must flow these
+  terms down to anyone they use. Finishing may be subcontracted only on orders not subject to
+  trade laws (§2.1). Files must be returned or destroyed within 18 months of the order (§5.3).
+  The terms say nothing about CUI, DFARS 7012 or NIST 800-171.
+
+**Jiga** (a similar marketplace, included for contrast):
+
+- **ITAR is set per account, not per part.** An account must be enabled by Jiga support first.
+  Uploading an export-controlled file to an account that isn't enabled shows a warning.
+- On an enabled account, only **ITAR-registered, US-based** suppliers are shown. Jiga says it
+  checks that they don't use foreign nationals or unauthorized subcontractors.
+- Files are kept in **AWS GovCloud**. Only the US persons the customer designates can open them,
+  with two-factor authentication. **Email is not an approved channel** for ITAR files.
+
+**RapidMade** (an ITAR-registered contract manufacturer in Tualatin, near Portland, Oregon:
+3D printing (MJF, SLA, FDM, metal), thermoforming, CNC and engineering):
+
+- Says it is "an ITAR-registered manufacturing partner" with "secure U.S.-based operations and
+  strict controls for handling export-controlled technical data". All work is done at its own
+  facility. ISO 9001:2015.
+- Publishes **no detail** on how controlled files are submitted, stored or deleted, and nothing
+  on CMMC or NIST 800-171 (rapidmade.com home and ITAR pages). That is typical of single-site
+  shops: their control is "it never leaves our building and our people are US persons".
+  SolidCraft's markings and audit log would help exactly this kind of shop produce evidence.
+
+**What they have in common (opinion):** (1) a person declares the job controlled, because the
+software can't classify it; (2) once declared, the files move into a **separate, US-only store**;
+(3) **who** can see the files is limited by verified attributes (US person, ITAR-registered
+company); (4) **contracts flow down** to every party that touches the data; (5) access is
+**logged**; (6) there's a **retention** limit. None of them describes what happens to markings
+inside the CAD file itself. Their control starts at upload. SolidCraft can start it at the first
+sketch.
+
+#### The switch on the desktop
+
+- **One control:** Design Properties ▸ **Export controlled (ITAR)**, or the command
+  `export_control.set {regime: "ITAR", usml_category?, note?}`. It sets the design's marking
+  (section 3) to `export: {regime: "ITAR"}` plus the organisation's chosen CUI category and
+  banner text. EAR works the same way with an ECCN. SolidCraft never decides whether something is
+  ITAR. The person, or their export compliance officer, decides. SolidCraft only records the
+  decision and enforces it.
+- **Suggested, never automatic:** SolidCraft offers to turn the switch on when it sees a clue:
+  an imported STEP/3MF/PDF whose metadata or notes contain ITAR or "22 CFR" wording, an inserted
+  component that is already ITAR, an NSN part whose DEMIL code is not "A", or a library pack entry
+  marked ITAR. The answer is logged.
+- **Sticky ("locked in"):**
+  - **Turning it off** is a separate command, `export_control.clear {reason}`. It is never a side
+    effect of anything else. When the policy names an export compliance role, clearing needs a
+    second person's signed approval (a small approval file signed with their key or smart card,
+    imported on the desktop). Otherwise it needs a typed reason. Either way it is in the audit log.
+  - **Inheritance:** Save As, copy and paste of geometry, linked-design paste
+    (`docs/linked-design-paste.md`), configurations, derived parts, and inserting the design as a
+    component into another design all carry the flag. The receiving design is raised to ITAR
+    (high-water mark) after a one-time prompt.
+  - **Every export says it:** an export-control warning statement on drawings and PDFs, a
+    `.marking.json` side-car or 3MF/STEP metadata with the flag, banners on screenshots and
+    renders, and optionally an `-ITAR` file-name suffix.
+- **What it blocks or guards** while on:
+  - agent chat, except endpoints the policy marks `itar` (a local model, or Bedrock in GovCloud,
+    which Anthropic's FAQ lists as the route for ITAR data);
+  - crash-report drafts, contributions to public libraries (NSN, tool, workholding), and any
+    cloud Open/Save to storage not marked `itar` in policy;
+  - "send to manufacturer" or slicer hand-off (#2595) integrations, unless the destination is
+    marked ITAR-capable. If SolidCraft ever links to a service such as Xometry or Jiga, it should
+    pass the flag so the service's own ITAR setting is turned on (Xometry's Add Certifications,
+    a Jiga ITAR-enabled account), rather than relying on the user to tick it again.
+- **Optional end-to-end encryption:** with ITAR on, Save can write an encrypted container whose
+  keys are held only by the named US persons. That fits the 22 CFR 120.54(a)(5) carve-out
+  (section 6), so a laptop crossing a border, or a backup in a commercial cloud, holds only
+  ciphertext.
+- **Honest limits:** a desktop app can't stop a determined user who edits the JSON or takes a
+  photo of the screen. On the desktop the switch is a **guardrail and evidence**: it prevents
+  accidents and shows an assessor what happened. Hard enforcement needs a server.
+
+#### The switch in a future collaboration cloud
+
+`docs/web-runtime.md` already plans cloud Open/Save through craft-cloud and CollabCraft. If that
+becomes a place where people share designs, the ITAR flag becomes **server-enforced**, following
+what Xometry and Jiga do:
+
+| Rule | How (opinion) | Precedent |
+|---|---|---|
+| Flag lives on the server | The server stores the flag and the marking. The client's claim is never trusted. Changing it is an API call with role checks and an audit record. | Xometry logs access; Jiga sets ITAR per account |
+| Separate US-only partition | ITAR designs, their thumbnails, previews, versions, comments and search index live only in a GovCloud or Azure Government partition with US-person administration. A workspace must be **ITAR-enabled** before it can hold them. Uploading a flagged design to a workspace that isn't enabled is **refused**, not just warned, because SolidCraft knows the flag. | Xometry and Jiga use GovCloud; Jiga enables per account |
+| Who can open it | Only members whose identity provider asserts **US person** (and, for companies, a current ITAR registration on file), named on the design or workspace, with MFA. Every share checks those attributes at the moment it happens, not only when the invitation was sent. | Xometry Partner Terms §2.4; Jiga "designated US persons" + 2FA |
+| No public paths | No public links, no publishing to a community gallery, no "fork to my account" outside the partition, no email notifications that contain thumbnails or geometry. | Jiga: email isn't an approved channel |
+| Sharing with suppliers | Sharing to another organisation requires them to accept flow-down terms (no release to foreign persons, report violations, return or destroy), recorded with the share. | Xometry Partner Terms §2.1, §2.4, §5.3 |
+| Retention | Each share has an expiry date and a "return or destroy" step when the job ends. The owner sees which copies are still out. | Xometry: 18 months after the order |
+| Support access | Only US-person staff, with access logged and visible to the customer. | GovCloud administration is US-only |
+| Turning it off | Only an org's **export compliance** role can clear the flag, with a reason, and every past share is listed so it can be reviewed. | (no public precedent found) |
+| Access from abroad | A warning and policy option when an ITAR design is opened from outside the US. Whether that is lawful depends on who the person is and on the encryption carve-out, which is the organisation's call. | 22 CFR 120.54 |
+
+**Why at the source matters (opinion):** marketplaces protect a design from the moment it's
+uploaded. A design-side flag protects it from the first sketch, and it hands the flag to the
+marketplace at upload instead of relying on someone remembering to tick a box at checkout.
+
 ### Proposed commands (sketch)
 
 | Command | Input | Output |
@@ -476,6 +611,8 @@ From the [NSN library research](https://github.com/nsnlookupjn/solidcraft/blob/c
 | `marking.inspect` | `{target?}` | marking and where it came from |
 | `audit.list` | `{since?, kind?, limit?}` | events |
 | `audit.verify` | `{path?}` | `{ok, lines, first_bad_line?}` |
+| `export_control.set` | `{regime: "ITAR" \| "EAR", usml_category?, eccn?, note?}` | effective marking; designs raised by inheritance |
+| `export_control.clear` | `{reason, approval?}` | cleared marking, or refusal naming the missing approval |
 | `library.import_pack` | `{path}` | `{signer, verified, entries, warnings}` |
 | `security.report` | `{format?: "json" \| "pdf"}` | the report above |
 
@@ -490,6 +627,7 @@ All dialog-free, all with schemas, all audited when the profile is on.
 5. **Audit log** in the command dispatcher.
 6. **FIPS build** as a separate release flavour.
 7. Signed **library packs** (shared with the library research topics).
+8. The **ITAR switch** on top of markings (4): set, inherit, clear-with-reason, export statements.
 
 ## Glossary
 
@@ -537,6 +675,14 @@ All dialog-free, all with schemas, all audited when the profile is on.
    stored and shown" that the project should promise? (Probably not.)
 9. **Rule dates:** re-check CMMC phase 2 (10 Nov 2026) and any newer DFARS class deviation before
    quoting.
+10. **ITAR switch scope:** should clearing the switch ever be allowed on a desktop without an
+    approval file, or only with a typed reason? Should EAR (dual-use) use the same switch with an
+    ECCN, or a separate one?
+11. **Marketplace hand-off:** do Xometry, Jiga or others offer an API field for "export
+    controlled" that a design tool could set at upload? (Not found in public docs.)
+12. **What exactly marketplaces hide:** whether ITAR jobs are hidden from non-registered or
+    foreign partners in Xometry's partner job board is not stated publicly; RapidMade publishes
+    no file-handling detail. Asking them directly would fill the gap.
 
 ## Sources
 
@@ -566,6 +712,21 @@ Accessed 2026-10-26 unless noted.
 - AWS, *GovCloud DoD SRG*: <https://aws.amazon.com/govcloud-us/dodsrg>
 - AWS, *Amazon Bedrock models get FedRAMP High and DoD IL-4/5 approval in AWS GovCloud (US)* (23 May 2025):
   <https://aws.amazon.com/about-aws/whats-new/2025/05/amazon-bedrock-models-fedramp-high-dod-il-4-5-govcloud/>
+- Xometry, *ITAR, DFARS, and export restrictions* (help article 666):
+  <https://community.xometry.com/kb/articles/666-itar-dfars-and-export-restrictions>
+- Xometry, *Drawing discrepancies in ITAR, EAR and CUI* (help article 853, preview only):
+  <https://community.xometry.com/kb/articles/853-drawing-discrepancies-in-itar-ear-and-cui>
+- Xometry, *Data protection*: <https://www.xometry.com/capabilities/data-protection/>
+- Xometry, *Partner Terms and Conditions* (§1.2, §2.1, §2.4, §5.3):
+  <https://www.xometry.com/partner-terms-and-conditions/>
+- Xometry, *Legal* (ITAR registration letter, CMMC certificate): <https://www.xometry.com/legal/>
+- Xometry, *Certifications*: <https://www.xometry.com/certifications/>
+- Xometry, *Aerospace & defense supplier*: <https://www.xometry.com/aerospace-defense-supplier/>
+- Xometry, *Xometry is CMMC Level 2 certified* (11 Mar 2025): <https://www.xometry.com/resources/blog/xometry-is-cmmc-certified/>
+- Jiga, *ITAR and compliance*:
+  <https://help.jiga.io/trust-and-compliance/8dT4ZL2u22PQXTya1r8RGD/itar-and-compliance/8aKkcfjdUEaFD5QDj7yCLc>
+- RapidMade, home page and *ITAR certification*: <https://rapidmade.com>,
+  <https://rapidmade.com/itar-certification/>
 - Anthropic, *Public sector FAQs*: <https://support.claude.com/en/articles/13756069-public-sector-faqs>
 - Greenberg Traurig, *Software bill of materials guidance for government contractors* (Oct 2025):
   <https://www.gtlaw.com/en/insights/2025/10/software-bill-of-materials-guidance-for-government-contractors>
