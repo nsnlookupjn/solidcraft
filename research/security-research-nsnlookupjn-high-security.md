@@ -41,10 +41,26 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 - **Marking:** "(unverified)" marks a claim not confirmed against a source. **Fact**,
   **opinion** and **marketing** are labelled where they mix. Dates are as of 2026-10-26.
 
-> **[TODO Jason: personal experience]** Where you have seen CAD/CAM used in controlled
-> environments (CUI enclaves, ITAR shops, air-gapped labs, GovCloud), what got in the way (licence
-> servers that need the internet, update checks, cloud-only tools, USB bans), and what an
-> assessor or security officer asked for. Label this as personal experience.
+**Author's experience (personal experience, not a cited source):**
+
+- **Shop floor since 1987:** a machine shop apprenticeship from 1987 to 1991, starting on manual
+  machines, then writing G-code at the control on early CNC machines (Milacron and similar, with
+  no way to save a program).
+- **CAD/CAM over about 35 years:** most major packages. In automotive work: Unisurf, Siemens,
+  Sketchpad and NX, with programs stored on punch cards, then tape, then floppy disks; later
+  CATIA, AutoCAD and Pro/Engineer. Currently fluent in Fusion, Mastercam, SOLIDWORKS and NX.
+- **Engineering and software:** BTEC HND in Electrical and Mechanical Engineering, MEng, PhD in
+  Materials Science, certified welder. Programming since childhood (machine code, BASIC, C++,
+  C#, assembler, web and database technologies). Owns engineering and software companies.
+- **Current work:** engineering and manufacturing spare parts for defence and aerospace,
+  including flight-safety components.
+- **What can be shared on defence jobs:** in the author's practice, tool data (cutting results
+  per tool part number) can be shared; part, design, test and inspection data cannot. Section 12
+  builds on this.
+
+**This research is not complete.** It is a starting point: the author will keep researching
+and adding to it, and others are encouraged to do the same, correct it and contribute their own
+findings and experience of controlled environments.
 
 ## Summary
 
