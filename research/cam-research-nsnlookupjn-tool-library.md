@@ -450,8 +450,29 @@ step a scanned tag plus a tool-table export removes.
   spindle power against the vendor's own calculator for a published example (unverified that a
   vendor publishes worked examples with all inputs); compare measured offsets against nominal.
 
-> **[TODO Jason: personal experience]** Cases where vendor feeds/speeds or presets were wrong
-> for your machine, and by how much.
+**Author's anecdote (personal experience): "a jobber drill is not just a jobber drill."** A
+generic jobber drill bought online usually cuts well for a few cycles. A jobber drill from Haas
+Tooling cuts faster, at vendor cutting data that "almost seems too fast to be true but it works",
+and lasts hundreds of very short cycles. No figures were recorded for this file.
+
+**What it means for accuracy (opinion):**
+
+- **Nominal geometry doesn't predict performance.** Two tools with the same `DC`, `OAL`, point
+  angle and substrate class can differ by an order of magnitude in life and usable speed because
+  of things a library rarely records: carbide or HSS grade quality, grinding accuracy, edge prep,
+  coating, runout. A generic class (tier 2 in the cutting physics file) must therefore be
+  **conservative**, and it can't stand in for a known vendor tool.
+- **Vendor data is sometimes right even when it looks aggressive.** This is the counterweight to
+  complaint 11: aggressive vendor data isn't always marketing, and is sometimes the true capability
+  of a good tool. The way to tell is evidence: vendor-measured physics data (see "Vendors as
+  physics-data contributors") and the shop's own results.
+- **So identity matters:** the library should track the exact part number (and batch, where the
+  tag records it), and shop-proven results should attach to that part number. "Proven in this
+  shop" then moves a tool from the generic or vendor tier to the top tier, so the next job uses
+  the fast data with confidence.
+
+> **[TODO Jason: personal experience]** Optional: rough numbers for the drill example (diameter,
+> material, speed and feed used, cycles achieved by each drill).
 
 ## Programs
 
