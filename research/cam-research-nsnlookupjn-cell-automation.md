@@ -34,7 +34,9 @@ machines and physical sensors, with five functions:
    an attached printer.
 
 The operator uses a keyboard and mouse for input, configuration and reports. It is meant for
-reliable, low-latency, continuous operation, bridging machines, CAM and people.
+reliable, low-latency, continuous operation, bridging machines, CAM and people. The device
+definition itself (hardware, interfaces, kit) is kept in the [in-process inspection](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md)
+file; this summary is only here so the cell sections below read on their own.
 
 **How this file reads those functions for a robot cell (opinion).** Functions 1, 3, 4 and 5 fit
 the supervision layer as they stand: the cell adds handshake events, tool-tag scans, tool-setter
