@@ -21,10 +21,22 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 - **Marking:** "(unverified)" marks a claim not confirmed against a source. **Facts**, **opinion**
   and **marketing** are labelled where they mix.
 
-> **[TODO Jason: personal experience]** Which CAM programs you have used (for example Fusion,
-> Mastercam, others), on which machines (for example Haas mills), and for how long. How your
-> shop manages tools today: where the tool list lives, who enters tool data, how tools are
-> labelled, and what goes wrong. Label this as personal experience.
+**Author's experience (personal experience, not a cited source):**
+
+- **Shop floor since 1987:** a machine shop apprenticeship from 1987 to 1991, starting on manual
+  machines, then writing G-code at the control on early CNC machines (Milacron and similar, with
+  no way to save a program).
+- **CAD/CAM over about 35 years:** most major packages. In automotive work: Unisurf, Siemens,
+  Sketchpad and NX, with programs stored on punch cards, then tape, then floppy disks; later
+  CATIA, AutoCAD and Pro/Engineer. Currently fluent in Fusion, Mastercam, SOLIDWORKS and NX.
+- **Engineering and software:** BTEC HND in Electrical and Mechanical Engineering, MEng, PhD in
+  Materials Science, certified welder. Programming since childhood (machine code, BASIC, C++,
+  C#, assembler, web and database technologies). Owns engineering and software companies.
+- **Current work:** engineering and manufacturing spare parts for defence and aerospace,
+  including flight-safety components.
+
+> **[TODO Jason: personal experience]** How your shop manages tools today: where the tool list
+> lives, who enters tool data, how tools are labelled, and what goes wrong.
 
 ## Summary
 
