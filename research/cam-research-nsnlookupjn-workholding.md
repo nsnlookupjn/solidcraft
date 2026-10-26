@@ -636,6 +636,13 @@ torque window: `T_max` must be re-checked as the stock thins, and CAM may recomm
 **re-clamping at a lower torque before finishing**, which roughing forces would not allow but
 light finishing passes do.
 
+**Physical properties of the design and the stock.** The separate "Define physical properties
+in design and stock" topic (in progress) covers hardness and other properties per body, surface
+and feature, local hardness of the stock and in-process stock, and unmachined (for example cast)
+stock surfaces. Workholding reads two things from it: local hardness, which changes the cutting
+force the hold must resist, and the surface condition at each contact (cast, sawn, machined),
+which changes grip and the friction coefficient used in the checks.
+
 All five read and write through the same setup: one machine (from the machine library), one or
 more holds (from the workholding library), the stock, and tools (from the tool library). The
 confidence slider applies to the whole chain at once.
