@@ -51,7 +51,21 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
   "(textbook)" marks classical gear geometry that appears in every gear text and is not tied to
   one source. **Opinion** is labelled.
 
-> **[TODO Jason: personal experience]** Which gears, splines and keyways you make or buy (module
+**Author's experience (personal experience, not a cited source):**
+
+- **Shop floor since 1987:** a machine shop apprenticeship from 1987 to 1991, starting on manual
+  machines, then writing G-code at the control on early CNC machines (Milacron and similar, with
+  no way to save a program).
+- **CAD/CAM over about 35 years:** most major packages. In automotive work: Unisurf, Siemens,
+  Sketchpad and NX, with programs stored on punch cards, then tape, then floppy disks; later
+  CATIA, AutoCAD and Pro/Engineer. Currently fluent in Fusion, Mastercam, SOLIDWORKS and NX.
+- **Engineering and software:** BTEC HND in Electrical and Mechanical Engineering, MEng, PhD in
+  Materials Science, certified welder. Programming since childhood (machine code, BASIC, C++,
+  C#, assembler, web and database technologies). Owns engineering and software companies.
+- **Current work:** engineering and manufacturing spare parts for defence and aerospace,
+  including flight-safety components.
+
+> **[TODO Jason: gear and broaching experience]** Which gears, splines and keyways you make or buy (module
 > or DP range, internal or external, materials, batch sizes), on which machines (gear hobber,
 > shaper, 5-axis, lathe with live tooling, broach press, wire EDM), and how they are inspected
 > today (over pins, span micrometer, spline gauges, gear lab). Where it goes wrong: undercut,
