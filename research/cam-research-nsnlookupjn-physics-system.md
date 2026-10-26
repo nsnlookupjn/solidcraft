@@ -382,8 +382,10 @@ real time** from machines whose control publishes them (through MTConnect, OPC U
 control maker's interface; which signals each control publishes belongs in the machine library).
 **Aligned with the G-code and the timeline (Jason's point).** Every sample is stored against
 the program it belongs to: the program and its version, the **block (line) number** and the
-toolpath segment that line came from, the operation, the tool, and a timestamp on the cycle
-timeline. Most controls publish the executing block or line number alongside load data
+toolpath segment that line came from, the operation, the tool, the machine position, and a
+timestamp on the cycle timeline. The simulation's predictions are indexed the same way (line,
+segment, time), and clock drift between the box and the control is corrected from known events
+(program start, tool changes, the reported block number). Most controls publish the executing block or line number alongside load data
 (unverified per control; MTConnect defines a block/line data item). With that, an event (a
 load spike, a vibration peak, a stall) is located on the exact move in the program, shown on the
 simulation's timeline next to the predicted value for that move, and tied to the operation and
