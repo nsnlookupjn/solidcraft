@@ -376,10 +376,33 @@ Summary of what Self-tuning CAM Operations measures against the plan:
 | finished size and form | in-process and final inspection (per-part record) | the whole chain's accuracy |
 | chatter-free depth | sound or vibration, surface finish | tool-tip FRF, machine modes |
 
-**Real-time feedback from SolidCraft Edge (Jason's idea and name).** **SolidCraft Edge** is the
-Raspberry Pi edge device from the in-process inspection file. Jason's name for it reflects its
-role: it sits on the edge of CAM and brings the machine and its automation back into CAM for
-closed-loop process improvement. It could also read **vibration, spindle load, axis loads and torques in
+**Real-time feedback from SolidCraft Edge (Jason's idea and name).** **SolidCraft Edge** is an
+edge computer at the machine, built on a Raspberry Pi 5 and programmed in Rust, that bridges CNC
+machines, CAM and operators (Jason's specification). It sits on the edge of CAM and brings the
+machine and its automation back into CAM for closed-loop process improvement. Its five
+functions, as Jason specifies them:
+
+1. **Data acquisition**: continuously collects machine data (spindle speed, tool position,
+   temperature) and readings from added sensors, over serial, Modbus or Ethernet machine
+   interfaces.
+2. **Machine communication**: sends status requests and commands to the machine for
+   coordinated operation.
+3. **Data transmission to the CAM station**: processes and packages the data and sends it to
+   SolidCraft over REST, MQTT or WebSocket.
+4. **Visual display**: a live dashboard on a monitor at the machine (machine state, alerts,
+   production metrics).
+5. **Report printing**: production logs, maintenance summaries and quality reports on an
+   attached printer.
+
+The operator uses it with a keyboard and mouse; it is built for reliability, low latency and
+safe continuous operation. The device, its interfaces per control and its hardware are defined
+in the in-process inspection file,
+[SolidCraft Edge: a Raspberry Pi at the machine](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md#solidcraft-edge-a-raspberry-pi-at-the-machine).
+For this system, opinion: commands from SolidCraft Edge (function 2) go only through the
+control's own published interface and stay inside the limits the planned model and the control
+allow; the control's own limits and safety functions always win.
+
+For Self-tuning CAM Operations it could also read **vibration, spindle load, axis loads and torques in
 real time** from machines whose control publishes them (through MTConnect, OPC UA or the
 control maker's interface; which signals each control publishes belongs in the machine library).
 **Aligned with the G-code and the timeline (Jason's point).** Every sample is stored against
@@ -497,8 +520,10 @@ leave room for it in the right places.
 - **Capacity envelope:** the allowed force and moment in each direction for a hold (topic 3) or
   a link generally.
 - **Compliance:** inverse of stiffness (µm/N); compliances add in a series load path.
-- **SolidCraft Edge:** Jason's name for the Raspberry Pi edge device at the machine that records
-  inspection results and machine data and feeds them back into CAM.
+- **SolidCraft Edge:** Jason's edge computer at the machine (Raspberry Pi 5, programmed in Rust)
+  that acquires machine and sensor data, communicates with the machine, sends data to the CAM
+  station, shows a live dashboard and prints reports; defined in the
+  [in-process inspection file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md#solidcraft-edge-a-raspberry-pi-at-the-machine).
 - **Self-tuning CAM Operations:** Jason's name for the closed loop in which live machine data,
   aligned with the G-code lines and the cycle timeline, tunes the shop's library entries.
 - **Gate (simulation gate):** the rule that a program cannot be posted while the physics-checked
