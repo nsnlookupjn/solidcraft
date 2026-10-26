@@ -329,6 +329,11 @@ shared catalogue proposed here would sit *above* them: local libraries keep asse
 machine tools, and reference shared catalogue IDs. It should work offline (cached catalogue) and
 not require an account for local use (opinion).
 
+The same catalogue / shop-instance / tag pattern is proposed for workholding (vises, chucks,
+fixture plates) in the companion file
+[cam-research-nsnlookupjn-workholding.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-workholding/research/cam-research-nsnlookupjn-workholding.md);
+vise clamping-torque curves could sit in the shared catalogue next to holders (opinion).
+
 > **[TODO Jason: personal experience]** Your own step-by-step workflow from new job to first cut,
 > and which step costs the most time.
 
