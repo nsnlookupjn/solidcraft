@@ -28,19 +28,21 @@ It builds on a set of files from the same author and does not repeat them:
 
 | Topic | File | What this file takes from it |
 |---|---|---|
-| In-process inspection and the edge box | [cam-research-nsnlookupjn-in-process-inspection.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md) | **the Raspberry Pi box** (hardware, software, retrofit sensor kit), aligning data with G-code blocks and CAM segments, cameras for probing tasks, "corrections stay in the control" |
+| In-process inspection and SolidCraft Edge | [cam-research-nsnlookupjn-in-process-inspection.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md) | **SolidCraft Edge** (the Raspberry Pi box) (hardware, software, retrofit sensor kit), aligning data with G-code blocks and CAM segments, cameras for probing tasks, "corrections stay in the control" |
 | Machine health | [cam-research-nsnlookupjn-machine-health.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-9w3gq9/research/cam-research-nsnlookupjn-machine-health.md) | what the signals *mean*: residual = measured / predicted per segment, tool condition (chipped, broken, worn), trends, work orders |
 | Cell automation | [cam-research-nsnlookupjn-cell-automation.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-g08nas/research/cam-research-nsnlookupjn-cell-automation.md) | three control layers (safety / real-time handshake / supervision), write tiers Record → Advise → Stage → Commit, MTConnect Interfaces as handshake vocabulary |
 | Workholding | [cam-research-nsnlookupjn-workholding.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-workholding/research/cam-research-nsnlookupjn-workholding.md) | slip and lift physics and detection from load signals |
 | Machine library | [cam-research-nsnlookupjn-machine-library.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md) | "Signals the machine publishes": each machine entry lists its signals, units and rates |
-| High-security work | [security-research-nsnlookupjn-high-security.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-2fa4g1/research/security-research-nsnlookupjn-high-security.md) | the Pi box in a controlled shop: wired only, no inbound ports, segmented OT network |
+| High-security work | [security-research-nsnlookupjn-high-security.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-2fa4g1/research/security-research-nsnlookupjn-high-security.md) | SolidCraft Edge in a controlled shop: wired only, no inbound ports, segmented OT network |
 | Aging eyes UI | [ui-research-nsnlookupjn-aging-eyes.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-kc0dit/research/ui-research-nsnlookupjn-aging-eyes.md) | large-target, high-contrast screens for the machine station |
 | ITAR and quality compliance | [compliance-research-nsnlookupjn-itar-quality.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-ymp2ma/research/compliance-research-nsnlookupjn-itar-quality.md) | how an accepted change from the shop floor becomes a new revision |
+
+**Naming:** the Raspberry Pi computer at the machine is called **SolidCraft Edge** (Jason's name: it sits on the edge of CAM and integrates the machine and automation back into CAM for closed-loop process improvement). Older files call it "the Pi box" or "the edge box".
 
 **Ownership (so nothing is said twice):** this file owns **which controls expose which signals
 and commands, at what rate, through which interface**, the **safety model for anything that
 writes to a control** (messages, offsets, feed hold, stop requests), the **MCP proposal**, and
-**SolidCraft at the machine on a mini PC**. The Pi box hardware stays in the inspection file;
+**SolidCraft at the machine on a mini PC**. SolidCraft Edge hardware stays in the inspection file;
 what a load or vibration pattern means for the tool, the machine or the hold stays in the machine
 health and workholding files.
 
@@ -105,7 +107,7 @@ speeds. Control polling (FOCAS, MTConnect, OPC UA, Haas Q commands) gives a valu
 ms: enough to compare each CAM segment's average load with its prediction, set per-tool load
 limits and spot a dull tool or a setup that is fighting the cut, **too slow to save a tool that
 breaks now**. High-rate control traces (SINUMERIK Edge at 500 Hz) see individual events. Add-on
-sensors on the Pi box (spindle current clamp, accelerometer at kHz) see each tooth. So the box
+sensors on SolidCraft Edge (spindle current clamp, accelerometer at kHz) see each tooth. So the box
 **predicts and records**, and the stop that saves the tool must come from **inside the control**:
 for example the control's own tool-load monitor with a limit SolidCraft computes from the
 physics and posts with the program (Haas has a per-tool load limit with an overload action;
@@ -139,7 +141,7 @@ cut is the "utopia" part. See [Cameras that see slip](#cameras-that-see-slip-a-s
 
 ### Three questions every interface answers
 
-For each control, three questions decide what SolidCraft or an edge box can do (opinion; the
+For each control, three questions decide what SolidCraft or SolidCraft Edge can do (opinion; the
 same split as the cell automation file's three layers):
 
 1. **What can I read, and how fast?** State, program and block, positions, feed and speed,
@@ -209,7 +211,7 @@ shops (personal experience; no market-share source was checked).
   load, axis loads, block number) a given machine fills must be checked in its `/probe`
   response (machine library rule).
 - **DPRNT** (print from a macro) to the serial port or the network: how probe results leave the
-  machine for Fusion's live inspection and for the Pi box (inspection file). Autodesk forum
+  machine for Fusion's live inspection and for SolidCraft Edge (inspection file). Autodesk forum
   titles such as "Surface Inspection DEPRINT Error on Haas NGC" show it is also where things
   break.
 - **HaasConnect** (phone notifications of machine state and alarms), **HaasDrop** (send files
@@ -250,7 +252,7 @@ Fusion was not run. This is from Autodesk's help pages and product page.
   lets Fusion change the running program, hold the feed or start a cycle. Jason's experience
   (inspection file) is that the connector setup is clunky; forum titles ("Live Inspection Fusion
   360 and my Machine wont connect", "Fusion 360 (machine connect) supported on tormach?") agree.
-- **What SolidCraft can do better (opinion):** no per-machine connector app (the Pi box or the
+- **What SolidCraft can do better (opinion):** no per-machine connector app (SolidCraft Edge or the
   machine station speaks MDC/DPRNT/MTConnect directly), no Windows-only service, no
   subscription; the same probing-in-the-control split, but with the results tied to the design's
   tolerances and the part record (inspection file), and with load data aligned to the CAM
@@ -380,7 +382,7 @@ the rates where cited; the consequences are opinion):
 - **Tier D must do the stopping.** SolidCraft's job is to give the control good limits: a load
   ceiling per tool and per operation computed from the predicted cutting force with a margin,
   posted with the program (see [Posting limits into the control](#posting-limits-into-the-control)).
-  The Pi box then checks, after the fact, whether the limits were right and suggests better ones
+  SolidCraft Edge then checks, after the fact, whether the limits were right and suggests better ones
   for the next run.
 
 Timestamps and the G-code block matter as much as rate: a value that cannot be placed on the
@@ -391,7 +393,7 @@ interface above.
 ### Writing to the control: the safety model
 
 Everything above can be read safely. Writing is where a mistake breaks tools, parts or people.
-This model applies to the Pi box, the machine station, an agent, and any future maker MCP server
+This model applies to SolidCraft Edge, the machine station, an agent, and any future maker MCP server
 (opinion, strongly held; it extends the cell automation file's write tiers and the inspection
 file's "corrections stay in the control"):
 
@@ -534,7 +536,7 @@ not be read):
   process, closed library), Heidenhain DNC/OPC UA, Okuma THINC (on the control's Windows). Each
   reports what it found (`/probe`, browse) into the machine's shop record in the machine
   library.
-- **Runs in the Pi box or the machine station**, not in the desktop app; the desktop app reads
+- **Runs in SolidCraft Edge or the machine station**, not in the desktop app; the desktop app reads
   the recorded data through the part record and sync (inspection file).
 - **Rust, separate crate or process**, so SolidCraft's own crates keep the no-`unsafe`,
   wasm-buildable rules (AGENTS.md); closed vendor libraries only behind a process boundary.
@@ -629,7 +631,7 @@ it renders with the GPU (wgpu) and has a headless CLI and an MCP server. So:
 | Option | For | Notes (opinion; prices unverified, they move) |
 |---|---|---|
 | **x86 mini PC** (Intel N100/N150 class, 8–16 GB RAM, fanless) | full machine station: view the model and toolpath, live charts, inspection entry | about USD 150–300; mature GPU drivers; fanless and sealed matters near coolant mist |
-| **Raspberry Pi 5** (8 GB) | lighter station, or the Pi box itself with a screen | GPU driver support for wgpu on the Pi's Vulkan driver should be tested before promising it (unverified); fine for a browser view of a station page served by the box |
+| **Raspberry Pi 5** (8 GB) | lighter station, or SolidCraft Edge itself with a screen | GPU driver support for wgpu on the Pi's Vulkan driver should be tested before promising it (unverified); fine for a browser view of a station page served by the box |
 | **The control's own PC** (Okuma, some Siemens and Heidenhain HMIs) | no extra box | SolidCraft for Windows on the HMI; the maker's rules on installing software apply |
 | **Operator's tablet** | browser build or a page from the box | no hardware at the machine at all |
 
@@ -660,7 +662,7 @@ is down (offline-first; sync later).
 3. A **"post the load limits"** option in the CAM post (once CAM exists, #1153 / PR #4158): one
    load ceiling per tool from the physics, printed on the setup sheet even where the control
    cannot read it from the program.
-4. A **read-only machine station page** served by the Pi box and opened in SolidCraft's browser
+4. A **read-only machine station page** served by SolidCraft Edge and opened in SolidCraft's browser
    build.
 5. A **public draft of the machine MCP profile** (tool set and tiers above) for discussion.
 
@@ -671,7 +673,8 @@ is down (offline-first; sync later).
 - **DNC (Heidenhain):** Heidenhain's remote-access interface (option 18), not the older meaning
   "drip-feed numerical control".
 - **DPRNT:** a macro statement that prints text to a port; used to send probe results.
-- **Edge device / edge box:** a small computer at the machine that collects data (the Pi box).
+- **SolidCraft Edge:** Jason's name for the Raspberry Pi computer at the machine (formerly "the Pi box"): it sits on the edge of CAM and brings the machine and automation back into CAM for closed-loop process improvement.
+- **Edge device:** any small computer at the machine that collects data; SolidCraft Edge and SINUMERIK Edge are examples.
 - **Elicitation (MCP):** a server asking the client's user for input during a tool call.
 - **FOCAS:** Fanuc's library for reading and writing CNC data over Ethernet or HSSB.
 - **HSSB:** High-Speed Serial Bus, Fanuc's fibre link to a PC.
@@ -702,7 +705,8 @@ is down (offline-first; sync later).
    Vulkan driver? A quick test would settle the station hardware choice.
 6. **Camera slip check:** what movement can a sealed camera really detect in a coolant-wet
    enclosure? Needs a bench test.
-7. **Who owns the machine station's "report back" data model:** this file, the inspection file
+7. **Name check for "SolidCraft Edge":** Siemens sells SINUMERIK Edge and Industrial Edge, and other vendors use "Edge" too. "SolidCraft Edge" is distinct as a whole, but the maintainers should check it against their trademark plans before it appears in the product.
+8. **Who owns the machine station's "report back" data model:** this file, the inspection file
    (part record) or the compliance file (revisions)? Suggest: record in the inspection file's
    model, revision flow in the compliance file.
 
