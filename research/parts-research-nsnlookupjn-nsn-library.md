@@ -43,10 +43,26 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 > government-sourced baseline that needs no vendor, and lists the questions maintainers should
 > put to any provider, NSN Lookup included.
 
-> **Personal experience (Jason).** Running NSN Lookup has given me a deep understanding of how
-> the militaries in NATO specify, manufacture, test, inspect (QC) and use their parts and
-> equipment.
->
+**Author's experience (personal experience, not a cited source):**
+
+- **Shop floor since 1987:** a machine shop apprenticeship from 1987 to 1991, starting on manual
+  machines, then writing G-code at the control on early CNC machines (Milacron and similar, with
+  no way to save a program).
+- **CAD/CAM over about 35 years:** most major packages. In automotive work: Unisurf, Siemens,
+  Sketchpad and NX, with programs stored on punch cards, then tape, then floppy disks; later
+  CATIA, AutoCAD and Pro/Engineer. Currently fluent in Fusion, Mastercam, SOLIDWORKS and NX.
+- **Engineering and software:** BTEC HND in Electrical and Mechanical Engineering, MEng, PhD in
+  Materials Science, certified welder. Programming since childhood (machine code, BASIC, C++,
+  C#, assembler, web and database technologies). Owns engineering and software companies.
+- **Current work:** engineering and manufacturing spare parts for defence and aerospace,
+  including flight-safety components.
+- **NSNs:** running NSN Lookup has given the author a deep understanding of how the militaries
+  in NATO specify, manufacture, test, inspect (QC) and use their parts and equipment.
+
+**This research is not complete.** It is a starting point: the author will keep researching
+and adding to it, and others are encouraged to do the same, correct it and contribute their own
+findings and experience.
+
 > **[TODO Jason: optional detail]** Concrete examples would help maintainers: where NSNs show up
 > in that work, how users of NSN Lookup find a part's dimensions today, and which parts people
 > most often wish they could drop into a model.
