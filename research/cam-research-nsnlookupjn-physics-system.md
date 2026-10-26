@@ -392,6 +392,11 @@ simulation's timeline next to the predicted value for that move, and tied to the
 setup in the design. Without alignment the data shows *that* something happened but not
 *where*.
 
+Controls publish load and position far too slowly to see chatter, so vibration needs an added
+accelerometer sampled in the kHz range by the edge box itself; the machine library lists, per
+control, which signals it publishes and how finely they can be aligned (per block, per position
+sample, or by time only).
+
 Uses, in order of risk (opinion):
 
 1. **Record and compare** (first): measured vs predicted torque, power and force per segment,
