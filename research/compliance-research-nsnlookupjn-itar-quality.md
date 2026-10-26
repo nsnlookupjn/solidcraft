@@ -98,7 +98,14 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    production and QMS software validated. SolidCraft already has a strong start (83 reference
    tests against analytic and independent-kernel results, `docs/oracle.md`). A `validation
    report` command and version pinning per job would let a shop reuse that work as evidence.
-9. **Answer to Jason's ISO 9001 question:** today an ISO 9001 shop can record part number and
+9. **US military/defence profile** (section 13, from Jason's checklist). Most of the MIL
+   documents shops still see on drawings were cancelled and moved to SAE or ASME
+   (MIL-STD-2175 → AMS-STD-2175, MIL-F-7190 → AMS-F-7190, MIL-A-21180 → AMS-A-21180,
+   MIL-I-8950 → MIL-STD-2154 → AMS-STD-2154, MIL-STD-100 → ASME Y14.100). DFARS 252.225-7014
+   was replaced by 7008/7009. MIL-STD-31000B is the active standard for technical data
+   packages. The profile keeps the number the customer cited, maps it to the current document
+   and turns each one into a required record.
+10. **Answer to Jason's ISO 9001 question:** today an ISO 9001 shop can record part number and
    revision and keep designs in git, but release states, sign-offs, change orders and CAPA links
    do not exist yet. The proposal below adds them without changing any default.
 
@@ -598,6 +605,53 @@ cheap:
 - **Never crash on hostile records:** compliance blocks from other shops or customers are
   untrusted input, bounded and validated like everything else.
 
+### 13. US military and defence profile
+
+Jason supplied the list of US military and federal standards a defence machine shop meets most
+often (his checklist, credited here). Many of the old MIL documents were **cancelled in the
+1990s–2000s and handed to SAE or ASME**, but drawings and purchase orders still cite the
+MIL numbers. So the profile has to know **both numbers** and say which one is current. The
+status below was checked on EverySpec's copies of the DoD notices and on the eCFR/LII text
+(October 2026). Treat it as a starting point and confirm against ASSIST, the DoD's official
+specification database, before relying on it.
+
+| Area | Cited as | Status (checked) | Current document to use | Where it lands in SolidCraft's records |
+|---|---|---|---|---|
+| Technical data package | **MIL-STD-31000** | **Active**, revision B (2018). The older MIL-DTL-31000 detail specification (rev C, 2004) is cancelled and superseded by MIL-STD-31000. | MIL-STD-31000B | A TDP export command: 3D model (STEP AP242 with semantic PMI), drawings, parts list, specs and notes, packed per the contract's TDP option selection, with the content hash and the export-control record (section 2; high-security file for markings and distribution statements). |
+| Drawing practices | **ASME Y14.100** (replaced MIL-STD-100) | MIL-STD-100G **cancelled** (Notice 1, Dec 2001), which points to ASME Y14.100 and related Y14 standards. | ASME Y14.100 (latest edition, check the year) | Title-block and revision-block fields, the revision letter scheme (section 2) and drawing notes come from the design profile; this is the Drawings milestone. |
+| GD&T | **ASME Y14.5** | Active (2018 edition; check for newer). | ASME Y14.5-2018 | Tolerances and datums as data (inspection file), which feed the characteristic list, FAI and the probe plan. |
+| Specialty metals (raw CNC stock) | **DFARS 252.225-7014** | This is the 1997-era *Preference for Domestic Specialty Metals* clause. It was **removed from the DFARS in 2009** and replaced by **252.225-7008** (specialty metals delivered *as such*, which must be melted or produced in the US) and **252.225-7009**, *Restriction on Acquisition of Certain Articles Containing Specialty Metals* (current text dated JAN 2023; items containing specialty metals, which may also come from qualifying countries). Older POs and quality clauses still cite 7014. | DFARS 252.225-7008 / 252.225-7009; keep the clause the customer cited and record which current clause it maps to | Material record on the traveller: spec, heat/lot, **melt country**, mill cert reference, and which 7009 exception applies (qualifying country, COTS, 2% minimal content, and so on). Stock purchase and certs: [stock marketplace file, "Melt origin and DFARS specialty metals"](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-um9nlo/research/cam-research-nsnlookupjn-stock-marketplace.md#melt-origin-and-dfars-specialty-metals), which uses the same cited-clause-to-current-clause mapping. |
+| Workmanship | **MIL-STD-454, Requirement 9** | MIL-STD-454N **cancelled** in 1995, superseded by **MIL-HDBK-454** (now rev B), *General Guidelines for Electronic Equipment*. It is a handbook for **electronic equipment**, so it is guidance, not a requirement, unless the contract makes it one. | MIL-HDBK-454B Guideline 9 when the contract cites it; otherwise the drawing's own notes (edge break, burrs, surface texture per ASME Y14.36) | Workmanship notes as structured drawing notes ("remove all burrs, break sharp edges 0.1–0.4 mm") linked to face sets, so CAM can add deburr or chamfer operations and inspection can check them visually. CAM physics and cutting files cover gouge-free toolpaths. |
+| Cybersecurity of CAM and G-code | **NIST SP 800-171 / CMMC** | Active. CMMC clauses have been in DoD contracts since 10 Nov 2025; third-party Level 2 phase-in starts 10 Nov 2026. | NIST SP 800-171 (Rev 2 is still the DoD reference under a class deviation; check), CMMC | Owned by the [high-security file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-2fa4g1/research/security-research-nsnlookupjn-high-security.md): egress control, markings, audit log, FIPS crypto. This file adds that **G-code, setup sheets and probe programs inherit the design's marking** (section 6). |
+| Castings: classification and inspection | **MIL-STD-2175** | MIL-STD-2175A **cancelled** (Notice 1, Nov 1999), which points to **SAE AMS-STD-2175**, *Castings, Classification and Inspection of*. Note: it covers casting **classes** (by how critical the part is) and **inspection grades** (including radiographic grades), not only X-ray acceptance criteria. | SAE AMS-STD-2175 (rev A) | Casting class and grade per region of the raw part, as data on the stock/raw-part model ([physical properties](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uxzal2/research/design-research-nsnlookupjn-physical-properties.md) file: cast skin, regions, raw part). NDT results and certificate references on the traveller; AS9102 Form 2 lists them. |
+| High-strength aluminium castings | **MIL-A-21180** | MIL-A-21180D **cancelled** (Notice 1, Sep 1999), which points to **SAE AMS-A-21180**, *Aluminum-Alloy Castings, High Strength*. | SAE AMS-A-21180 | Material by specification, alloy, class and temper; separately cast test bars or test coupons cut from the casting recorded with the heat/lot. |
+| Steel forgings | **MIL-F-7190** | MIL-F-7190B **cancelled** (Notice 1, Sep 1999), which points to **SAE AMS-F-7190**. | SAE AMS-F-7190 | Forging spec, heat-treat condition, grain-flow requirement and the raw forging model (machining allowance per face, decarburised layer; physical properties file). |
+| Ultrasonic inspection of forgings | **MIL-I-8950** | **Cancelled in 1983**, superseded by **MIL-STD-2154**. MIL-STD-2154 was in turn withdrawn in 2004 and replaced by **SAE AMS-STD-2154** (first published by SAE in 1998). | SAE AMS-STD-2154 | Ultrasonic class (acceptance level) per region, as a special-process call-out (section 4); the UT report and the NDT operator's certification are referenced on the traveller. |
+| First article inspection | **AS9102** | Active (rev C, 2023). | AS9102C | Section 7 and the inspection file. |
+| Inspection / test report deliverable | **DI-NDTI-80809B** | **Active** (base 2014; Notice 2, 2019: "valid for use in acquisition"). Its title is *Test/Inspection Report*. It is a **data item description**, the format of a deliverable named in a contract's data requirements list (CDRL), not a FAI standard. DoD contracts often call for first article test results in this format (unverified as a general rule). | DI-NDTI-80809B when it is on the CDRL; AS9102 forms when the contract or the prime asks for FAI | The same QIF results render either as AS9102 forms or as a DI-NDTI-80809B report; one master record, two renderings (section 7). |
+| Sampling for acceptance | **MIL-STD-1916** | The 1996 base document is listed as **inactive for new design**; Notices 1 and 2 (2014) are listed as active. ASTM E2910 is the commercial guide that carries the same methods. (Exact status unverified; check ASSIST.) | MIL-STD-1916 when the contract cites it (MIL-STD-105 and its successors are the older, AQL-based alternative) | A per-characteristic **sampling plan** in the inspection plan (verification level, lot size giving sample size, or continuous sampling), so the probe or CMM plan only measures the parts the plan requires. KCs and safety-critical characteristics default to 100 % inspection. |
+
+What the profile does with this (proposal):
+
+- **Specification aliases.** A small, openly licensed data file maps each cancelled MIL number
+  to its successor ("MIL-F-7190 → SAE AMS-F-7190, cancelled 1999"). When a customer drawing or
+  PO cites the old number, SolidCraft shows both and records which one the shop worked to. It
+  never decides that the old one is acceptable; the contract does.
+- **Contract flowdowns become checks.** A defence profile turns each cited document into a
+  required record before release or shipment. For example: 7009 → melt country on every
+  specialty-metal lot; AMS-STD-2175 → casting class and grade on the raw part, plus an NDT
+  certificate on the traveller; DI-NDTI-80809B on the CDRL → the report is rendered and signed.
+- **Raw parts are first-class.** Castings and forgings start from a supplier's raw part with its
+  own spec, class, heat/lot and inspection records. The physical properties file's region model
+  (cast skin, scale, decarburised layer) is where the class/grade zones live. The stock
+  integrity file's checks run on it.
+- **Paid standards are referenced, never copied.** The profile stores document numbers,
+  revisions and the shop's own acceptance values, not text or tables from the standards.
+
+> **[TODO Jason]** Which of these your own customers actually cite, whether you see the old MIL
+> numbers or the SAE numbers on drawings and POs, and how you record specialty-metal melt
+> country today. Label this as personal experience.
+
 ### Data model sketch
 
 ```text
@@ -683,7 +737,11 @@ All have input and output schemas, in line with the repository's command rules.
 - **APQP**: Advanced Product Quality Planning (automotive).
 - **AS9102**: aerospace First Article Inspection requirement; Forms 1–3.
 - **Baseline**: frozen set of exact revisions of all items in a configuration.
+- **ASSIST**: the DoD's official database of military specifications and standards, with
+  their current status.
 - **CAPA**: corrective and preventive action.
+- **CDRL / DID**: contract data requirements list / data item description (for example
+  DI-NDTI-80809B), which defines the format of a contract deliverable.
 - **Configuration management**: identifying, controlling changes to, recording the status of,
   and auditing a product's configuration.
 - **Content hash**: a SHA-256 over a file's canonical content; same hash = same content.
@@ -704,10 +762,14 @@ All have input and output schemas, in line with the repository's command rules.
 - **NADCAP**: accreditation programme for special processes, run by PRI.
 - **NCR**: nonconformance report.
 - **PPAP**: Production Part Approval Process (automotive).
+- **Qualifying country**: a country with a defence procurement agreement with the US whose
+  specialty metals are accepted under DFARS 252.225-7009.
 - **QIF**: Quality Information Framework (ISO 23952), XML for measurement plans and results.
 - **QMSR**: FDA Quality Management System Regulation, 21 CFR 820 incorporating ISO 13485.
 - **Special characteristic**: IATF term for product/process characteristics affecting safety,
   regulatory compliance, fit, function or further processing.
+- **TDP**: technical data package (MIL-STD-31000): models, drawings, specs and lists needed to
+  make and support an item.
 - **Technical data**: ITAR §120.33 information for designing, making, operating or repairing a
   defense article.
 - **USML**: United States Munitions List (ITAR Part 121).
@@ -766,6 +828,23 @@ All have input and output schemas, in line with the repository's command rules.
   sections summarised, unverified wording)
 - FAA Advisory Circular 120-78A, Electronic Signatures, Electronic Recordkeeping, and Electronic
   Manuals (general knowledge; unverified wording)
+- US military standards checklist supplied by Jason (October 2026), statuses checked on:
+  - EverySpec, MIL-STD-31000B: https://everyspec.com/MIL-STD/MIL-STD-10000-and-Up/MIL-STD-31000B_55788 ;
+    MIL-DTL-31000C (cancelled, superseded by MIL-STD-31000): https://everyspec.com/MIL-SPECS/MIL-SPECS-MIL-DTL/MIL_DTL_31000C_135/
+  - EverySpec, MIL-STD-100G Notice 1 (cancelled; refer to ASME Y14.100): https://everyspec.com/MIL-STD/MIL-STD-0100-0299/MIL-STD-100G_NOTICE-1_10909/
+  - EverySpec, MIL-STD-454N Notice 4 (cancelled, superseded by MIL-HDBK-454): https://everyspec.com/MIL-STD/MIL-STD-0300-0499/MIL-STD-454N_NOTICE-4_21844/ ;
+    DLA copy of MIL-HDBK-454B: https://www.dla.mil/portals/104/documents/landandmaritime/v/va/psmc/documents/lm_mil_hdbk_454b_151030.pdf
+  - EverySpec, MIL-STD-2175A Notice 1 (cancelled; refer to SAE AMS-STD-2175): https://everyspec.com/MIL-STD/MIL-STD-2000-2999/MIL-STD-2175A_NOTICE-1_21933/ ;
+    SAE AMS-STD-2175A: https://saemobilus.sae.org/standards/amsstd2175a-castings-classification-inspection
+  - EverySpec, MIL-A-21180D Notice 1 (cancelled; refer to SAE AMS-A-21180): https://everyspec.com/MIL-SPECS/MIL-SPECS-MIL-A/MIL-A-21180D_NOTICE-1_6089/
+  - EverySpec, MIL-F-7190B Notice 1 (cancelled; refer to SAE AMS-F-7190): https://everyspec.com/MIL-SPECS/MIL-SPECS-MIL-F/MIL-F-7190B_NOTICE-1_14733/
+  - EverySpec, MIL-I-8950B Notice 1 (cancelled, superseded by MIL-STD-2154): https://everyspec.com/MIL-SPECS/MIL-SPECS-MIL-I/MIL-I-8950B_NOTICE-1_5166/ ;
+    Nimonik, "What ever happened to MIL-STD-2154?": https://nimonik.com/blog/what-ever-happened-to-mil-std-2154/
+  - EverySpec, DI-NDTI-80809B Notice 2 (Test/Inspection Report, valid for use): https://everyspec.com/DATA-ITEM-DESC-DIDs/DI-NDTI/DI-NDTI-80809B_NOTICE-2_56078/
+  - EverySpec, MIL-STD-1916 Notice 1: https://everyspec.com/MIL-STD/MIL-STD-1800-1999/MIL-STD-1916_NOTICE-1_54113/ ;
+    ASTM E2910-24: https://store.astm.org/e2910-24.html
+  - LII, 48 CFR 252.225-7009 (JAN 2023): https://www.law.cornell.edu/cfr/text/48/252.225-7009 ;
+    Acquisition.gov, DFARS 252.225-7014 (1997 text): https://www.acquisition.gov/node/17358
 - SolidCraft docs: `docs/oracle.md`, `docs/design-container.md`, `docs/book/src/guide/files.md`,
   `skills/solidcraft-checking/SKILL.md`, `ROADMAP.md`.
 - Related research by the same author (linked at the top): high-security, in-process
