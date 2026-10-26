@@ -83,8 +83,10 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 6. **Other topics in secure mode.** The NSN library runs from the offline DLA PUB LOG pack, with
    online lookups off (lookups reveal programs) and contributions of controlled items blocked.
    The Pi box becomes an in-scope CUI asset: hardened image, wired-only, pull-only sync to the
-   shop's own server, encrypted storage, the same hash-chained log. Cloud tool/workholding/machine
-   libraries become **pull-only** mirrors; nothing about what the shop uses goes out.
+   shop's own server, encrypted storage, the same hash-chained log. **Tool data can still be
+   shared** on defense jobs (cutting results per tool part number), because only part, design,
+   test and inspection data is controlled. A field allow-list makes sure nothing derived from the
+   design (geometry, toolpaths, part numbers, job names) rides along in a tool record.
 7. **A per-design ITAR switch.** Online manufacturers that take ITAR work (Xometry, Jiga,
    RapidMade) all do the same few things: the customer flags the job, controlled files go to a
    separate US-only store (Xometry and Jiga say AWS GovCloud), only vetted US persons and
@@ -469,14 +471,60 @@ From the [NSN library research](https://github.com/nsnlookupjn/solidcraft/blob/c
 - **Marking from data:** a contributed model inherits the strictest of the design's marking and
   the item's DEMIL/export screen.
 
-### 12. Cloud tool, workholding and machine libraries in secure mode
+### 12. Tool, workholding and machine libraries in secure mode: what may be shared
 
-- Vendor catalogue data (tool geometry, vise specs, machine envelopes) is public; pulling it is
-  fine. **Pushing** is the risk: which tools, fixtures and machines a shop uses, its cutting
-  data, and its machine-health trends can reveal capability and programs.
-- In the profile: **pull-only** from the organisation's mirror; local edits and the shop's own
-  entries stay local or go to the mirror; the self-tuning feedback loops in the cutting-physics
-  and inspection research run **locally**.
+**The rule (Jason's experience in defense work, labelled as such):** on defense jobs, **tool
+data can be shared**. What a tool did (cutting results per tool part number) isn't controlled.
+Only **part, design, test and inspection data** can't be shared. That matches how the rules are
+written (opinion, not legal advice). ITAR controls *technical data* "required for the design,
+development, production... of defense articles". A vendor's catalogue end mill, and how it
+behaves in 6061 at a given speed and feed, is general machining knowledge, not a description of
+the article. The risk is not the tool data. It's **design-derived data hiding inside a tool
+record**. Some contracts are stricter than the regulations, so the policy can still turn sharing
+off for a program.
+
+So the profile doesn't block tool-library sharing. It **filters** it, field by field, with an
+**allow-list** (only listed fields leave; anything new is blocked until it's reviewed):
+
+| Leaves the shop (allowed) | Never leaves (blocked) |
+|---|---|
+| Tool vendor, catalogue/part number, grade, coating, geometry from the catalogue | Part geometry, stock model, fixture model, sketches, any mesh or B-rep |
+| Holder and stick-out (length), runout measured at setup | Toolpaths, G-code, NC program names, CAM operation names |
+| Workpiece material **by standard designation** (e.g. 6061-T6, Ti-6Al-4V) and hardness | Part number, NSN, drawing number, revision, CAGE of the part, customer, program or contract name |
+| Operation **class** (slotting, adaptive, finishing wall, drilling) and engagement: ae, ap, chip thickness, speed, feed | Feature dimensions that describe the part (pocket depth, wall height, hole positions), tolerance values |
+| Result: tool life (minutes or metres cut), wear mode, failure mode, spindle-load %, chatter yes/no | Inspection results, probe data, test data, serial numbers, part photos or screenshots |
+| Machine **model** and spindle taper | Machine serial, shop location, operator, exact timestamp (coarsened to the month) |
+| Coolant type | Free-text notes (they're where part names leak). They can only be shared as a fixed vocabulary, never as free text. |
+
+How it works (opinion):
+
+- **One export path.** Every shared tool record passes through one command,
+  `tool_data.prepare_share {records}`. It builds the outgoing record from the allow-listed
+  fields only. It never copies the internal record and then deletes fields, so a field added
+  later can't leak by default.
+- **Provenance is cut.** The outgoing record has no link back to the design or job. The local
+  record keeps that link, so the self-tuning loop in the cutting-physics research still works
+  at home.
+- **Preview and log.** The user, or a policy-set reviewer, sees exactly what will leave. The
+  audit log keeps a hash of each record that left, with the job it came from, kept **locally
+  only**, so an assessor can confirm nothing else went.
+- **The ITAR switch doesn't block tool data.** A tool record from an ITAR design is shared
+  through the same filter, plus a check: a value that looks like a part identifier (an NSN
+  pattern, the design's part number, drawing number or file name) anywhere in an allowed field
+  is refused.
+- **Small-population leaks.** Odd combinations can still hint at a program: a rare alloy,
+  a special form tool, a burst of records in one week. Coarsening timestamps to the month, and
+  publishing community aggregates only once a minimum number of shops have contributed
+  (k-anonymity, k of 5 or more), reduces that. A **custom or special tool** (made to the part's
+  shape, such as a form tool ground to a profile) is design-derived. Its profile is not shared;
+  only its class is.
+- **Policy keys:** `libraries.share_tool_data = true | false` (default `true` in the profile,
+  following Jason's experience) and `libraries.share_review = "none" | "user" | "reviewer"`.
+- **Pull is always fine:** vendor catalogues, fixture specs and machine envelopes come in from
+  the organisation's mirror or signed packs.
+- **Workholding and machine-health data** follow the same pattern. Vise model, clamping force
+  and slip results can be shared. Fixture geometry made for the part can't. Machine-health
+  trends are shared by machine model only, never with the machine serial or the job.
 
 ### 13. A per-design ITAR switch that locks in restrictions
 
@@ -566,7 +614,8 @@ sketch.
 - **What it blocks or guards** while on:
   - agent chat, except endpoints the policy marks `itar` (a local model, or Bedrock in GovCloud,
     which Anthropic's FAQ lists as the route for ITAR data);
-  - crash-report drafts, contributions to public libraries (NSN, tool, workholding), and any
+  - crash-report drafts, contributions of the design or anything made from it to public
+    libraries (NSN models, custom tools, fixtures), and any
     cloud Open/Save to storage not marked `itar` in policy;
   - "send to manufacturer" or slicer hand-off (#2595) integrations, unless the destination is
     marked ITAR-capable. If SolidCraft ever links to a service such as Xometry or Jiga, it should
@@ -613,6 +662,7 @@ marketplace at upload instead of relying on someone remembering to tick a box at
 | `audit.verify` | `{path?}` | `{ok, lines, first_bad_line?}` |
 | `export_control.set` | `{regime: "ITAR" \| "EAR", usml_category?, eccn?, note?}` | effective marking; designs raised by inheritance |
 | `export_control.clear` | `{reason, approval?}` | cleared marking, or refusal naming the missing approval |
+| `tool_data.prepare_share` | `{records}` | outgoing records (allow-listed fields only) and refused values with reasons |
 | `library.import_pack` | `{path}` | `{signer, verified, entries, warnings}` |
 | `security.report` | `{format?: "json" \| "pdf"}` | the report above |
 
@@ -628,6 +678,7 @@ All dialog-free, all with schemas, all audited when the profile is on.
 6. **FIPS build** as a separate release flavour.
 7. Signed **library packs** (shared with the library research topics).
 8. The **ITAR switch** on top of markings (4): set, inherit, clear-with-reason, export statements.
+9. The **tool-data share filter** (section 12), so tool sharing works on defense jobs from day one.
 
 ## Glossary
 
