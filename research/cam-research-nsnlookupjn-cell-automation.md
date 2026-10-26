@@ -94,6 +94,20 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
   (notably Haas's online manuals) could not be fetched for this research; claims that depend on
   them are marked.
 
+**Author's experience (personal experience, not a cited source):**
+
+- **Shop floor since 1987:** a machine shop apprenticeship from 1987 to 1991, starting on manual
+  machines, then writing G-code at the control on early CNC machines (Milacron and similar, with
+  no way to save a program).
+- **CAD/CAM over about 35 years:** most major packages. In automotive work: Unisurf, Siemens,
+  Sketchpad and NX, with programs stored on punch cards, then tape, then floppy disks; later
+  CATIA, AutoCAD and Pro/Engineer. Currently fluent in Fusion, Mastercam, SOLIDWORKS and NX.
+- **Engineering and software:** BTEC HND in Electrical and Mechanical Engineering, MEng, PhD in
+  Materials Science, certified welder. Programming since childhood (machine code, BASIC, C++,
+  C#, assembler, web and database technologies). Owns engineering and software companies.
+- **Current work:** engineering and manufacturing spare parts for defence and aerospace,
+  including flight-safety components.
+
 > **Jason's experience (personal, October 2026): how offsets are loaded today.** Either the tool
 > is set to a known length with a tool setter (presetter) and the offsets are **typed into the
 > machine by hand**, or the **machine's own tool setter measures length, and optionally
