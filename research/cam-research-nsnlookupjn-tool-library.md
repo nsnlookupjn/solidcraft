@@ -471,6 +471,33 @@ and lasts hundreds of very short cycles. No figures were recorded for this file.
   shop" then moves a tool from the generic or vendor tier to the top tier, so the next job uses
   the fast data with confidence.
 
+**Closing the loop with SolidCraft Edge (the author's idea):** with the SolidCraft Edge
+feedback system, a jobber drill that **squeaks on entry** or **screams from over-feed** can be
+identified quickly and its data tuned back into the tool library for the next job, and perhaps
+shared with the community. Proposed (opinion):
+
+- **Detect:** Edge records spindle load, axis load and an add-on accelerometer or microphone,
+  time-aligned to the G-code block and CAM segment (device and signals:
+  [in-process inspection file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md);
+  tool condition signatures:
+  [machine health file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-9w3gq9/research/cam-research-nsnlookupjn-machine-health.md)).
+  A squeal on entry or a tonal scream during the feed shows up as a vibration or acoustic peak
+  at a frequency not explained by tooth passing, or as load above prediction (classifying
+  "squeak" vs "scream" from sound is (unverified) as a reliable method; to be tested).
+- **Attribute:** because the tool is identified by its tag ID and part number, the event is
+  stored against **that tool, that material, that machine and holder, and those cutting values**,
+  not just the job.
+- **Tune:** the library proposes a correction for the next job (lower entry feed or a peck or
+  spot step for the squeak, lower `fz` or `vc` for the scream). A person accepts it, and it
+  becomes a **shop-proven** value with the evidence attached (the "Self-tuning CAM Operations"
+  loop in the [CAM physics system file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)).
+  Good runs count too: hundreds of clean cycles at the vendor's fast data confirm it.
+- **Share (opt-in):** anonymised results for a catalogue part number (material group, machine
+  class, cutting values, outcome, cycles) can be pooled in the shared catalogue, so the community
+  sees "this Haas jobber drill ran N cycles at vendor data in 6061 across M shops". Pooling needs
+  outlier rejection, a minimum number of shops before a value is shown, and the vendor's
+  right of reply (opinion). Export-controlled or customer-confidential jobs never share.
+
 > **[TODO Jason: personal experience]** Optional: rough numbers for the drill example (diameter,
 > material, speed and feed used, cycles achieved by each drill).
 
