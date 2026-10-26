@@ -95,7 +95,8 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    AWS GovCloud (US) offers GPU instances (G6 with NVIDIA L4, in US-West since November 2024 and
    US-East since August 2025), and Azure Government has offered GPU virtual machines since 2017,
    so a controlled-data shop can still rent GPUs inside an approved boundary, or run the worker on
-   its own hardware only.
+   its own hardware only. This follows the markings and endpoint trust levels proposed in the
+   [high-security research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-2fa4g1/research/security-research-nsnlookupjn-high-security.md).
 8. **The CPU path is never removed.** Every GPU kernel has a CPU twin (using `rayon` threads,
    already a SolidCraft dependency) that gives the same answer within a stated tolerance; tests
    compare them; a missing GPU, a browser without WebGPU, or a GPU lost in the middle of a job
@@ -327,29 +328,37 @@ add their own limits. A part's geometry, its toolpath and its stock model are al
 about the part, even if no B-rep is sent. So the design treats every job as carrying the design's
 data class.
 
-- **Default: local only.** Remote compute is off until someone turns it on.
-- **Data classes on the design.** A design can be marked (for example `public`,
-  `company-confidential`, `CUI`, `ITAR`). The mark is saved in the design and cannot be lowered
-  by an agent command without the person's confirmation.
-- **Endpoints carry approvals.** Each configured worker or cloud endpoint lists the classes it is
-  approved for (a local-network server might be approved for everything; a GovCloud account for
-  CUI and ITAR if the organisation has decided so; a commodity GPU marketplace for `public`
-  only). An organisation can ship this list as a locked preference.
+These rules reuse the model in the
+[high-security research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-2fa4g1/research/security-research-nsnlookupjn-high-security.md)
+(markings in the design, an administrator's policy file, endpoint trust levels, an audit log)
+rather than inventing a second one. Compute workers are one more kind of endpoint in it.
+
+- **Default: local only.** Remote compute is off until someone turns it on. Under the
+  high-security profile's policy file, a worker's address must also be in the network allow list.
+- **Markings on the design.** The design's effective marking (the strictest of its own and its
+  components', the high-security file's "high-water mark") decides where its jobs may go. A
+  marking is lowered only by its own deliberate, logged command, never by a compute setting.
+- **Endpoints carry trust levels.** Each configured worker or cloud endpoint has a trust level in
+  policy, the same levels the high-security file gives agent endpoints (for example `public`,
+  `cui`, `itar`). A local-network server might be `itar`; a GovCloud account `cui` or `itar` if
+  the organisation has decided so; a commodity GPU marketplace `public` only. An organisation
+  ships this as part of its locked policy.
 - **The engine enforces it.** The scheduler refuses, with an explanation, to send a job to an
-  endpoint not approved for the design's class, whatever asked for it (a person, an agent, a
-  plugin). The refusal is a normal command error, never a crash.
-- **Every send is recorded.** What was sent, to which endpoint, when, its hash, and what came
-  back, in a log the organisation can audit.
+  endpoint below the design's marking, whatever asked for it (a person, an agent, a plugin). The
+  refusal is a normal command error, never a crash.
+- **Every send is recorded.** Endpoint, job hash, size and time (not the content) go into the
+  high-security file's hash-chained audit log, and each worker address is a row in its egress
+  inventory.
 - **In transit and at rest.** Mutual TLS in transit; the worker keeps nothing after the job by
   default; cloud images can use encrypted disks.
 - **What this does not do.** Software settings do not make a cloud account compliant; that
   depends on the organisation's agreements, the region and who administers it. This feature only
   makes sure SolidCraft never sends data somewhere the organisation has not approved.
 
-> Jason is also researching high-security use of SolidCraft as a separate topic; that file will
-> own the wider rules (offline installs, air-gapped networks, data classes across the whole app).
-> This section is only the compute part, and should follow whatever data-class model that topic
-> settles on.
+The high-security file owns the wider rules (the policy file, markings, air-gapped and
+GovCloud-hosted operation, encryption, the audit log). This section is only the compute part. In
+an air-gapped shop, the local GPU network is the only remote compute, and the worker needs no
+internet access at all.
 
 ### How this serves the CAM Physics System
 
@@ -534,7 +543,7 @@ were not separately collected for this topic (TODO).
 | Machine library | Axis limits, torque and power curves, machine geometry | Machine collision checks; per-segment torque and power checks |
 | Tool library | Tool and holder geometry | Tool and holder shapes for collision and stock update |
 | In-process inspection | Measured results that recalibrate models | A record of how each program was computed and certified |
-| High-security topic (in progress) | Data-class model, offline and air-gapped rules | The compute part: endpoint approvals, refusal, send log |
+| [High-security](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-2fa4g1/research/security-research-nsnlookupjn-high-security.md) | Markings, policy file, endpoint trust levels, audit log, air-gapped and GovCloud operation | Compute workers as endpoints: trust levels, refusal, audit entries, egress inventory rows |
 
 ## Glossary
 
@@ -581,8 +590,9 @@ were not separately collected for this topic (TODO).
    schemas), or a binary format for large stock tiles?
 5. Should the worker be part of `solidcraft-cli` (one binary, a `serve-compute` mode) or a
    separate app?
-6. How should the data-class model be shared with the high-security topic, and should data
-   classes be a property of the design, of the project, or both?
+6. Should a compute job ever be allowed to a lower-trust endpoint if it carries only
+   discretised stock and tool envelopes, not the design? (Proposed answer: no, it is still
+   technical data about the part; the high-security file's marking applies unchanged.)
 7. Is local-network discovery acceptable in a CAD app by default, or should workers always be
    added by address?
 8. Should SolidCraft ship a start/stop helper for specific cloud providers at all, or only
@@ -646,3 +656,8 @@ All accessed 2026-10-26.
   (August 2017). [Page](https://devblogs.microsoft.com/azuregov/azure-nc-virtual-machines-availability-gpu-compute/)
 - Spheron, "RunPod vs Lambda Labs 2026" (August 2026, updated October 2026).
   [Page](https://www.spheron.network/blog/runpod-vs-lambda-labs-2026/)
+
+### Related research in this set
+
+- Jason, high-security use of SolidCraft (markings, policy, audit log, GovCloud).
+  [File](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-2fa4g1/research/security-research-nsnlookupjn-high-security.md)
