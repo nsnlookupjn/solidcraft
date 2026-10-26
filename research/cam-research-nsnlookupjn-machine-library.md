@@ -317,6 +317,17 @@ What can be measured depends on the control, so each machine entry lists its sig
   rate; and per shop instance the endpoint and any added sensors (type, position, sample rate).
   The closed loop uses only signals the entry says exist, and labels everything else as
   predicted, not measured.
+- **Aligning data with the G-code (Jason's requirement, "Self-tuning CAM Operations").** A
+  measured spike is only useful if it can be placed on the toolpath: which block, which tool,
+  which position, which planned force. So each signal entry also says whether the control
+  publishes, **with the same timestamp**, the executing program, block or line number and the
+  machine position, and at what rate. MTConnect has EVENT items for the program and the block
+  being executed and SAMPLE items for axis positions, each observation timestamped by the agent
+  (MTConnect model; whether a given machine fills the line-number item is (unverified) per
+  control). Where the control's rate is too slow, the edge box interpolates position between
+  samples using the planned path and the actual feed, and an added sensor's high-rate stream is
+  aligned to the control's slower one by timestamp (opinion). The library records, per control,
+  the best alignment it allows: *per block*, *per position sample*, or *per time only*.
 - **Uses.** Calibrating `kc` and the torque curve from measured spindle power; detecting chatter
   from the vibration spectrum near `f_tp`; checking that axis load stays under thrust; logging the
   measured load per operation into the part traveller (in-process inspection file, unverified link).
@@ -457,7 +468,7 @@ deflection, **C** chatter, **V** feed/cycle time, **G** geometry/collision, **W*
 | Dynamics | dominant modes per direction `(f_n, ζ, k)`; spindle-machine receptances for RCSA (shop instance) | Hz, –, N/µm | C |
 | Warm-up | routine steps `(n, duration)`, idle time before it is needed again, cold derating of `M`, `P`, `n_max`; shop instance: last warm-up time | rpm, s, – | P H |
 | Accuracy | positioning accuracy and repeatability per axis (ISO 230-2 / 10791-4 style), ballbar result, thermal drift | µm | H |
-| Signals | protocols (MTConnect, OPC UA, maker API); per signal: name, unit, meaning, update rate; shop: endpoint, added sensors and sample rate | –, Hz | closed loop |
+| Signals | protocols (MTConnect, OPC UA, maker API); per signal: name, unit, meaning, update rate; block/line number and position published with it (alignment level); shop: endpoint, added sensors and sample rate | –, Hz | closed loop |
 | Control | look-ahead, smoothing/tolerance modes, corner behaviour if known | | V |
 | 3D model | link to model (STEP/STL), part-to-axis mapping, tool attach point, table frame, licence | | G |
 
