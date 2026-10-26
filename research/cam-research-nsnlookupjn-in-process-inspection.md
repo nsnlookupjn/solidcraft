@@ -11,7 +11,7 @@ It touches design-side work as much as CAM: the tolerances have to exist in the 
 anything downstream can check them. Those parts are marked **(design side)** so maintainers can
 route them elsewhere if they prefer.
 
-It pairs with three earlier files from the same author:
+It pairs with earlier files from the same author:
 
 - [Shared cloud tool library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-tool-library/research/cam-research-nsnlookupjn-tool-library.md):
   tool records, where tool wear offsets and probe records would live.
@@ -20,6 +20,12 @@ It pairs with three earlier files from the same author:
 - [Workholding physics](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-workholding/research/cam-research-nsnlookupjn-workholding.md):
   clamp distortion and part springback, which decide whether an in-clamp measurement can be
   trusted once the part is released.
+- [Machine library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md):
+  spindle torque/power curves, axis thrust, stiffness and modes per machine; the shop instance
+  that measured loads and vibration (below) would calibrate.
+- [CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md):
+  how the libraries fit together, and its "closed loop: measuring what was predicted" section,
+  which this file's edge device feeds.
 
 Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of CONTRIBUTING.md).
 
@@ -91,6 +97,14 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    talks to the control. Selling it is a business decision for maintainers and a hardware vendor;
    an open reference design plus "works with SolidCraft" vendors is the lowest-risk path. See
    [The edge device](#the-edge-device-a-raspberry-pi-at-the-machine).
+9. **The same box can watch the cut, not just the part (Jason's addition).** Many controls
+   publish spindle load, axis (servo) loads and sometimes torque; an add-on accelerometer gives
+   vibration. Logged against the toolpath, these are the measurements the physics models predict,
+   so they can **calibrate** the machine, tool and material libraries for that shop. They are
+   for monitoring and learning; corrections still happen in the control. Every sample is aligned
+   with the G-code block, the CAM segment and the timeline, so an event can be found exactly on
+   the program, the toolpath and the part. See
+   [Machine monitoring](#machine-monitoring-loads-torque-and-vibration).
 
 ## Fundamentals
 
@@ -621,6 +635,117 @@ Someone outside the core team (for example Jason) could start at path 2 without 
 except the trademark question: using the "SolidCraft" name on a product needs the maintainers'
 permission (opinion; check the project's trademark position).
 
+### Machine monitoring: loads, torque and vibration
+
+**Jason's idea:** the Raspberry Pi box could also feed back machine vibration, loads and torques
+in real time, because some machines already output them. This closes the loop described in the
+[CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
+file ("The closed loop: measuring what was predicted") and the "MTConnect (shop) → library" row
+of the [machine library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md)
+interface table.
+
+**What the machine can give (fact where cited, otherwise unverified per control):**
+
+| Signal | Typical source | Rate the box can get | Compared with |
+|---|---|---|---|
+| Spindle load (% of rated) | control load meter via FOCAS, MTConnect, OPC UA, Haas data collection | polled, about 100–1,000 ms (the data-collection guide's figures) | predicted cutting power `Pc` against the spindle curve at that speed (machine library) |
+| Axis / servo loads | FOCAS servo load meters; MTConnect `Load` on axes (unverified per adapter) | polled, same | predicted feed forces `Fx`, `Fy`, `Fz` against axis thrust (machine library) |
+| Spindle torque | some controls report it, or derive from load % × rated torque at that speed (opinion) | polled | predicted `Mc` (cutting physics) |
+| Actual feed and speed, override % | all of the above | polled | the planned feed per segment (is the operator overriding it?) |
+| Vibration | **add-on** accelerometer on the spindle housing or table, read by the Pi itself; a few controls and spindles have built-in sensors (unverified) | sampled locally, kHz | tooth-passing frequency `n·z/60` and its harmonics vs chatter frequencies near the machine and tool modes (cutting physics, machine library) |
+| Temperature | add-on sensors, or control thermal compensation values (unverified) | seconds | machine library's thermal growth and warm-up |
+
+Two practical limits (opinion, following from the rates above):
+
+- **Polled control data is slow.** At 100–1,000 ms per sample, spindle and axis loads show the
+  average load of a cut, not each tooth. That is enough to calibrate specific cutting energy
+  (`kc1.1`) and check power and thrust margins, which is what the libraries need.
+- **Vibration needs its own sensor.** Chatter lives at hundreds to thousands of hertz, so it must
+  be sampled at the sensor (a MEMS or IEPE accelerometer and an ADC on the Pi) and reduced on the
+  box to a few numbers per segment (RMS, dominant frequency, whether it is a tooth-passing harmonic
+  or not). Raw waveforms stay local unless asked for.
+
+**What the box does with them (opinion):**
+
+1. **Time-align to the G-code and the timeline** (Jason's requirement; see
+   [Aligning machine data with the G-code](#aligning-machine-data-with-the-g-code-and-the-timeline)).
+   Every sample and event carries a timestamp, the program, the block (line) and the CAM segment,
+   so an exact event can be found on the program, on the toolpath in 3D and in the part record.
+2. **Compare with the prediction.** For each segment: predicted vs measured power, thrust,
+   vibration level. Store the ratio, not just the value.
+3. **Calibrate the shop instance**, never the shared catalogue: update this machine's effective
+   power and thrust margins, this material lot's `kc1.1`, this tool's wear trend, this setup's
+   chatter-free depth. The physics system file states the same rule: feedback updates the shop
+   instance; contributing back to the shared library is the shop's choice, labelled as measured.
+4. **Feed the part record.** A part cut with a chatter event, an overload or a broken-tool alarm
+   gets that event in its traveller next to the dimensional results, so an inspector knows which
+   features to look at.
+5. **Show it.** A per-part and per-toolpath chart (planned vs measured) is the easiest way for a
+   novice to see where the program was too timid or too aggressive, which ties into the
+   conservative-to-aggressive slider in the cutting physics file.
+
+**Staging (matches the CAM physics system file's closed loop):** first **record and compare**
+(this section), then **detect and alarm** (chatter onset, overload, broken tool flagged to the
+operator and the part record), and only later **feed adjustment**, and then only through the
+control maker's own adaptive-control interface, not from the box.
+
+**Corrections stay in the control.** The box monitors and learns; it does not change feeds,
+speeds or offsets while the machine runs. Real-time feed adjustment from load (adaptive control)
+exists as control options and commercial products, runs inside or beside the control with
+deterministic timing, and is safety-relevant. A Linux Pi on a network is not a real-time
+controller. If a shop wants the box to act, the safe forms are (a) a recommendation shown to the
+operator or the CAM programmer for the next run, and (b) an alarm output (a dry contact into a
+control input that the program checks at a safe point, e.g. "stop after this tool"), designed
+and wired by the machine's integrator. Both are opinions, and (b) needs the machine builder's
+approval.
+
+#### Aligning machine data with the G-code and the timeline
+
+**Jason's requirement:** the machine data should be aligned with the G-code and the timeline so
+exact events can be located. A load spike is only useful if you can say "block N4520, T7, second
+finishing pass on the pocket wall, 41.2 s into Op 20, part SN000123".
+
+**Keys every record carries (opinion):** wall-clock time (UTC, with the box's clock synchronised
+by NTP, or PTP where the plant has it), machine, program name and revision, **block or line
+number**, **CAM segment ID**, tool number, active work offset, spindle speed, feed and override,
+part serial and operation.
+
+**Where the program position comes from:**
+
+- **Read from the control.** MTConnect defines data items for the program, the current block and
+  the line number (unverified per adapter which ones are filled); Fanuc FOCAS can read the
+  executing sequence (N) number (unverified exact function); OPC UA machine-tool servers expose the
+  running program per the companion specification (unverified detail). Polled values carry the
+  poll delay (100–1,000 ms), so they locate a segment, not a single tooth.
+- **Written by the post-processor (more reliable, opinion).** CAM numbers its segments and the
+  post writes the segment ID into a macro variable (or emits an N number) at the start of each
+  segment; the box reads that variable, or the program prints a short marker line (DPRNT) at key
+  points such as tool changes, probe cycles and the start of each finishing pass. The same ID
+  exists in CAM's simulation, so measured data lines up with predicted data segment by segment.
+  Markers should be sparse: output statements can interrupt look-ahead on some controls and leave
+  dwell marks (unverified per control; test before using inside a finishing pass).
+- **Recovered from the signals.** Spindle start/stop, tool changes and the start of a cut show as
+  steps in load and vibration. Matching those steps against the CAM's predicted times corrects
+  clock offsets and poll delays (cross-correlation; opinion that this tightens alignment to well
+  under one poll interval for events with a clear edge).
+
+**What alignment gives the user (opinion):**
+
+- **Timeline view**: one time axis with the program's blocks, the predicted load and the measured
+  load and vibration; click an event to jump to the G-code line.
+- **3D view**: the event marked on the toolpath and on the part's face (the same place a probe
+  result is shown), so "chatter here" and "this wall measured 0.03 thin" appear side by side.
+- **Part record**: events (alarms, feed holds, override changes, chatter onset, overload, tool
+  breakage, probe results, offsets changed) become traveller entries with their block, segment
+  and time, next to the dimensional results.
+- **Replay**: re-running the CAM simulation with the measured data overlaid, which is how a
+  programmer learns where a program was too timid or too aggressive.
+
+**Hardware addition (opinion):** an accelerometer kit (a magnetic-mount IEPE accelerometer and a
+24-bit ADC board, or a MEMS sensor for a low-cost version) adds roughly USD 50–400 to the box
+(unverified; prices move). Mount position and cable routing away from coolant matter more than
+sensor grade for chatter detection.
+
 ### Data model sketch
 
 Illustrative only (opinion), one characteristic as it might be stored and exchanged:
@@ -685,12 +810,14 @@ In QIF terms: `kind`/`spec`/limits are a characteristic definition and nominal (
    generic skip-move macros (portable, but every control dialect differs)?
 4. **Where should the per-part record live** in SolidCraft: inside the design, beside it as a
    job file, or only in an external system that reads QIF?
-5. **How to label on-machine results**: block them from "final acceptance" unless a correlation
+5. **Monitoring data ownership**: should measured loads and vibration ever leave the shop, and
+   in what reduced form, if shops want to improve the shared libraries?
+6. **How to label on-machine results**: block them from "final acceptance" unless a correlation
    is recorded, or just label the method?
-6. **The edge device**: does the project want an official hardware path at all, or only an open
+7. **The edge device**: does the project want an official hardware path at all, or only an open
    data format that any device (Pi or otherwise) can implement?
-7. **Trademark**: may third parties use "SolidCraft" in a product name ("for SolidCraft")?
-8. **Jason's TODO**: personal shop experience, and which controls (Haas, Fanuc, others) his shop
+8. **Trademark**: may third parties use "SolidCraft" in a product name ("for SolidCraft")?
+9. **Jason's TODO**: personal shop experience, and which controls (Haas, Fanuc, others) his shop
    would test with first.
 
 ## Sources
@@ -728,6 +855,8 @@ Connectivity and the edge device:
 - Fanuc FOCAS2 library: https://www.fanucamerica.com/products/cnc/cnc-software/machine-tool-builder-software/focas2-library
 - Chatter, Haas NGC connection guide (Setting 143, port 5051): https://support.chatter.dev/docs/integration/haas-ngc
 - MTConnect agent for Haas (GPL-2.0, listed only to note it is out of bounds): https://github.com/TrakHound/MTConnect-Agent-For-Haas
+- Machine library (same author): https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md
+- CAM physics system (same author): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md
 - Revolution Pi products: https://revolutionpi.com/en/products
 - Raspberry Pi Integrator Programme and Powered by Raspberry Pi: https://www.raspberrypi.com/for-industry/integrator-programme/
 - Zebra CUPS driver configuration: https://support.zebra.com/cpws/docs/cups/cups_driver1_4_configure.pdf
