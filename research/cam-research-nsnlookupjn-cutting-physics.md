@@ -460,6 +460,45 @@ for that tool (opinion; the data path is open question 3 and the machine library
 a "generic HSS square end mill" class next to vendor part numbers, which a shop's own tool can
 reference and then override field by field.
 
+### Coolant, air blast and chip clearing fans (Jason's questions)
+
+*"Does coolant type, refraction or temp affect tool physics?"* and *"Use of chip clearing fans."*
+
+**Short answer:** coolant changes tool **life**, edge damage and part **size** much more than it
+changes cutting **force**. So the force, power and deflection checks above barely move, but the
+tool life constants, the choice of cutting data and the risk of chip recutting all depend on how
+the cut is cooled and cleared (opinion, from the sources below).
+
+| Effect | What happens | Source / status |
+|---|---|---|
+| Cutting force | Lubrication lowers friction between chip and rake face, so `kc` drops somewhat; tabulated `kc1.1` values rarely state the coolant condition | Direction general; magnitude unverified |
+| Tool life | Taylor `n`, `C` differ for dry, air, MQL, flood and high-pressure through-tool coolant; vendor ranges often assume one mode | Store life constants and cutting data **per coolant mode** (opinion) |
+| Thermal cracking (carbide) | ISCAR lists the causes as "excessive variations in surface temperature, intermittent machining, or variations in coolant supply", and the remedy as "significantly increase coolant supply or turn it off" | [ISCAR, milling inserts wear problems and solutions](https://www.iscar.com/products.aspx/countryid/1/productid/12356) |
+| Built-up edge | Also from ISCAR: a cutting zone that is too cool is a cause of built-up edge | Same source |
+| Coolant concentration (refractometer) | Too lean shortens tool life and brings corrosion; too rich brings foaming and residue; measured with a refractometer times the fluid's factor | Covered in the [machine health research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-9w3gq9/research/cam-research-nsnlookupjn-machine-health.md), "Coolant condition" |
+| Coolant temperature | Mainly moves part and fixture size (thermal growth), not tool force | Machine health research (same section) |
+| Chip recutting | Chips left in the cut are recut, "a primary contributor to early onset tool wear"; through-tool air blast clears them, "particularly useful for deep cavity machining" | [ETMM / Haas Automation Europe, 2015-10-20](https://www.etmm-online.com/optimum-cooling-for-a-better-finish-longer-tool-life-a-508424/?p=2) |
+
+**Chip clearing fans and air blast (opinion):** a fan or air nozzle clears chips from open
+surfaces and keeps the cut dry and visible; it cools little and does not reach the bottom of deep
+pockets or slots. Through-tool air or coolant does. So the program should treat "deep pocket or
+slot with only a fan" as a recutting risk: a warning, a lower tool life estimate, or a preference
+for toolpaths that leave an open side for chips. This is a separate flag, not a slider factor,
+because no safety margin makes recut chips harmless.
+
+**What the library needs for this (opinion):**
+
+- **Tool:** through-coolant capable (ISO 13399 holder coolant fields `CNSC`, `CXD`, `CP`; Haas
+  product pages list "through-spindle coolant"), and the coolant modes the vendor allows (some
+  carbide grades are meant to run dry in steel).
+- **Machine** (machine library): coolant modes fitted (flood, through-spindle and its pressure,
+  air blast, MQL, fan), coolant type in the tank.
+- **Operation:** the coolant mode chosen, which selects the cutting data row and the tool life
+  constants, and warns about thermal cracking when a carbide tool in an interrupted cut gets
+  partial coolant.
+- **Shop state** (machine health): concentration and temperature in range or not; out of range
+  shortens the expected tool life.
+
 ### Outputs for workholding (shared with the workholding file)
 
 The workholding research uses these as inputs, per toolpath move or segment (opinion; agreed
