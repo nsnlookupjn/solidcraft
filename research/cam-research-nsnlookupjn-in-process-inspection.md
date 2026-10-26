@@ -105,6 +105,12 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    with the G-code block, the CAM segment and the timeline, so an event can be found exactly on
    the program, the toolpath and the part. See
    [Machine monitoring](#machine-monitoring-loads-torque-and-vibration).
+10. **Self-tuning CAM operations (Jason's name for it).** Put the two loops together: the
+    machine data says how much margin the cut had (load, torque, vibration), and the inspection
+    results say whether accuracy and surface finish held. CAM then raises the feeds and depths of
+    the next run where both have margin, and backs off where either does not. Inspection is the
+    guard that lets the shop **go harder without losing accuracy or finish**. See
+    [Self-tuning CAM operations](#self-tuning-cam-operations).
 
 ## Fundamentals
 
@@ -745,6 +751,65 @@ part serial and operation.
 24-bit ADC board, or a MEMS sensor for a low-cost version) adds roughly USD 50–400 to the box
 (unverified; prices move). Mount position and cable routing away from coolant matter more than
 sensor grade for chatter detection.
+
+### Self-tuning CAM operations
+
+**Jason's idea:** call it *self-tuning CAM operations*: the live machine data from the edge box,
+aligned to the G-code, tied into in-process inspection, "so that we can go harder without
+affecting accuracy or surface finish". It is the closed loop of the
+[CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
+("The closed loop: measuring what was predicted"; phase 6 of its plan) with inspection added as
+the quality gate.
+
+**Two kinds of evidence, one decision (opinion):**
+
+| Evidence | From | Says |
+|---|---|---|
+| Process margin | spindle/axis load vs the machine library's curves, torque vs the tool library's limits, vibration vs the stability prediction, per CAM segment | "this segment could take more" or "this segment is near a limit" |
+| Quality margin | probe results, hand-gauge results, surface roughness checks, per characteristic, mapped to the segments that cut each face | "this feature is centred with room to spare" or "this feature is drifting toward a limit" |
+
+A segment may be pushed harder only when **both** say there is margin. Either one alone is not
+enough: a cut can run at low load and still leave a bad finish (chatter, deflection), and a part
+can measure well while the spindle is at its limit.
+
+**How a cycle of self-tuning works (opinion):**
+
+1. **Run** the program as planned (from the physics system at the slider's current setting).
+2. **Record** loads, vibration and events aligned to segments; **inspect** the characteristics
+   in process and at the bench.
+3. **Map** each characteristic back to the segments that made it (the CAM knows which toolpath
+   cut which face; the part record knows the result). Roughing segments feed only stock left for
+   finishing, so their quality evidence is the finishing pass's correction size and stability.
+4. **Propose** changes for the next part or batch: raise feed or depth on segments with process
+   margin whose features have quality margin; lower them where vibration rose or a feature
+   drifted; leave finishing passes alone until roughing gains are taken (the large time savings are
+   in roughing; finishing is bounded by deflection and the roughness target).
+5. **Check** each proposal against the physics limits again (tool, holder, spindle, axes,
+   workholding, stock); the physics models are the safety net, never relaxed by the data.
+6. **Apply** between parts, never mid-cut: either the programmer approves, or the shop allows
+   automatic steps inside set bounds (e.g. at most +10 % per step, one change per segment group
+   per batch). The conservative-to-aggressive slider sets those bounds.
+7. **Watch** the next parts; if a characteristic's capability (Cpk) falls or a guard band is
+   approached, roll back to the last good settings automatically and flag it.
+
+**What "without affecting accuracy or finish" means in numbers (opinion):** keep each
+characteristic's measured spread inside its ISO 14253-1 acceptance zone with a set capability
+(for example Cpk ≥ 1.33, a common customer minimum, unverified as universal), and keep measured
+or predicted roughness below the requirement with a margin. Roughness is rarely measured on the
+machine, so sample it at the bench (profilometer) every N parts, and use the predicted value from
+feed/step-over plus the vibration level as a proxy in between (the proxy needs correlation per
+shop; unverified how well vibration predicts Ra).
+
+**Why inspection makes "harder" safe:** today a programmer stays conservative because they
+cannot see the margin. With measured margin per feature and per segment, the program can be
+pushed exactly where the evidence allows, and pulled back automatically when it no longer does.
+The per-part record also proves to a customer that the faster program still produced
+conforming parts.
+
+**Where it stays careful (opinion):** first articles and any characteristic flagged critical
+are never tuned without a person approving; a change of material lot, tool brand or machine
+starts a new tuning history (the shop instance in the libraries, not the shared catalogue); and
+corrections inside a run remain the control's in-cycle compensation described earlier.
 
 ### Data model sketch
 
