@@ -700,6 +700,52 @@ the trademark question below).
 network, stores reports in the cloud or on a corporate server, and prints a report locally to
 travel with the part.
 
+**Definition (Jason's project description, adopted as the canonical one).** SolidCraft Edge is an
+edge computer built on a **Raspberry Pi 5** and programmed in **Rust**. It connects CNC machines
+and physical sensors to SolidCraft's CAM. It has five functions:
+
+1. **Data acquisition:** continuously collects machine data (spindle speed, tool position,
+   temperature and so on) and readings from attached sensors, over serial, Modbus or the machine's
+   Ethernet interfaces (the paths in the table below).
+2. **Machine communication:** sends status requests and commands to the CNC for coordinated
+   operation. The write tiers below set what "commands" may do.
+3. **Data transmission to the CAM station:** processes and packages the data and sends it to the
+   CAM station by REST API, MQTT or WebSocket, for monitoring, analysis and optimisation (the
+   self-tuning loop and the design feedback in this file).
+4. **Visual display:** a live dashboard on an attached monitor showing machine state, alerts and
+   production metrics, and the inspection screens described in this file.
+5. **Report printing:** hard-copy reports on an attached printer: production logs, maintenance
+   summaries, quality checks, and the part traveller with its DataMatrix.
+
+The operator uses a **keyboard and mouse** for manual input (including hand-gauge values),
+configuration and report generation. The device is built for reliability, low latency and safe
+continuous operation, and connects the machines, CAM and the people on the floor.
+
+**Reconciling "sends commands" with "the control stays authoritative" (opinion).** Function 2 is
+real: SolidCraft Edge does talk back to the machine. Every write goes through the same four tiers
+as the [cell automation research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-g08nas/research/cam-research-nsnlookupjn-cell-automation.md) ("Write tiers"):
+
+| Tier | What SolidCraft Edge does | Examples |
+|---|---|---|
+| 1. **Record** (default) | reads and logs only | probe results, loads, vibration, events, part record |
+| 2. **Advise** | shows a recommendation on its dashboard or sends it to CAM | "bore 7 drifting, expect a correction in 4 parts"; "segment 112 has margin for +10 % feed next run" |
+| 3. **Stage** | prepares a change for the control or a person to accept | an offset program or file in the control's folder; the next job and program queued; a revised CAM program waiting for approval |
+| 4. **Commit** | writes through the control's documented interface (e.g. FOCAS offset or macro-variable write, OPC UA method) | only if the shop enables it per machine and per function, only in documented states (cycle not running), with size limits, read-back check and a log entry; **off by default** |
+
+Status requests (what is running, which block, alarms, offsets) are reads and always allowed.
+Three things never move to SolidCraft Edge at any tier:
+
+- **In-cycle compensation** (pass, correct, re-cut, stop) stays in the control's probing macro,
+  at machine speed, with no network in the loop.
+- **Feed and speed changes during a cut** belong to the control maker's adaptive-control option,
+  if the shop uses one.
+- **Safety functions**: SolidCraft Edge is never wired into an E-stop, door interlock or other
+  safety circuit.
+
+"Low latency" here means fast enough for monitoring, the dashboard and between-cycle actions.
+It does not mean hard real-time: Linux on a Pi does not give guaranteed timing, which is one more
+reason the control keeps the timing-critical work.
+
 **What it can and cannot read (fact, from the interface descriptions):**
 
 | Path | Works with | Reads | Writes | Notes |
@@ -714,13 +760,14 @@ travel with the part.
 | Probe signal directly | none | — | — | The trigger only means something together with axis positions latched inside the control; SolidCraft Edge cannot do this. |
 
 **Design principle (opinion, strongly held):** SolidCraft Edge **never writes compensation** to the
-machine by default. Correction happens in the control's macro (fast, deterministic, works when
+machine by default (tier 1; see the write tiers above). Correction happens in the control's macro (fast, deterministic, works when
 the network is down). Optional "write-back" (e.g. push a corrected wear offset computed from a
 CMM result into FOCAS) is a separate, explicit, logged feature with limits, off by default.
 
 **Hardware sketch (opinion):**
 
-- **Compute**: a Raspberry Pi 5 or a Compute Module 4/5 on an industrial carrier. For a product,
+- **Compute**: a **Raspberry Pi 5** (Jason's definition); a Compute Module 5 on an industrial
+  carrier is the same platform in an industrial form. For a product,
   an industrial Pi such as the Kunbus Revolution Pi (CM4/CM5, DIN rail, 24 V, −25 to +55 °C,
   CE/UKCA, UL-certified, EN 61131-2 and EMC to IEC 61000-6-2/-4, from about EUR 270–420) saves
   most of the compliance work. eMMC storage, not SD cards (SD cards fail under power cuts).
@@ -730,7 +777,8 @@ CMM result into FOCAS) is a separate, explicit, logged feature with limits, off 
 - **Printer**: a thermal label printer (ZPL-speaking printers work under CUPS on Linux) for
   traveller labels with the DataMatrix, and/or an ordinary office printer on the network for a
   full-page report.
-- **Screen**: small touch screen or the operator's tablet through a local web page.
+- **Screen and input**: an attached monitor for the dashboard, with a keyboard and mouse (Jason's
+  definition); a touch screen or the operator's tablet through a local web page can be added.
 - **Power and enclosure**: 24 V DC from the machine cabinet's supply (common in machine
   cabinets) or a wall adapter; IP-rated enclosure away from coolant; real-time clock with battery
   so timestamps survive power loss.
@@ -741,13 +789,16 @@ CMM result into FOCAS) is a separate, explicit, logged feature with limits, off 
 
 - Linux image with a small service: parsers per control family (DPRNT line format above, FOCAS,
   Haas data collection, MTConnect, OPC UA), the part-record store (append-only, hash-chained),
-  a QIF Results writer, the label/report renderer and a sync client.
+  a QIF Results writer, the label/report renderer, the dashboard and a sync client.
+- Links to the CAM station: REST API for requests and uploads, MQTT for live data streams (many
+  subscribers, works through brief network drops), WebSocket for the live dashboard view in CAM
+  (Jason's definition lists all three). Modbus for sensors and PLC-style I/O.
 - Storage targets: local first; then a corporate share (SMB), an S3-compatible bucket, or a
   quality system's API; the user chooses. No vendor cloud required.
 - Security: signed updates, no inbound ports on the plant side, machine network isolated, reports
   signed (so a customer can check a report was not edited).
-- Written in Rust if it is to share code with SolidCraft (e.g. the QIF and record model);
-  application code in SolidCraft is Rust only (AGENTS.md).
+- Written in **Rust** (Jason's definition), which lets it share code with SolidCraft (e.g. the QIF
+  and record model); application code in SolidCraft is Rust only (AGENTS.md).
 
 **Feasibility (opinion):**
 
