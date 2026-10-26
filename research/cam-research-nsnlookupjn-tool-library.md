@@ -508,6 +508,13 @@ not cloud-only; holders with real geometry; one source of truth for tool numbers
 9. **No material lock.** CAM software doesn't lock tools to a material, so aluminium parameters
    can easily be run on a mild steel part, and a tool breaks.
 
+10. **Vendor libraries load badly.** Tool makers' libraries often don't import well into the
+    major CAM platforms (missing or wrong fields, holders without geometry).
+11. **Vendor cutting data is too aggressive.** Vendors often load only very aggressive
+    parameters, which read as showing the tool off rather than suiting a typical machine and
+    setup (opinion: vendor data is partly marketing; see the facts/opinion/marketing rule in
+    "About this research").
+
 **How the proposal answers each (opinion):**
 
 - **(6) Missing parameters:** the field list is ISO 13399's, not a program's own subset, and a
@@ -527,6 +534,17 @@ not cloud-only; holders with real geometry; one source of truth for tool numbers
   "Material-scoped libraries"). The job's stock material selects the cutting data; there is no
   way to pick "aluminium" cutting data for a steel stock without a visible override, and in
   `locked` mode not even that.
+- **(10) Vendor imports:** import goes through GTC / ISO 13399 with a **validation report**
+  (fields missing, values out of range, stack-up mismatches, holder without model), and a fix
+  made once in the shared catalogue fixes it for every user, instead of each shop fixing its own
+  import.
+- **(11) Aggressive vendor data:** vendor cutting data is stored as a **labelled source**
+  ("vendor") alongside, not instead of, values computed from the physics model for *this*
+  machine's power, torque and stiffness, *this* holder and stick-out, and the workholding. The
+  job uses the lower of the two by default, places the result on the conservative-to-aggressive
+  risk slider from the
+  [cutting physics file](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md),
+  and records shop-proven values as a third source that, over time, outranks both.
 
 ## What users need
 
