@@ -533,6 +533,12 @@ the likely cause and order a maintenance check (for example "inspect vise screw 
 plates" or "spindle vibration trend") before parts are scrapped. The machine-side detail
 belongs to the separate "Predict machine failure and order maintenance" topic (in progress), with the machine library and the CAM Physics System topics.
 
+**Add-on sensors.** Jason's idea of a sensor package for the edge box (vibration, temperature,
+coolant concentration by refractometer and coolant temperature) matters for workholding too:
+coolant changes the friction at the jaws (see "Friction holds"), so a measured concentration
+lets the check pick the right friction value instead of assuming one. The package itself is
+covered in the machine monitoring topics.
+
 **Aligned with the G-code and the timeline (Jason's point).** Every recorded sample is stamped
 so it can be placed on the program: the time, the G-code line or block number being executed,
 and the machine position. The simulation's per-step predictions are indexed the same way, so a
