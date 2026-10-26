@@ -9,6 +9,10 @@ file covers Jason's request:
 > properties, for the whole part and per surface or feature. CAM should know the hardness, and
 > the local hardness, of the stock and of the in-process stock. And a design should be able to
 > describe stock surfaces that are not machined, such as the skin of a casting.**
+>
+> Added later: **design to final size with tolerances once, derive from it the casting, forging
+> or 3D-printed stock design, load that into CAM and machine it to final size; and plan heat
+> treatment, which changes size, followed by re-machining to the final tolerance.**
 
 It is one of a set of files from the same author that describe CAM as **one physical system**.
 This file adds the **material state** (what the part and the stock are made of, how hard they are
@@ -768,9 +772,7 @@ hardness keeps its scale.
    that the machined one is derived from (and which owns the foundry's revisions)?
 7. Can hardness per hardness band be added to the shared tool library's cutting data without
    multiplying records unmanageably?
-8. Should a derived stock state be a configuration of the design or its own linked design (a
-   foundry often owns the casting drawing and its revisions)?
-9. Where do size-change models come from in an open project: steel makers' data sheets, heat
+8. Where do size-change models come from in an open project: steel makers' data sheets, heat
    treaters, or only the shop's own measurements?
 
 ## Sources
