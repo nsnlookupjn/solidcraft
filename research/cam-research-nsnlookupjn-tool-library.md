@@ -62,6 +62,11 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 5. **The complaints are consistent:** tools re-entered in every program, duplicates, CAM library
    and machine tool table drifting apart, holders missing geometry. A shared catalogue plus
    per-shop assemblies plus scannable tags addresses all four.
+6. **Four requirements from Jason (2026-10-26), covered under Fundamentals below:** the library
+   and the tags record **which insert and grade** is in an indexable tool right now; a tool can
+   be added by **AI reading its datasheet**, with a person approving every value; a **custom tool
+   with its own 3D model** is a first-class entry; and a library can be **locked to a machine or
+   machine group**, including a fixed, preloaded tool set that doesn't change.
 
 ## Fundamentals
 
@@ -187,6 +192,149 @@ entry instead of each typing their own copy.
 > DIN 69873 bore, whether you have used the MakerWorld label holder, label printer used and label
 > size, and what you would want to see when you scan a tool.
 
+### Indexable tools: inserts and grades
+
+*Jason's requirement: "Tool library and tool tags system should handle indexable insert grades so
+we always know what is in the tool."*
+
+- **The insert's shape and size are standardised, but its grade isn't.** The ISO 1832 code
+  (for example `CNMG 120408`) describes only the physical insert: shape `C` (80° diamond),
+  clearance `N` (0°), tolerance `M`, type `G`, size `12` (12.7 mm inscribed circle), thickness
+  `04` (4.76 mm), corner radius `08` (0.8 mm). The grade, coating and chipbreaker are not
+  standardised; the source says "Manufacturer chipbreaker names are not universal ISO codes"
+  ([Protool, 2026-08-23](https://www.protool-ltd.co.uk/blogs/blog/iso-turning-insert-nomenclature)).
+  So two `CNMG 120408` inserts from different makers, or in different grades from the same
+  maker, cut differently.
+- **Grades map to ISO 513 application groups.** Grades are classed by work material: P (steel),
+  M (stainless), K (cast iron), N (non-ferrous), S (heat-resistant alloys and titanium), H
+  (hardened). The six-group system has been in force since 2003
+  ([Mitsubishi Materials, carbide classification](https://www.mmc-carbide.com/permanent/courses/78/classification.html));
+  ISO 513:2004 is the current edition listed by
+  [CCN-SCC](https://ccn-scc.ca/standardsdb/standards/8117151) (unverified that no later edition
+  exists). The two-digit sub-scale (e.g. P10 to P40, from wear-resistant to tough) is
+  (unverified) from these sources.
+- **What changes when an insert changes (opinion):** cutting data (the grade sets the safe
+  `vc` range and the material coefficients used), tool-life tracking (life belongs to the
+  insert edge, not the body) and sometimes geometry (corner radius `RE`, which changes the tool
+  offset and the finish). A holder or cutter body with the wrong insert grade is a silent error
+  today, because the CAM program only knows the body.
+
+**Proposal (opinion):**
+
+| Layer | What's stored |
+|---|---|
+| Catalogue | Indexable body (e.g. face mill, turning holder) with its **insert seat** (ISO 1832 shape/size it accepts, number of seats). Inserts as separate catalogue items: ISO 1832 code + maker + chipbreaker + grade + ISO 513 group + coating. |
+| Assembly | The body plus the **insert currently fitted**: catalogue insert ID, quantity, date fitted, which edge is in use (an 80° diamond has 2 usable corners per side, double-sided negative inserts 4) (unverified edge counts per shape). |
+| Machine tool | Edge life used, inserts changed history. |
+| Tag | Points at the assembly, so scanning shows "CNMG 120408-xx, grade yyyy, ISO P, fitted 2026-10-26, edge 2 of 4". |
+
+- **Changing an insert is a scan event:** scan the tool tag, scan or pick the insert box
+  (makers print barcodes/DataMatrix on boxes, e.g.
+  [Seco](https://www.secotools.com/article/seco_data_matrix); box code contents (unverified)),
+  confirm. The assembly updates, life resets, and if the grade or `RE` changed, programs using
+  that tool are flagged for re-checking.
+- **Mixed or unknown grades:** if the fitted grade isn't recorded, cutting data falls back to the
+  conservative end of the generic class (see "Tools with unknown physics" in the
+  [cutting physics file](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md)).
+
+### Adding tools: AI datasheet reading, custom tools and 3D models
+
+*Jason's requirements: "Can we use ai to read a tool datasheet and add to library" and "Need to
+be able to add a custom tool including 3d model".*
+
+**Order of preference for getting a tool in (opinion):**
+
+1. **Shared catalogue hit** by part number: nothing to enter.
+2. **Vendor GTC / ISO 13399 package:** exact data, imported without interpretation.
+3. **AI reading a datasheet or catalogue page** (PDF, photo of a catalogue page, web page).
+4. **Manual entry or a custom tool** with the user's own 3D model.
+
+**AI datasheet reading (opinion on the design; sources on the risks):**
+
+- **The risk is misplaced numbers, not missing ones.** Text extracted from PDFs often loses
+  table structure, so a model has to guess which value belongs to which column; one benchmark
+  scored a common PDF text extractor 0.000 on table-structure recovery
+  ([Nutrient blog, updated 2026-10-26](https://www.nutrient.io/blog/why-your-ai-agent-hallucinates-pdf-table-data/);
+  vendor source, marketing for its own extractor). A study extracting tables from government
+  PDFs with an LLM, using page images, passed 84 % of its internal sum checks overall and
+  recommends algorithmic validation, pointing reviewers at the exact failed row, and human
+  review ([Aggarwal et al., arXiv 2511.10659v2, 2025](https://arxiv.org/html/2511.10659v2)).
+  Tool catalogues are dense multi-column tables with inch/mm variants, so the same failure modes
+  apply (opinion).
+- **Safeguards proposed:**
+  - Read the page as an image as well as text, and keep a link from each extracted value to
+    its location on the page so the reviewer sees the source next to the value.
+  - Map every field to an ISO 13399 symbol (`DC`, `APMX`, `LU`, `OAL`, `NOF`, `RE`…) with its
+    unit, and convert to mm on entry.
+  - **Consistency checks before review:** `OAL ≥ LU ≥ APMX`; `DC` within the series' range;
+    shank `DCON` a standard size; flute count an integer; inch values that convert to the
+    catalogue's own mm column. Failed checks are highlighted.
+  - **Every value carries a confidence label** ("AI-extracted, unreviewed" → "reviewed"), using
+    the same labels as the [cutting physics file](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md) (vendor, measured, generic,
+    assumed).
+  - **Nothing AI-extracted reaches the shared catalogue without a person approving it**, and the
+    entry records the source document and who approved it. Until approved, the tool is usable
+    only in the user's own library, and its cutting data is derated like a generic tool.
+  - The datasheet's own cutting data (recommended `vc`, `fz`) goes in as a vendor preset with
+    its source, not as material coefficients.
+- **Licence:** catalogue data is the maker's; whether extracted values can be shared in an open
+  catalogue is the same question as GTC redistribution (Open questions).
+
+**Custom tools with a 3D model:**
+
+- **Why the model matters:** collision checking and simulation need the real shape, especially
+  for form tools, special step drills, long-neck tools and odd holders. Fusion, for example,
+  ignores the STEP model inside GTC packages and uses only the parametric P21 data
+  ([Autodesk help: tool library import](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-TOOL-LIBRARY-IMPORT.htm)),
+  and importing a maker's holder STEP needs a third-party script that converts it to the
+  library's JSON
+  ([DSI knowledge base, screenshots 2023-07](https://know.dsi-mfg.com/kb/f360-import-holder)).
+  Users drawing their own holders is complaint 5 below.
+- **Proposal (opinion), using SolidCraft's strength as a CAD program:**
+  - A custom tool is a **SolidCraft design**: sketch a half-profile and revolve it, or import a
+    STEP from the maker. SolidCraft already models revolved solids, so no separate tool editor
+    is needed.
+  - On save, the user marks the **cutting part** (faces or the profile segment that cuts) and the
+    **non-cutting part** (shank, neck, holder), and the **gauge point** (where the tool meets
+    the holder face, on the Z axis). These map to ISO 13399 reference points such as the
+    coordinate system at the connection (ISO/TS 13399-50, (unverified) point names).
+  - SolidCraft derives the ISO 13399 properties it can (`DC`, `LU`, `OAL`, `DCON`) from the
+    model and asks for the rest (flutes, helix, substrate, coating), so physics can fall back
+    to a generic class.
+  - The profile used for toolpaths and the full 3D model for collision checking are both kept;
+    non-revolved tools (e.g. some turning tools) keep the 3D model only.
+  - A custom tool can stay private or be **submitted to the shared catalogue** with its model,
+    under a licence the submitter chooses.
+
+### Machine-scoped libraries and fixed tool sets
+
+*Jason's requirement: "Tool library should be able to be locked to a particular machine as we
+often a certain set of tools only fits one machine or group of machines or a machine is
+preloaded with a set load of tools which do not change."*
+
+- **Why:** a tool only fits machines with the same spindle taper (CAT40 vs BT40 vs HSK-A63),
+  within their max tool length, diameter and weight, and within the spindle's speed. Many shops
+  also keep a **standard tool load** on each machine that stays in the magazine permanently, so
+  jobs are programmed against what is already there (opinion; supporting source: the master
+  library matched to the controller in the
+  [Autodesk forum thread](https://forums.autodesk.com/t5/fusion-manufacture-forum/fusion-tool-libraries-vs-machine-tool-library/td-p/11741597)).
+- **Proposal (opinion):**
+  - **Machine groups.** A library can be scoped to one machine or a named group of machines
+    (e.g. "Haas VF-2 cell, CAT40"). Machine definitions come from the
+    [machine library file](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md).
+  - **Compatibility is checked, not just labelled:** taper/interface, max tool length, diameter
+    and weight, max RPM vs the holder's balance rating. A tool that doesn't fit can't be added
+    to that machine's library, with the reason shown.
+  - **Fixed load ("locked") library:** a machine's standard tool set with fixed tool numbers and
+    pockets. When a job is programmed for that machine, tools are picked from the fixed load
+    first; using anything else is flagged as an extra tool to load (and, if pockets are full,
+    which tool must come out). The post processor emits the fixed numbers.
+  - **Locking is a permission:** only a named role can change a locked library, every change is
+    logged, and the change produces a new tool table to send to the machine.
+  - **Drift check:** compare the locked library with the machine's actual tool table (exported
+    file, or live via the controller) and list differences: wrong tool in a pocket, offset
+    changed, insert changed (see above).
+
 ### Where tool data meets the machine
 
 - Machine controls keep their own tool table. LinuxCNC's `tool.tbl` has tool number `T`, pocket
@@ -299,15 +447,25 @@ not cloud-only; holders with real geometry; one source of truth for tool numbers
 ### Data model sketch (opinion; field names follow ISO 13399 symbols where one exists)
 
 ```text
-CatalogueItem   id, kind (cutter|holder|extension), vendor, part_number, gtc_class,
+CatalogueItem   id, kind (cutter|indexable_body|insert|holder|extension|generic_class),
+                vendor, part_number, gtc_class,
                 properties { DC, DCON, APMX, LU, LF, OAL, NOF, RE, ... }  (mm, rad),
-                model_ref (STEP), source, version, licence
+                insert { iso1832_code, grade, iso513_group, chipbreaker, coating },
+                seats { iso1832_shape_size, count },
+                model_ref (STEP or SolidCraft design), profile_ref, gauge_point,
+                source (gtc|vendor|ai_extracted|user), confidence, approved_by,
+                version, licence
 CuttingDataSet  id, material_group, tool_family, model (kienzle|edge_force),
                 coefficients { kc11, mc } | { Ktc, Krc, Kac, Kte, Kre, Kae },
                 valid_range { fz, ae, vc }, source, date
 Assembly        id, cutter -> CatalogueItem, holder -> CatalogueItem, stickout_mm,
+                fitted_inserts [ { insert -> CatalogueItem, qty, edge, fitted_at } ],
                 measured { DC, length }, notes
-MachineTool     machine_id, T, pocket, assembly -> Assembly, offsets, life_used
+MachineGroup    id, machines [machine_id], interface (e.g. CAT40), limits
+                { max_length, max_diameter, max_mass, max_rpm }
+Library         id, scope (user|shop|machine|machine_group), locked, editors, change_log
+MachineTool     machine_id, T, pocket, fixed (bool), assembly -> Assembly, offsets,
+                life_used (per insert edge for indexable tools)
 Tag             tag_id -> Assembly | MachineTool
 ```
 
@@ -359,6 +517,13 @@ vise clamping-torque curves could sit in the shared catalogue next to holders (o
 | Tool tag | tool label, data carrier | A physical marker on a holder that identifies an assembly. | RFID chip or printed code. |
 | Data carrier bore | chip bore | A standardised hole in a holder for mounting an identification chip. | DIN 69873. |
 | Tool table | offset table, tool.tbl | The controller's list of tool numbers, pockets and offsets. | Per machine. |
+| Indexable tool | insert tool | A tool body that carries replaceable cutting inserts. | Face mills, turning holders. |
+| Insert | indexable insert, tip | A replaceable cutting piece clamped in an indexable tool body. | Described by ISO 1832 code plus grade. |
+| Grade | carbide grade, insert grade | A maker's name for an insert's substrate and coating combination. | Not standardised; classed by ISO 513 group. |
+| ISO 513 group | application group, P/M/K/N/S/H | A letter class of work materials a cutting material is meant for. | P steel, M stainless, K cast iron, N non-ferrous, S superalloys, H hardened. |
+| Machine group | machine cell | A named set of machines that share an interface and limits. | A library can be scoped to it. |
+| Fixed tool load | standard tool load, permanent tools | A set of tools kept in a machine's magazine across jobs. | Programmed against first. |
+| Gauge point | gauge line, tool reference point | The point on the tool axis where tool length is measured from. | Usually the holder face. |
 
 ## Open questions
 
@@ -377,6 +542,12 @@ vise clamping-torque curves could sit in the shared catalogue next to holders (o
    their geometry be used. Look at the Haas Tooling web store and the Fusion download page.
 6. Fit, label size and licence of the MakerWorld label holder (page could not be fetched).
 7. Which holder types carry the DIN 69873 bore by default (CAT40, BT40, HSK-A63).
+8. What insert makers encode in the barcodes or DataMatrix codes on insert boxes (part number
+   only, or grade and batch too), and whether it is documented publicly.
+9. Whether vendor datasheet values extracted by AI can be shared in an open catalogue
+   (same licence question as 2).
+10. How controllers expose the current tool table for a drift check (file export, MTConnect,
+    maker API); see the machine library file.
 
 > **[TODO Jason: personal experience]** Anything you know that answers the above.
 
@@ -390,6 +561,10 @@ vise clamping-torque curves could sit in the shared catalogue next to holders (o
   [INN](https://ecommerce.inn.cl/isots-13399-80201449355).
 - DIN 69873:1993-07, Data media for tools and clamping devices
   ([DIN Media](https://dinmedia.de/en/standard/din-69873/2113394)).
+- ISO 1832, Indexable inserts for cutting tools: designation (described from
+  [Protool, 2026-08-23](https://www.protool-ltd.co.uk/blogs/blog/iso-turning-insert-nomenclature)).
+- ISO 513:2004, Classification and application of hard cutting materials
+  ([CCN-SCC listing](https://ccn-scc.ca/standardsdb/standards/8117151)).
 
 ### Books and papers
 - Kienzle, O., "Die Bestimmung von Kräften und Leistungen an spanenden Werkzeugen und
@@ -415,6 +590,17 @@ vise clamping-torque curves could sit in the shared catalogue next to holders (o
 - [Balluff: Automated tool management with RFID](https://www.balluff.com/en-us/application-examples-and-solutions/automated-tool-management-with-rfid)
 - [Seco Tools: Data Matrix codes](https://www.secotools.com/article/seco_data_matrix)
 - [LinuxCNC 2.5: Tool compensation and tool table](https://linuxcnc.org/docs/2.5/html/gcode/tool_compensation.html)
+- [Autodesk: Tool library import (GTC STEP models not used)](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-TOOL-LIBRARY-IMPORT.htm)
+- [DSI: Importing a holder into Fusion](https://know.dsi-mfg.com/kb/f360-import-holder)
+- [Mitsubishi Materials: carbide classification](https://www.mmc-carbide.com/permanent/courses/78/classification.html)
+- [Protool: ISO turning insert nomenclature (2026-08-23)](https://www.protool-ltd.co.uk/blogs/blog/iso-turning-insert-nomenclature)
+- [Nutrient: Why your AI agent hallucinates PDF table data](https://www.nutrient.io/blog/why-your-ai-agent-hallucinates-pdf-table-data/)
+- Aggarwal, V. et al., "Information Extraction From Fiscal Documents Using LLMs", arXiv
+  2511.10659v2, 2025 ([HTML](https://arxiv.org/html/2511.10659v2))
+- Companion research in this fork:
+  [cutting physics](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md),
+  [machine library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md),
+  [workholding](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-workholding/research/cam-research-nsnlookupjn-workholding.md)
 
 ### Trade press
 - [Machinery: vendor-neutral cutting tools catalogue structure (GTC)](https://www.machinery.co.uk/content/news/vendor-neutral-cutting-tools-catalogue-structure-supports-standardised-data-exchange-with-plm-and-cadcam-systems)
