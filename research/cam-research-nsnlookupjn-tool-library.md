@@ -434,6 +434,17 @@ block per tool in the program, in tool-change order:
 - **Numbers to check:** computed gauge length and the measured tool-setter length with the
   allowed difference, diameter, minimum stick-out the program needs (from the deepest cut) and
   maximum stick-out allowed (from deflection limits), holder type and nut, coolant mode.
+- **Assembly torques (the author's requirement):** every tightening step for the assembly,
+  in build order, with its torque in N·m (and the shop's own unit if different) and the tool to
+  use: pull stud into the holder, collet nut (e.g. ER nut torque for that collet size), side-lock
+  or set screws, shell-mill or arbor bolt, extension couplings, and insert clamp screws for
+  indexable tools. Values come from the catalogue entry of each component (holder, nut, collet,
+  insert seat), each with its source; a missing value is shown as missing, never guessed. Where
+  sources disagree (the
+  [tool holding file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-4aoliy/research/cam-research-nsnlookupjn-tool-holding.md) found
+  pull stud torque values that differ between makers), the sheet shows the holder maker's value
+  and flags the difference. Shrink-fit and hydraulic holders show their own procedure (heating
+  or clamping screw) instead of a torque.
 - **Use in this job:** operations that use the tool, material, cutting values and their source
   (shop-proven, vendor-measured, vendor, generic), cutting time, and life used vs remaining.
 - **Status flags:** exactness level (exact / parametric / envelope), "not yet verified",
@@ -777,6 +788,8 @@ CatalogueItem   id, kind (cutter|indexable_body|insert|holder|extension|generic_
                 vendor, part_number, gtc_class,
                 properties { DC, DCON, APMX, LU, LF, OAL, NOF, RE, ... }  (mm, rad),
                 insert { iso1832_code, grade, iso513_group, chipbreaker, coating },
+                torques [ { joint (pull_stud|nut|screw|bolt|insert_clamp), value_Nm,
+                  tool, source } ],
                 seats { iso1832_shape_size, count },
                 model_ref (STEP or SolidCraft design), profile_ref, gauge_point,
                 source (gtc|vendor|ai_extracted|user), confidence, approved_by,
