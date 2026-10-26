@@ -536,6 +536,17 @@ How workholding ties into the two new topics:
   moment about the rotary axis must stay under both. The workholding entry's position on the
   table (or on the trunnion) comes from the machine model.
 
+Agreed with those two topics: stiffness combines as a **series compliance chain**,
+`1/k_total = 1/k_tool+holder+spindle + 1/k_machine + 1/k_fixture + 1/k_stock`, per direction.
+The machine library returns per-axis allowed thrust (N), static stiffness at the table (N/µm)
+and dominant modes; the stock integrity model returns local stock stiffness per direction,
+stock deflection, its lowest mode, release distortion and an allowed-force envelope from the
+tolerance budget, and takes from this file the clamp force, contact and support locations and
+the capacity envelope (clamp locations are its boundary conditions). One consequence for the
+torque window: `T_max` must be re-checked as the stock thins, and CAM may recommend
+**re-clamping at a lower torque before finishing**, which roughing forces would not allow but
+light finishing passes do.
+
 All five read and write through the same setup: one machine (from the machine library), one or
 more holds (from the workholding library), the stock, and tools (from the tool library). The
 confidence slider applies to the whole chain at once.
