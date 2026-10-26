@@ -25,7 +25,7 @@ It pairs with earlier files from the same author:
   that measured loads and vibration (below) would calibrate.
 - [CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md):
   how the libraries fit together, and its "closed loop: measuring what was predicted" section,
-  which this file's edge device feeds.
+  which this file's SolidCraft Edge device feeds.
 
 Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of CONTRIBUTING.md).
 
@@ -90,13 +90,13 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    it has been correlated against an independent instrument (a CMM or calibrated gauge). The
    report must say how each value was measured, and the decision rule must account for
    measurement uncertainty (ISO 14253-1).
-8. **The Raspberry Pi edge device is feasible** with off-the-shelf parts, for reading results the
+8. **SolidCraft Edge, a Raspberry Pi device at the machine, is feasible** with off-the-shelf parts, for reading results the
    machine already produces: by serial output (DPRNT, on many Fanuc-style and Haas controls), by
    network (Fanuc FOCAS, Haas machine data collection, MTConnect, OPC UA where the control offers
    it), or by operator entry for hand gauges. It cannot read a probe signal directly; the probe
    talks to the control. Selling it is a business decision for maintainers and a hardware vendor;
    an open reference design plus "works with SolidCraft" vendors is the lowest-risk path. See
-   [The edge device](#the-edge-device-a-raspberry-pi-at-the-machine).
+   [SolidCraft Edge](#solidcraft-edge-a-raspberry-pi-at-the-machine).
 9. **The same box can watch the cut, not just the part (Jason's addition).** Many controls
    publish spindle load, axis (servo) loads and sometimes torque; an add-on accelerometer gives
    vibration. Logged against the toolpath, these are the measurements the physics models predict,
@@ -129,7 +129,7 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
     That prevents operator error and makes unattended running safer. See
     [Pre-start checks](#pre-start-checks-part-present-orientation-and-setup).
 14. **Cameras for some probing tasks (Jason).** A camera on the machine, or held in the spindle like
-    a tool, linked to the Pi box, can do fast checks: presence, orientation, rough location,
+    a tool, linked to SolidCraft Edge, can do fast checks: presence, orientation, rough location,
     reading the serial. Precise sizes stay with the touch probe. Cameras must be kept clean with an
     air blast or a wash-and-dry cycle. See [Cameras](#cameras-instead-of-or-beside-the-probe).
 
@@ -406,7 +406,7 @@ Ways to get those values into the loop:
 - **Digital gauges**: many calipers, micrometers and indicators have a data output (USB,
   Bluetooth, or a wired "SPC" port); a gauge interface turns a button press into a value on a
   computer (unverified; varies by maker and is often proprietary).
-- **Tablet or edge device beside the machine**: the operator scans the traveller, the screen shows
+- **Tablet or SolidCraft Edge beside the machine**: the operator scans the traveller, the screen shows
   the characteristic to check with its limits, the operator enters or presses the gauge button.
 
 A thread go/no-go result can drive compensation too: when the go gauge fails on a milled
@@ -570,7 +570,7 @@ Standards that apply when a customer requires them:
 
 For SolidCraft this suggests (opinion): a "marking" feature in the model (a face, a location, the
 code type, the content template such as `{part}-{rev}-{serial}`), which CAM turns into an engrave
-toolpath and the edge device fills with the actual serial at run time.
+toolpath and SolidCraft Edge fills with the actual serial at run time.
 
 ## Accuracy
 
@@ -674,7 +674,7 @@ pending design-format file, with layering: data in `doc`, exchange in `io`, UI i
    correction limit, re-cut count and the offset to update, all filled from the model.
 4. **Decision logic in the program**: pass / correct / re-cut / stop, entirely in the control.
 5. **Output of every result** to a known place: DPRNT line, file, or a variable block, in a
-   documented format the edge device can parse. Proposed line format (opinion):
+   documented format SolidCraft Edge can parse. Proposed line format (opinion):
    `SC1,<serial>,<op>,<char#>,<value>,<lo>,<hi>,<decision>,<offset#>,<delta>`.
 6. **Feed back into the model of the process**: measured error per tool feeds the cutting
    physics (deflection estimates, tool wear rate) and the tool library's tool-life records
@@ -689,7 +689,12 @@ pending design-format file, with layering: data in `doc`, exchange in `io`, UI i
 5. Non-conformance: a rejected part's record links to the disposition (scrap, rework, use as is
    with concession).
 
-### The edge device: a Raspberry Pi at the machine
+### SolidCraft Edge: a Raspberry Pi at the machine
+
+**Name (Jason's decision):** the device is called **SolidCraft Edge**, because it sits on the edge
+of CAM and brings the machine and the automation back into CAM for closed-loop process
+improvement. Whether the SolidCraft name can be used on hardware is the maintainers' call (see
+the trademark question below).
 
 **What Jason proposes:** a small box that plugs into any machine with probing, connects to the
 network, stores reports in the cloud or on a corporate server, and prints a report locally to
@@ -706,9 +711,9 @@ travel with the part.
 | **OPC UA** (OPC 40501 Machine Tools) | Controls with an OPC UA server (Okuma OSP; Siemens, Heidenhain options; unverified per model) | per server | per server | Standard information model for monitoring and job management. |
 | **Network file share** | Most modern controls | files the program writes (unverified) | program files | Simplest on controls that can write to a share. |
 | **Operator entry** | All | hand-gauge values | nothing | Touch screen, keyboard, barcode scanner, gauge interface. |
-| Probe signal directly | none | — | — | The trigger only means something together with axis positions latched inside the control; the Pi cannot do this. |
+| Probe signal directly | none | — | — | The trigger only means something together with axis positions latched inside the control; SolidCraft Edge cannot do this. |
 
-**Design principle (opinion, strongly held):** the Pi **never writes compensation** to the
+**Design principle (opinion, strongly held):** SolidCraft Edge **never writes compensation** to the
 machine by default. Correction happens in the control's macro (fast, deterministic, works when
 the network is down). Optional "write-back" (e.g. push a corrected wear offset computed from a
 CMM result into FOCAS) is a separate, explicit, logged feature with limits, off by default.
@@ -775,7 +780,7 @@ store listings (Snap Store) but no shop. Paths, from least to most commitment:
 
 #### A commercial retrofit kit: "upgrade any machine"
 
-**Jason's idea:** commercialise a Pi package that also includes machine sensors (vibration,
+**Jason's idea:** commercialise a SolidCraft Edge package that also includes machine sensors (vibration,
 temperature) and coolant sensors (concentration by refraction, coolant temperature, and so on),
 to upgrade any machine while optimising production and quality. The kit is the hardware for
 [self-tuning CAM operations](#self-tuning-cam-operations) and for the per-part record; using the
@@ -795,7 +800,7 @@ predictive-maintenance research (topic "Predict machine failure and order mainte
 | Coolant pH / conductivity | electrode probes with transmitters | USD 50–500 | ageing and bacterial growth | electrodes foul in oily fluid and need cleaning (data-collection guide) |
 | Coolant and air pressure | 4–20 mA pressure transmitters | USD 30–100 each + ADC | through-spindle coolant failures, low air for tool changes | |
 
-**Kit tiers (opinion, rough totals including the box from the edge-device section):**
+**Kit tiers (opinion, rough totals including SolidCraft Edge from the section above):**
 
 - **Inspect** (records, traveller, printer, scanner, serial capture): about USD 400–1,200.
 - **Monitor** (+ accelerometer, 4–8 temperatures, power CTs, coolant temperature and level):
@@ -850,7 +855,7 @@ permission (opinion; check the project's trademark position).
 
 ### Machine monitoring: loads, torque and vibration
 
-**Jason's idea:** the Raspberry Pi box could also feed back machine vibration, loads and torques
+**Jason's idea:** the Raspberry Pi box (SolidCraft Edge) could also feed back machine vibration, loads and torques
 in real time, because some machines already output them. This closes the loop described in the
 [CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
 file ("The closed loop: measuring what was predicted") and the "MTConnect (shop) → library" row
@@ -859,13 +864,13 @@ interface table.
 
 **What the machine can give (fact where cited, otherwise unverified per control):**
 
-| Signal | Typical source | Rate the box can get | Compared with |
+| Signal | Typical source | Rate SolidCraft Edge can get | Compared with |
 |---|---|---|---|
 | Spindle load (% of rated) | control load meter via FOCAS, MTConnect, OPC UA, Haas data collection | polled, about 100–1,000 ms (the data-collection guide's figures) | predicted cutting power `Pc` against the spindle curve at that speed (machine library) |
 | Axis / servo loads | FOCAS servo load meters; MTConnect `Load` on axes (unverified per adapter) | polled, same | predicted feed forces `Fx`, `Fy`, `Fz` against axis thrust (machine library) |
 | Spindle torque | some controls report it, or derive from load % × rated torque at that speed (opinion) | polled | predicted `Mc` (cutting physics) |
 | Actual feed and speed, override % | all of the above | polled | the planned feed per segment (is the operator overriding it?) |
-| Vibration | **add-on** accelerometer on the spindle housing or table, read by the Pi itself; a few controls and spindles have built-in sensors (unverified) | sampled locally, kHz | tooth-passing frequency `n·z/60` and its harmonics vs chatter frequencies near the machine and tool modes (cutting physics, machine library) |
+| Vibration | **add-on** accelerometer on the spindle housing or table, read by SolidCraft Edge itself; a few controls and spindles have built-in sensors (unverified) | sampled locally, kHz | tooth-passing frequency `n·z/60` and its harmonics vs chatter frequencies near the machine and tool modes (cutting physics, machine library) |
 | Temperature | add-on sensors, or control thermal compensation values (unverified) | seconds | machine library's thermal growth and warm-up |
 
 Two practical limits (opinion, following from the rates above):
@@ -874,11 +879,11 @@ Two practical limits (opinion, following from the rates above):
   average load of a cut, not each tooth. That is enough to calibrate specific cutting energy
   (`kc1.1`) and check power and thrust margins, which is what the libraries need.
 - **Vibration needs its own sensor.** Chatter lives at hundreds to thousands of hertz, so it must
-  be sampled at the sensor (a MEMS or IEPE accelerometer and an ADC on the Pi) and reduced on the
+  be sampled at the sensor (a MEMS or IEPE accelerometer and an ADC on SolidCraft Edge) and reduced on the
   box to a few numbers per segment (RMS, dominant frequency, whether it is a tooth-passing harmonic
   or not). Raw waveforms stay local unless asked for.
 
-**What the box does with them (opinion):**
+**What SolidCraft Edge does with them (opinion):**
 
 1. **Time-align to the G-code and the timeline** (Jason's requirement; see
    [Aligning machine data with the G-code](#aligning-machine-data-with-the-g-code-and-the-timeline)).
@@ -900,13 +905,13 @@ Two practical limits (opinion, following from the rates above):
 **Staging (matches the CAM physics system file's closed loop):** first **record and compare**
 (this section), then **detect and alarm** (chatter onset, overload, broken tool flagged to the
 operator and the part record), and only later **feed adjustment**, and then only through the
-control maker's own adaptive-control interface, not from the box.
+control maker's own adaptive-control interface, not from SolidCraft Edge.
 
-**Corrections stay in the control.** The box monitors and learns; it does not change feeds,
+**Corrections stay in the control.** SolidCraft Edge monitors and learns; it does not change feeds,
 speeds or offsets while the machine runs. Real-time feed adjustment from load (adaptive control)
 exists as control options and commercial products, runs inside or beside the control with
 deterministic timing, and is safety-relevant. A Linux Pi on a network is not a real-time
-controller. If a shop wants the box to act, the safe forms are (a) a recommendation shown to the
+controller. If a shop wants SolidCraft Edge to act, the safe forms are (a) a recommendation shown to the
 operator or the CAM programmer for the next run, and (b) an alarm output (a dry contact into a
 control input that the program checks at a safe point, e.g. "stop after this tool"), designed
 and wired by the machine's integrator. Both are opinions, and (b) needs the machine builder's
@@ -918,13 +923,13 @@ approval.
 exact events can be located. A load spike is only useful if you can say "block N4520, T7, second
 finishing pass on the pocket wall, 41.2 s into Op 20, part SN000123".
 
-**Keys every record carries (opinion):** wall-clock time (UTC, with the box's clock synchronised
+**Keys every record carries (opinion):** wall-clock time (UTC, with SolidCraft Edge's clock synchronised
 by NTP, or PTP where the plant has it), machine, program name and revision, **block or line
 number**, **CAM segment ID**, operation, tool number, machine position, active work offset,
 spindle speed, feed and override, and the part serial. The physics predictions are indexed by the
 same keys, so measured and predicted values line up row by row (the same scheme as the
 [CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
-file's self-tuning loop). Clock drift between the box and the control is corrected at known
+file's self-tuning loop). Clock drift between SolidCraft Edge and the control is corrected at known
 events: program start, each tool change and each reported block number.
 
 **Where the program position comes from:**
@@ -936,7 +941,7 @@ events: program start, each tool change and each reported block number.
   poll delay (100–1,000 ms), so they locate a segment, not a single tooth.
 - **Written by the post-processor (more reliable, opinion).** CAM numbers its segments and the
   post writes the segment ID into a macro variable (or emits an N number) at the start of each
-  segment; the box reads that variable, or the program prints a short marker line (DPRNT) at key
+  segment; SolidCraft Edge reads that variable, or the program prints a short marker line (DPRNT) at key
   points such as tool changes, probe cycles and the start of each finishing pass. The same ID
   exists in CAM's simulation, so measured data lines up with predicted data segment by segment.
   Markers should be sparse: output statements can interrupt look-ahead on some controls and leave
@@ -959,7 +964,7 @@ events: program start, each tool change and each reported block number.
   programmer learns where a program was too timid or too aggressive.
 
 **Hardware addition (opinion):** an accelerometer kit (a magnetic-mount IEPE accelerometer and a
-24-bit ADC board, or a MEMS sensor for a low-cost version) adds roughly USD 50–400 to the box
+24-bit ADC board, or a MEMS sensor for a low-cost version) adds roughly USD 50–400 to SolidCraft Edge
 (unverified; prices move). Mount position and cable routing away from coolant matter more than
 sensor grade for chatter detection.
 
@@ -1071,8 +1076,8 @@ pays for many hours of them (opinion).
 
 ### Cameras instead of, or beside, the probe
 
-**Jason's ideas:** use a digital camera for some probing tasks, for speed and flexibility. The Pi
-box could link wirelessly to a camera mounted in the machine, or the camera could be held in the
+**Jason's ideas:** use a digital camera for some probing tasks, for speed and flexibility. SolidCraft Edge
+could link wirelessly to a camera mounted in the machine, or the camera could be held in the
 mill spindle like a tool so it can be positioned for inspection. Cameras need keeping clean with an
 air blast or a wash-and-dry cycle.
 
@@ -1103,7 +1108,7 @@ where the tolerance needs it.
   position. Spindle-mounted imaging units have existed since at least 2005 (OptoVue: imager,
   optics and lighting in a standard tool holder, about 10 µm resolution, used to locate the
   workpiece). Needs: the spindle locked (oriented, not turning), power from a battery, a wireless
-  link to the Pi, and coolant off with the part blown dry before imaging.
+  link to SolidCraft Edge, and coolant off with the part blown dry before imaging.
 - **Wireless link:** Wi-Fi or Bluetooth from inside a steel enclosure can be weak. An antenna
   through the enclosure wall, or a window, fixes most cases (unverified; site-dependent). For a
   spindle camera, take the image, store it on the camera, and send it after the camera returns to
@@ -1112,7 +1117,7 @@ where the tolerance needs it.
   image quality check fails (the software can measure blur and contrast on a known target), and a
   covered parking position.
 
-**On the Pi:** Raspberry Pi cameras connect directly to the board, and OpenCV (Apache-2.0) covers
+**On SolidCraft Edge:** Raspberry Pi cameras connect directly to the board, and OpenCV (Apache-2.0) covers
 the standard vision tasks: template matching for presence and orientation, edge and circle finding
 for rough positions, and DataMatrix decoding with an open library. The camera calibration (pixel
 size, lens distortion, position relative to the spindle) is done once on a calibration target and
@@ -1168,7 +1173,7 @@ the design gets iteratively better in performance, time, cost and quality.
    limits and a method (probe, gauge, CMM) automatically. The user reviews and edits; nothing is
    typed twice.
 2. **No connector setup.** Results arrive through whichever path the machine already has (DPRNT,
-   network, file share, operator entry on the edge box). Adding a machine is choosing its control
+   network, file share, operator entry on SolidCraft Edge). Adding a machine is choosing its control
    family from a list.
 3. **Results on the model.** Each feature is coloured by its result (centred, drifting, out),
    with the trend across serials one click away. A surface inspection shows a deviation map, not
@@ -1223,7 +1228,7 @@ Rules for the loop (opinion):
 
 ### Self-tuning CAM operations
 
-**Jason's idea:** call it *self-tuning CAM operations*: the live machine data from the edge box,
+**Jason's idea:** call it *self-tuning CAM operations*: the live machine data from SolidCraft Edge,
 aligned to the G-code, tied into in-process inspection, "so that we can go harder without
 affecting accuracy or surface finish". It is the closed loop of the
 [CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
@@ -1348,7 +1353,7 @@ In QIF terms: `kind`/`spec`/limits are a characteristic definition and nominal (
    in what reduced form, if shops want to improve the shared libraries?
 6. **How to label on-machine results**: block them from "final acceptance" unless a correlation
    is recorded, or just label the method?
-7. **The edge device**: does the project want an official hardware path at all, or only an open
+7. **SolidCraft Edge**: does the project want an official hardware path at all, or only an open
    data format that any device (Pi or otherwise) can implement?
 8. **Trademark**: may third parties use "SolidCraft" in a product name ("for SolidCraft")?
 9. **Jason's TODO**: personal shop experience, and which controls (Haas, Fanuc, others) his shop
@@ -1383,7 +1388,7 @@ Probing and machines:
 - Autodesk blog, using a Renishaw spindle probe with CAM: https://www.autodesk.com/products/fusion-360/blog/top-tips-using-autodesk-fusion-with-renishaw-spindle-probe/
 - Tormach forum, updating tool diameter after probing a bore: https://forums.tormach.com/t/a-way-to-update-the-tool-diameter-or-use-wear-to-update-the-tool-after-probing-a-bore/1345
 
-Connectivity and the edge device:
+Connectivity and SolidCraft Edge:
 
 - CNC data collection: FOCAS, MTConnect and NC protocols: https://industrialmonitordirect.com/blogs/knowledgebase/cnc-data-collection-deep-dive-focas-mtconnect-and-nc-protocols
 - Fanuc FOCAS2 library: https://www.fanucamerica.com/products/cnc/cnc-software/machine-tool-builder-software/focas2-library
