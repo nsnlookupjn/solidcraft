@@ -87,22 +87,28 @@ findings and shop experience.
    function of **direction and time in the cycle**, and the feed (and where possible the
    direction of cut) is adjusted at each step to keep the load at the best value the weakest link
    allows in that direction.
-4. **Sequence is part of the physics.** As stock is machined away it becomes weaker and can
+4. **The goal is steady maximum load (Jason's philosophy).** The system is not a safety
+   brake that averages everything down. Its goal is to load the tool and the machine **to the
+   limit and keep them there**: deep and fast where the physics allows, no time cutting air, and
+   no sudden spikes in tight corners or lead-ins, because machines do not wear faster under high
+   steady load, they suffer from sudden crash-type loads. Tools are cheap; cycle time and
+   broken tools are not. The cutting physics file states this in Jason's words.
+5. **Sequence is part of the physics.** As stock is machined away it becomes weaker and can
    deform. Planning the **order of cuts** so the stock stays stiff while forces are high, and
    balancing stock integrity against tool force and holding force, is part of the same
    optimisation (Jason's idea, topic 4).
-5. **One slider for the whole chain.** Jason's conservative ("I don't trust this") to aggressive
+6. **One slider for the whole chain.** Jason's conservative ("I don't trust this") to aggressive
    ("I don't care if I break a tool or two") slider moves the safety factors on **every** link
    at once, never below hard floors, and missing data pulls a link toward conservative.
-6. **Every result names its limit.** The system's most useful output for a novice is not the feed
+7. **Every result names its limit.** The system's most useful output for a novice is not the feed
    but the sentence beside it: "limited by the vise: the part would slip along the jaws above
    this feed". That puts an experienced machinist's knowledge into the program.
-7. **The simulation enforces the physics (Jason's point).** The physics model is built into
+8. **The simulation enforces the physics (Jason's point).** The physics model is built into
    the toolpath simulation, so the same rules are followed through the whole program before it
    reaches the machine. A novice's toolpath that would break a tool, move the part, stall the
    spindle or overload the machine is caught in simulation, shown at the move where it happens,
    and blocked from posting until it is fixed or deliberately accepted.
-8. **The request: physics as the cradle.** The cheapest moment to build this is before the CAM
+9. **The request: physics as the cradle.** The cheapest moment to build this is before the CAM
    exists. If SolidCraft's CAM starts with a setup that carries physical data, toolpath
    generators that report engagement per segment, and one limits engine, then each topic can
    land as an increment. If CAM starts from presets, the same work later means reworking every
@@ -296,6 +302,23 @@ The inner loop, per step `i` of a toolpath, on the in-process stock:
    not allowed to reach maximum torque on a cold machine. The slider cannot override this gate.
 6. **Record the binding link** (which link and which direction set `s`) on the segment, so the
    result can explain itself.
+
+**What the solver optimises (Jason's philosophy).** Within the limits, the objective is the
+**highest steady load**, not the lowest risk:
+
+- **Push up to the limit everywhere.** A segment whose load is well under its binding limit is
+  lost time; the solver raises feed, and the middle loop prefers deeper or wider cuts, until a
+  limit binds. Moves in air (no engagement in the in-process stock) run at the fastest safe feed.
+- **No spikes.** The inner loop runs fine enough to catch the sudden rise in engagement at tight
+  corners, lead-ins and entry into material that an incomplete simulation misses; there the
+  solver smooths the load (slows only the few moves that need it, or asks the path planner for a
+  rounder corner or a gentler entry) instead of letting the tool take a short overload.
+- **Smooth feed changes.** Feed changes are limited in rate so the axes and spindle see a steady
+  load, not steps.
+
+The slider sets *which* limit is "the limit"; at every slider position the aim is the same:
+steady, maximum, spike-free load. Force models and Jason's statement are in the cutting physics
+file.
 
 The middle loop tries alternatives where the inner loop found a weak direction (cut toward the
 fixed jaw, ramp instead of plunge, a stiffer tool) and keeps the one with the shortest time that
