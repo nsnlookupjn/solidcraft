@@ -419,6 +419,47 @@ so the user learns why a cut is slow.
 compared with predicted power would show whether the shop can move the slider, and could refine
 `kc1.1` for that material over time.
 
+### Tools with unknown physics (Jason's question)
+
+*"What if a tool is unknown for its physics? Can we have standard physics for like a 1/2" HSS end
+mill, or can the system handle a non-physics defined tool?"*
+
+**Most of the physics belongs to the work material, not the tool.** Cutting force comes from
+`kc1.1`/`mc` of the material (section 3); the tool only contributes geometry (diameter, flutes,
+rake, helix, lengths), its substrate's stiffness and its limits. So a tool with no vendor data
+still gets usable physics once its basic geometry is known (opinion, following from the formulas
+above).
+
+Proposed fallback tiers (opinion):
+
+| Tier | What is known | Where the rest comes from |
+|---|---|---|
+| 1. Vendor | Catalogue entry (GTC/ISO 13399) and vendor cutting data | Vendor |
+| 2. Generic class | Tool type (square/ball/bull end mill, drill…), substrate (HSS, cobalt HSS, carbide), coating, flute count, diameter | A built-in or shared **generic class** with typical rake, helix, core-diameter ratio, `E` (HSS ≈ 200–220 GPa, carbide ≈ 600–650 GPa per section 6) and a typical `vc`/chip load range per ISO material group from public handbook tables (to be sourced; unverified values not given here) |
+| 3. Measured geometry only | The user's own diameter, flutes, stick-out, maybe a photo | Tier 2 defaults for everything else |
+| 4. Nothing | A tool number and a diameter | Physics checks run with tier 2 defaults for "end mill, HSS, 2 flutes" and say so, or the user types feeds by hand and the program only checks hard limits |
+
+So a "1/2 in HSS 4-flute end mill" is a valid tool on its own: tier 2 fills in everything else.
+
+**Every value carries a confidence label:** vendor, measured, generic or assumed. Results show
+which labels they depend on ("feed limited by deflection; core diameter assumed").
+
+**Unknown tools are derated automatically.** Any limit that depends on a generic or assumed value
+is capped at the conservative end of the slider, whatever the user chose, until better data
+exists. This fits the novice point above: a tool nobody has described is exactly where a novice
+gets hurt.
+
+**Learning the tool over time:** spindle load during the cut (from the controller or a monitor)
+compared with predicted power refines the force estimate; measured deflection, surface finish and
+part inspection results refine stiffness and chip load; tool life records refine Taylor
+constants. Each refinement moves the field from "generic" to "measured" and lifts the derating
+for that tool (opinion; the data path is open question 3 and the machine library file).
+
+**Where generic classes live:** they are natural shared entries in the cloud catalogue proposed in
+[the tool library file](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-tool-library/research/cam-research-nsnlookupjn-tool-library.md):
+a "generic HSS square end mill" class next to vendor part numbers, which a shop's own tool can
+reference and then override field by field.
+
 ### Outputs for workholding (shared with the workholding file)
 
 The workholding research uses these as inputs, per toolpath move or segment (opinion; agreed
