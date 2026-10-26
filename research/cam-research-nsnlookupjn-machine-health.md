@@ -36,7 +36,24 @@ maintenance work order. Reading and writing the control is in the interfaces not
 Edge**, because it sits on the edge of CAM and brings the machine and its automation back into
 the CAM for closed-loop process improvement. It is a working name: using "SolidCraft" on a
 product needs the maintainers' agreement (see the inspection file's notes on offering the
-device).
+device). The device itself is defined in the inspection file's section
+[SolidCraft Edge: a Raspberry Pi at the machine](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md#solidcraft-edge-a-raspberry-pi-at-the-machine).
+
+**What SolidCraft Edge does, in Jason's description, and what this file uses it for.** Jason
+describes it as an edge computer on a Raspberry Pi 5, programmed in Rust, with a monitor,
+keyboard, mouse and printer, built for reliability, low latency and safe continuous operation.
+Its five functions, mapped to this file:
+
+| Function (Jason's spec) | Used here for |
+|---|---|
+| 1. **Data acquisition** from the CNC (spindle speed, position, temperature) and physical sensors over serial, Modbus or Ethernet machine interfaces | the signals behind every finding: spindle and axis load, vibration, temperatures, coolant sensors, the fingerprint cycle |
+| 2. **Machine communication**: commands and status requests to the CNC | status reads; a stop request at the next safe point or a tool-check flag, **only** where the interfaces note's [safety model](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#writing-to-the-control-the-safety-model) allows it; never feed, speed or offset changes |
+| 3. **Data transmission to the CAM station** (REST API, MQTT or WebSocket) | per-segment residuals, trends and findings sent to SolidCraft, where the machine library's shop instance and the CAM react (deratings, self-tuning hold, tool histories) |
+| 4. **Visual display**: real-time dashboard of machine state, alerts and production metrics | the machine's health page at the machine: open findings, alerts graded note/watch/act/stop, tool flags, coolant state, next planned checks |
+| 5. **Report printing**: production logs, maintenance summaries, quality checks | printed maintenance tickets and maintenance summaries, alongside the part travellers the inspection file prints |
+
+The operator uses the keyboard and mouse to acknowledge alerts, enter hand checks (coolant
+refractometer readings, tests done) and close maintenance tasks with what was found and done.
 
 Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of CONTRIBUTING.md).
 
@@ -661,12 +678,15 @@ hand refractometer check, logged as a manual test, keeps the inline sensor hones
   SolidCraft's findings, so builder-scheduled maintenance and condition-based findings sit on one
   list. Writing SolidCraft's own prognoses into a control's server is not something the standard
   invites (opinion, unverified); keep them in SolidCraft's record and the CMMS.
-- **No CMMS.** Email, a message to a chat channel, or a printed maintenance ticket from the edge
-  box's label printer (the same printer that prints part travellers), with a QR code back to the
-  evidence.
-- **The machine's health page in SolidCraft**: open findings, trend charts, the last
-  fingerprint, maintenance done, and the next planned checks; the shop instance in the machine
-  library holds them.
+- **No CMMS.** An alert on SolidCraft Edge's dashboard at the machine, email, a message to a
+  chat channel, or a printed maintenance ticket from SolidCraft Edge's printer (the same printer
+  that prints part travellers), with a QR code back to the evidence. A weekly printed
+  **maintenance summary** per machine (open findings, trends, work done, next checks) suits shops
+  that run maintenance from a clipboard (opinion).
+- **The machine's health page**, in SolidCraft on the CAM station and on SolidCraft Edge's
+  dashboard at the machine: open findings, trend charts, the last fingerprint, maintenance done,
+  and the next planned checks; the shop instance in the machine library holds them, and
+  SolidCraft Edge keeps a local copy so the page works when the network is down (opinion).
 
 **Closing the loop.** The person who does the work closes the order with what they found and
 did (bearing replaced, lube line cleared, coolant corrected, nothing found). The monitor checks
@@ -755,7 +775,10 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
   data must never stop a CAM job from being planned; it only removes the health-based deratings
   and says so.
 - **Rust only, wasm-safe below the apps.** Feature extraction (RMS, spectra, envelope, EWMA) is
-  ordinary numeric code that fits the engine layers; the SolidCraft Edge service is separate.
+  ordinary numeric code that fits the engine layers. SolidCraft Edge is programmed in Rust
+  (Jason's spec), so the same feature, residual and trend code can be shared crates used by
+  both SolidCraft and SolidCraft Edge, with the device-specific parts (drivers, display,
+  printing) in SolidCraft Edge alone (opinion).
 
 ## Glossary
 
