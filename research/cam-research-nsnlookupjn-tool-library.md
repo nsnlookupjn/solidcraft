@@ -75,11 +75,13 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 5. **The complaints are consistent:** tools re-entered in every program, duplicates, CAM library
    and machine tool table drifting apart, holders missing geometry. A shared catalogue plus
    per-shop assemblies plus scannable tags addresses all four.
-6. **Four requirements from Jason (2026-10-26), covered under Fundamentals below:** the library
+6. **Requirements from Jason (2026-10-26), covered under Fundamentals below:** the library
    and the tags record **which insert and grade** is in an indexable tool right now; a tool can
    be added by **AI reading its datasheet**, with a person approving every value; a **custom tool
    with its own 3D model** is a first-class entry; and a library can be **locked to a machine or
-   machine group**, including a fixed, preloaded tool set that doesn't change.
+   machine group**, including a fixed, preloaded tool set that doesn't change. The assembly's
+   geometry must be **exact** for simulation, clearance and collision checks, and can be
+   **verified with photos or 3D scans**.
 
 ## Fundamentals
 
@@ -341,6 +343,71 @@ be able to add a custom tool including 3d model".*
     non-revolved tools (e.g. some turning tools) keep the 3D model only.
   - A custom tool can stay private or be **submitted to the shared catalogue** with its model,
     under a licence the submitter chooses.
+
+### Exact geometry for simulation, collision and clearance
+
+*Jason's requirement: the tool library is critical for simulation and toolpath calculation, where
+holder, shank and flute constraints are monitored for clearance and collisions. The physical
+model must be exact for best performance and safety. Consider 3D scans and photos from the user
+to verify the tool assembly geometry against the library.*
+
+**Why exactness matters (opinion, following from the uses below):**
+
+- **Toolpath calculation** uses the cutting zone: `DC`, corner radius `RE`, flute length `APMX`
+  (no cutting above it), and for ramps and helices the centre-cutting ability and maximum ramp
+  angle. A wrong `APMX` lets the CAM plan a cut on the non-cutting shank.
+- **Clearance and collision** use everything above the flutes, as separate zones with
+  different rules: **flutes** (may touch stock only where they cut), **neck/shank** (reduced
+  neck diameter and `LU` usable length decide reach in deep pockets; may never touch stock),
+  **holder and extensions** (never touch stock, workholding or the machine, with a clearance
+  margin), and the **spindle nose** (machine library). Each zone gets its own clearance distance.
+- **Gauge length and stick-out** set where all of these sit in Z. An error here (complaint 7)
+  moves every zone at once, which is why the length is computed and checked against the
+  measured tool-setter length.
+- **Simulation** removes stock with the cutting zone and checks the rest for gouges and
+  collisions; it is only as good as the model. Fusion, for example, uses the parametric P21 data
+  and not the STEP model in GTC packages
+  ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-TOOL-LIBRARY-IMPORT.htm)),
+  so a vendor's real holder shape can be lost on import.
+- **Physics** uses the same geometry: stick-out and neck diameter set stiffness and deflection,
+  and holder and tool geometry feed the tool-tip FRF for chatter prediction
+  ([Schmitz et al., 2023](https://mtrc.utk.edu/wp-content/uploads/sites/45/2022/10/RCSA-review.pdf)).
+
+**Proposed rules (opinion):**
+
+- A tool assembly has an **exactness level**: *exact* (vendor 3D model or measured), *parametric*
+  (ISO 13399 dimensions, revolved), or *envelope* (only `DC`, length and a holder cylinder).
+  Collision checks against an *envelope* add a larger safety margin, and the setup sheet shows
+  which tools are not *exact*.
+- **Measured beats nominal:** tool-setter length and diameter replace nominal values for the
+  assembly, and a difference above a tolerance flags the assembly for checking.
+- **Safety-critical jobs can require exact geometry** for every tool before the program is
+  released (fits the "hard limits" idea in the CAM physics system file).
+
+**Verifying the assembly with 3D scans and photos (opinion; methods to be tested):**
+
+- **Photos (lowest cost):** a phone photo of the assembly beside a scale reference, or on a
+  printed calibration card, taken side-on. SolidCraft finds the silhouette and compares it with
+  the library's assembly profile: stick-out, neck length, holder type and nut, extension present
+  or not. This catches gross errors (wrong holder, wrong extension, stick-out off by several mm),
+  not fine ones. Photo-based measurement accuracy depends on resolution, lens distortion and
+  scale reference (achievable accuracy (unverified); to be measured).
+- **Tool presetter images:** many optical presetters already capture a silhouette of the tool
+  at high magnification (unverified which export the image or profile); importing that profile
+  gives a measured outline at presetter accuracy.
+- **3D scans:** a structured-light or laser scan (or phone photogrammetry) of the assembly gives
+  a mesh that SolidCraft aligns to the library model on the spindle axis and compares surface to
+  surface, showing a colour map of deviations. Shiny carbide and ground holders can scan poorly
+  without a matting spray (unverified for each scanner type). Good for checking custom
+  holders, extensions and form tools, and for creating an *exact* model of a tool with no vendor
+  model.
+- **What the check produces:** a pass/fail against tolerances per zone (e.g. holder envelope,
+  stick-out, neck diameter), stored on the assembly with the date and method, so the exactness
+  level and the evidence are visible. A tag scan at load can show "geometry verified by scan on
+  2026-10-26".
+- **Privacy:** scans and photos are of tools, not parts, so they fall under the same sharing
+  rule as tool data (see "Closing the loop with SolidCraft Edge"); a verified scan of a
+  catalogue tool can be offered to the shared catalogue as an *exact* model.
 
 ### Machine-scoped libraries and fixed tool sets
 
