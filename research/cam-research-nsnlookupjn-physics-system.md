@@ -84,7 +84,12 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 6. **Every result names its limit.** The system's most useful output for a novice is not the feed
    but the sentence beside it: "limited by the vise: the part would slip along the jaws above
    this feed". That puts an experienced machinist's knowledge into the program.
-7. **The request: physics as the cradle.** The cheapest moment to build this is before the CAM
+7. **The simulation enforces the physics (Jason's point).** The physics model is built into
+   the toolpath simulation, so the same rules are followed through the whole program before it
+   reaches the machine. A novice's toolpath that would break a tool, move the part, stall the
+   spindle or overload the machine is caught in simulation, shown at the move where it happens,
+   and blocked from posting until it is fixed or deliberately accepted.
+8. **The request: physics as the cradle.** The cheapest moment to build this is before the CAM
    exists. If SolidCraft's CAM starts with a setup that carries physical data, toolpath
    generators that report engagement per segment, and one limits engine, then each topic can
    land as an increment. If CAM starts from presets, the same work later means reworking every
@@ -292,6 +297,42 @@ dexel or voxel in-process stock and beam/plate estimates for stiffness (no B-rep
 also keeps this out of the paused kernel work), and allow an FEA check from the FEA research
 (#1620) as an optional, slower, more accurate stock model later.
 
+### Physics in the simulation: the gate before G-code (Jason's point)
+
+The rules above are only useful if nothing gets past them. Jason's requirement: the physics
+model is **built into the simulation**, so the rules are followed through to the end and a
+novice's toolpath error cannot kill the work, the tools or the machine.
+
+What that means in practice (opinion on the method):
+
+- **One model, two uses.** The simulation that removes material and checks collisions uses the
+  same in-process stock, setup and limits engine as the feed calculation. It does not keep its
+  own simplified copy, so what is simulated is exactly what is checked.
+- **Every move is checked, including moves the optimiser did not write.** Hand edits, imported
+  toolpaths, rapids, plunges, linking moves, a feed typed over the calculated one, a tool or
+  hold changed after the toolpath was computed: the simulation re-runs the inner loop over the
+  final program, so a later change cannot silently break a limit.
+- **The checks are physical, not only geometric.** Besides gouges and collisions, the
+  simulation flags, at the move where it happens: tool or holder overload, spindle torque or
+  power above the curve at that speed, full torque on a cold machine, axis thrust above the
+  machine's limit, slip, lift, tip or turn of the hold, a wall that deflects out of tolerance or
+  rings, a full-width slot or plunge the tool cannot take, minimum chip thickness (rubbing).
+- **Severity, with the binding limit named.** *Stop* (would break or move something: tool,
+  part, hold, machine), *Warn* (out of tolerance, chatter risk, short tool life), *Info*
+  (assumed data used). Each item says which link, which direction and by how much, and offers
+  the fix the solver found (lower feed on these moves, cut toward the fixed jaw, re-order these
+  operations, raise vise torque to X N·m).
+- **A gate before posting.** Posting G-code requires a simulation with no open *Stop* items.
+  An expert can accept a *Stop* item deliberately, with a reason, and the acceptance is recorded
+  with the program and printed on the setup sheet or part traveller (inspection file). The
+  slider changes where *Warn* starts; it never removes a *Stop* on a hard limit.
+- **Novice default.** New users start conservative, with the gate on; the gate cannot be
+  switched off globally, only accepted item by item.
+
+In SolidCraft terms this is one more command (a physics-checked simulation whose output is the
+list of findings), and the post-processor command refuses, with a clear error and not a panic,
+when there are unaccepted *Stop* findings.
+
 ### One slider for the whole chain
 
 The cutting physics file defines the slider and its table for the tool and spindle; the
@@ -372,6 +413,7 @@ in the CAM core from the start.
 | 3. Workholding | capacity envelope per direction, torque window, best-hold suggestion, direction-aware feed | 3 | the novice's biggest blind spot; the real-time force-vector negotiation |
 | 4. Machine | axis thrust and stiffness, rotary clamp torque, machine modes | 5 | the same job judged correctly on different machines |
 | 5. Stock integrity | stock stiffness as it is cut, deflection and wall modes, cut-order planning, re-clamp before finishing | 4 (+ FEA #1620) | thin parts; balancing stock against tool and hold |
+| (every phase) Simulation gate | each phase's checks run over the final program in simulation, and *Stop* findings block posting | all | novice errors are caught before they reach the machine, from the first phase on |
 | 6. Closed loop | spindle load and probing feedback into shop instances | inspection file | lets the shop trust and move the slider |
 
 ### The request to the maintainers
@@ -392,6 +434,10 @@ designed around this system from the start:
    with a public schema, so contributors can add products the way the topic files describe.
 5. **Explain every number.** Every computed feed, torque or recommendation carries the limit
    that set it and whether its inputs are measured, catalogue or assumed.
+6. **Physics in the simulation, as a gate.** The toolpath simulation uses the same setup, stock
+   and limits engine, checks every move of the final program (including hand edits and linking
+   moves), and posting G-code requires no open *Stop* findings unless an expert accepts them
+   with a recorded reason.
 
 None of this requires the physics itself to be finished first; it asks that the first CAM code
 leave room for it in the right places.
@@ -402,6 +448,8 @@ leave room for it in the right places.
 - **Capacity envelope:** the allowed force and moment in each direction for a hold (topic 3) or
   a link generally.
 - **Compliance:** inverse of stiffness (µm/N); compliances add in a series load path.
+- **Gate (simulation gate):** the rule that a program cannot be posted while the physics-checked
+  simulation has unaccepted *Stop* findings.
 - **Engagement:** how much of the tool is in the material (radial width `ae`, axial depth `ap`,
   entry and exit angles).
 - **In-process stock:** the stock as it is at a given point in the cycle.
