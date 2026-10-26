@@ -355,8 +355,10 @@ and are placeholders, not a design):
      tolerance, with the reason in plain words and the fix;
    - a program that fails a **hard** workholding limit (below the slider floor, past the vise's
      maximum force, moment over the rotary clamp torque) cannot be posted to G-code until it is
-     fixed; the user may only override with an explicit, recorded acknowledgement (opinion on
-     whether to allow even that is an open question);
+     fixed, unless the user **overrides** it (Jason's decision): the override shows a disclaimer
+     naming the limit, the step and the margin, and records the approval (who, when, which
+     limit, by how much) in the design and on the setup sheet, so the decision can be traced
+     later;
    - **soft** findings (margin below the chosen slider setting) are fixed automatically by the
      feed optimiser where possible and listed where not;
    - the setup sheet carries the conditions the simulation assumed (hold, torque, grip depth,
