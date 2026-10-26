@@ -287,6 +287,40 @@ Two separate roles:
   *warm*: the first for the bearings, the second for thermal size. The workholding and system
   files use the same gate.
 
+### Signals the machine publishes (for the closed loop)
+
+Jason's idea (workholding thread): an **edge box at the machine** feeds back vibration, loads and
+torques in real time, so the plan can be checked and corrected against what really happens.
+What can be measured depends on the control, so each machine entry lists its signals.
+
+- **MTConnect.** Supported natively or through an agent/adapter on many controls (Haas, Mazak,
+  DMG Mori, Okuma; Fanuc, Siemens and Heidenhain through an agent) (IronFlock docs). Data items
+  are SAMPLE (continuous: position, spindle speed, feed rate, power, temperature), EVENT (mode,
+  program, tool change) and CONDITION (normal, warning, fault). Whether a given machine publishes
+  spindle or axis load must be checked in its `/probe` response. The agent serves current values
+  and a buffered stream over HTTP; sample rates are set by the adapter (not documented in the
+  sources read; unverified).
+- **OPC UA for Machine Tools (OPC 40501-1, umati).** An information model for monitoring and job
+  management: machine and channel state, spindles, tools and tool life (OPC Foundation reference,
+  v1.02). Whether spindle load is in its spindle monitoring type was not confirmed.
+- **Maker interfaces.** Fanuc FOCAS exposes, among others, `cnc_rdspload` (serial spindle load)
+  and `cnc_rdspeed` (actual feed and spindle speed) (Cybus connector docs). Haas has its own data
+  collection methods in its control manuals (page could not be fetched; unverified).
+- **What the controls do not give.** Control interfaces are polled, typically at tens to
+  hundreds of milliseconds (opinion, unverified per control), which is enough for load and power
+  trends but far too slow for chatter: tooth-passing frequencies are hundreds of hertz to kilohertz,
+  so **vibration needs an added accelerometer** (or microphone) sampled at kilohertz rates in the
+  edge box (opinion, from `f_tp = n · z / 60`: 10000 rpm × 3 teeth = 500 Hz).
+- **What the library stores (opinion).** Per machine model and control version: protocol(s);
+  each published signal (spindle load, spindle power, axis load per axis, actual feed, actual
+  speed, temperatures, alarms) with unit, meaning (e.g. "% of S1 rating") and typical update
+  rate; and per shop instance the endpoint and any added sensors (type, position, sample rate).
+  The closed loop uses only signals the entry says exist, and labels everything else as
+  predicted, not measured.
+- **Uses.** Calibrating `kc` and the torque curve from measured spindle power; detecting chatter
+  from the vibration spectrum near `f_tp`; checking that axis load stays under thrust; logging the
+  measured load per operation into the part traveller (in-process inspection file, unverified link).
+
 ### Accuracy, thermal growth and wear
 
 - **Positioning accuracy and repeatability** of linear and rotary axes are tested to ISO 230-2
@@ -423,6 +457,7 @@ deflection, **C** chatter, **V** feed/cycle time, **G** geometry/collision, **W*
 | Dynamics | dominant modes per direction `(f_n, ζ, k)`; spindle-machine receptances for RCSA (shop instance) | Hz, –, N/µm | C |
 | Warm-up | routine steps `(n, duration)`, idle time before it is needed again, cold derating of `M`, `P`, `n_max`; shop instance: last warm-up time | rpm, s, – | P H |
 | Accuracy | positioning accuracy and repeatability per axis (ISO 230-2 / 10791-4 style), ballbar result, thermal drift | µm | H |
+| Signals | protocols (MTConnect, OPC UA, maker API); per signal: name, unit, meaning, update rate; shop: endpoint, added sensors and sample rate | –, Hz | closed loop |
 | Control | look-ahead, smoothing/tolerance modes, corner behaviour if known | | V |
 | 3D model | link to model (STEP/STL), part-to-axis mapping, tool attach point, table frame, licence | | G |
 
@@ -443,7 +478,8 @@ physics file's "Machine" row).
 | Machine → workholding | rotary brake/clamp torque, table load, mounting frames | N·m, kg, frame | brake is part of the hold |
 | Machine → simulation | kinematics, travel limits, 3D model and axis mapping | mm, rad | collision and travel checks |
 | Cutting physics → machine check | `Mc`, `Pc`, `Fx`, `Fy`, `Fz`, `n` per step | N·m, W, N, rpm | compared with the limits above |
-| MTConnect (shop) → library | measured spindle load, axis load, actual feed | %, mm/min | calibrates the shop instance |
+| Machine → closed loop / edge box | list of signals the control publishes, with units and rates; added sensors | –, Hz | what can be measured on this machine |
+| MTConnect / OPC UA / edge box (shop) → library | measured spindle load, axis load, actual feed, vibration | %, mm/min, m/s² | calibrates the shop instance |
 
 The feed for each step is set by the smallest of the limits:
 `min(tool, holder, spindle(n), machine axes, workholding, stock)`, as in the system overview.
@@ -589,6 +625,11 @@ All accessed 2026-10-26.
   [mmsonline.com](https://mmsonline.com/articles/how-to-stabilize-machining-with-tap-testing)
 - VERICUT 6.0 includes showroom of popular machines and controls (2006). *Digital Engineering*.
   [digitalengineering247.com](https://www.digitalengineering247.com/article/vericut-6-0-includes-showroom-of-popular-machines-and-controls)
+
+- IronFlock, MTConnect collector docs. [ironflock.com](https://ironflock.com/en/docs/factory-data-extraction/mtconnect-collector/)
+- OPC Foundation, OPC 40501-1 Machine Tools: Monitoring and Job Management (v1.02).
+  [reference.opcfoundation.org](https://reference.opcfoundation.org/MachineTool/v102/docs/1?n=1)
+- Cybus, FOCAS connector docs. [docs.cybus.io](https://docs.cybus.io/connectors/shop-floor-connectors/focas.md)
 
 ### Community sources
 
