@@ -566,6 +566,26 @@ not cloud-only; holders with real geometry; one source of truth for tool numbers
   per catalogue item (geometry, 3D model, substrate and coating, cutting data with valid range,
   verified by shop results), and tools with incomplete data are derated and ranked lower. This
   gives vendors a direct reason to publish good data instead of aggressive headline numbers.
+- **Vendors as physics-data contributors (the author's request):** vendors should be encouraged
+  to provide **real-world physics data** for their tools, not just geometry and start values.
+  Proposed (opinion):
+  - A **vendor data profile** in the shared catalogue for each tool family: measured force
+    coefficients (`kc1.1`/`mc` or the six edge-force coefficients) per ISO 513 material group,
+    with the test conditions (machine, holder, stick-out, coolant, `vc`, `fz`, `ae`, `ap` range);
+    measured tool-tip FRFs for standard holder and stick-out combinations (useful for RCSA);
+    tool-life curves (Taylor constants) with the wear criterion used; stiffness and runout.
+  - **A published test recipe** so vendor data is comparable: a short, open procedure (slotting
+    sweep of `fz` with force measurement, as in Rubeo & Schmitz 2016; tap test for FRF) that a
+    vendor or a university lab can run, with results submitted as a data file.
+  - **Verified badge:** data from the recipe, with raw measurements attached, is marked
+    "vendor-measured"; it ranks above vendor start values and generic classes, and below
+    shop-proven results for that shop.
+  - **Feedback to vendors:** with the shop's consent, anonymised shop results (spindle load vs
+    predicted, tool life achieved) can be returned to the vendor, which gives them field data
+    they don't have today (opinion; privacy and export-control limits apply).
+  - **Openness:** contributed physics data is published under an open licence (to be agreed)
+    so every CAM program can use it, not only SolidCraft; this is the incentive argument in
+    (13), applied industry-wide.
 
 ## What users need
 
