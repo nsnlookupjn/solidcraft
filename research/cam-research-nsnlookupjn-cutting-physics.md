@@ -15,7 +15,9 @@ A second companion,
 [cam-research-nsnlookupjn-workholding.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-workholding/research/cam-research-nsnlookupjn-workholding.md)
 ("Workholding physics: have CAM tell us how to hold the work"), takes the cutting forces computed
 here as its input and returns workholding limits to the same feed calculation; the shared
-interface is in "Outputs for workholding" below.
+interface is in "Outputs for workholding" below. A third,
+[cam-research-nsnlookupjn-machine-library.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md),
+holds the machine data, including the spindle power and torque curves the checks here use.
 
 Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of CONTRIBUTING.md).
 
@@ -190,8 +192,12 @@ formulas above; inputs are illustrative, not a recommendation):
 | `Q` | ≈ 28.6 cm³/min |
 | Average tangential force at the edge (`Mc / (D/2)`) | ≈ 750 N |
 
-Each result is checked against a limit: `Pc` against the machine's spindle power **at that
-speed** (power and torque curves fall off at low RPM on many spindles), `Mc` against the tool's
+Each result is checked against a limit: `Pc` and `Mc` against the spindle's **power and torque
+curves at that speed**, read from the machine library
+([cam-research-nsnlookupjn-machine-library.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md)),
+never against a single rated value. Below the spindle's base speed the available power falls
+with RPM, so a cut that passes on rated power can stall at low speed (opinion, general spindle
+behaviour; curve shapes are in the machine library). `Mc` is also checked against the tool's
 and the holder's rated torque (`TQ` in ISO 13399), and force against the tool's breakage
 strength and the holder's pull-out resistance. None of these limits is in a typical CAM tool
 entry today (opinion, from the vendor and CAM pages cited).
@@ -382,7 +388,7 @@ Proposed mapping (opinion; every number is a starting point for discussion):
 | Position in vendor `vc` range | low end | middle | high end |
 | Position in vendor chip load range (`hex`) | low end | middle | high end |
 | Force vs. tool / holder rating | ≤ 50 % | ≤ 70 % | ≤ 90 % |
-| Spindle power and torque at that RPM | ≤ 60 % | ≤ 80 % | ≤ 95 % |
+| Spindle power and torque, from the curves at the operating RPM | ≤ 60 % | ≤ 80 % | ≤ 95 % |
 | Roughing deflection budget | ≤ 0.01 mm or 20 % of stock to leave | ≤ 40 % of stock | ≤ 70 % of stock |
 | Depth vs. predicted stability limit (only with measured dynamics) | ≤ 50 % | ≤ 70 % | ≤ 90 % |
 | Target tool life (Taylor) | e.g. 60 min | e.g. 30 min | e.g. 15 min |
@@ -456,7 +462,7 @@ torque, **D** deflection, **C** chatter, **L** tool life, **H** hard limit.
 | Work material | ISO 513 group + subgroup, hardness, tensile strength, `kc1.1`, `mc`, reference rake, edge-force coefficients (optional), source | F |
 | Cutting data (per tool × material × strategy) | `vc` min/start/max, `hex` per diameter, `ap`/`ae` limits, slotting factor, coolant, source, date | S T |
 | Tool life (per tool family × material) | Taylor `n`, `C` (and feed/depth exponents), wear criterion | L |
-| Machine | spindle power and torque curve vs RPM, max RPM, max feed, taper/interface | F H |
+| Machine (detailed in the machine library file) | spindle power and torque curves vs RPM (checked at the operating RPM, not a single rated value), max RPM, max feed, taper/interface | F H |
 
 SolidCraft already has **physical material cards** with SI properties, sources and conditions
 (`docs/physical-material-cards.md`: density, elasticity, strengths, thermal). Opinion: a
