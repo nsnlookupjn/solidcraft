@@ -15,7 +15,7 @@ It builds on a set of files from the same author and does not repeat them:
 | Topic | File | What this file takes from it |
 |---|---|---|
 | System overview | [cam-research-nsnlookupjn-physics-system.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md) | the per-segment predictions, the closed loop, "feedback updates the shop instance" |
-| In-process inspection and the edge box | [cam-research-nsnlookupjn-in-process-inspection.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md) | **the Raspberry Pi box, its sensors and interfaces**, alignment of data to G-code blocks and CAM segments, the per-part record, self-tuning |
+| In-process inspection and SolidCraft Edge | [cam-research-nsnlookupjn-in-process-inspection.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md) | **SolidCraft Edge (the Raspberry Pi computer at the machine), its sensors and interfaces**, alignment of data to G-code blocks and CAM segments, the per-part record, self-tuning |
 | Machine library | [cam-research-nsnlookupjn-machine-library.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md) | spindle torque/power curves, warm-up routine and cold derating, signals each control publishes, accuracy and wear held by the shop instance |
 | Workholding | [cam-research-nsnlookupjn-workholding.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-workholding/research/cam-research-nsnlookupjn-workholding.md) | workholding-side trends (worn vise screw, jaws), slip and lift detection |
 | Cutting physics | [cam-research-nsnlookupjn-cutting-physics.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md) | predicted force, torque and power per segment; Taylor tool life |
@@ -23,7 +23,7 @@ It builds on a set of files from the same author and does not repeat them:
 | CNC monitoring and control interfaces | [cam-research-nsnlookupjn-machine-interfaces.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md) | which controls publish spindle torque and axis load and how fast, how to read them, the safety model for writing to the control, SolidCraft at the machine on a mini PC |
 | Stock integrity | [cam-research-nsnlookupjn-stock-integrity.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-stock-integrity/research/cam-research-nsnlookupjn-stock-integrity.md) | wall and part modes, which must not be mistaken for machine faults |
 
-**Ownership (so nothing is said twice):** the edge box hardware, how it connects to each
+**Ownership (so nothing is said twice):** the SolidCraft Edge hardware, how it connects to each
 control, and how samples are lined up with the program stay in the in-process inspection file
 (the sensor kit itself is in its section [A commercial retrofit kit: upgrade any machine](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md#a-commercial-retrofit-kit-upgrade-any-machine)).
 The machine model and its published-signal list stay in the machine library. This file owns
@@ -31,6 +31,12 @@ The machine model and its published-signal list stay in the machine library. Thi
 thresholds and trends, predicting bad work, **tool condition (chipped, broken and worn tools,
 setup errors, when to stop and re-measure)**, coolant condition, and turning a finding into a
 maintenance work order. Reading and writing the control is in the interfaces note.
+
+**Name (Jason's decision):** the Raspberry Pi computer at the machine is called **SolidCraft
+Edge**, because it sits on the edge of CAM and brings the machine and its automation back into
+the CAM for closed-loop process improvement. It is a working name: using "SolidCraft" on a
+product needs the maintainers' agreement (see the inspection file's notes on offering the
+device).
 
 Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of CONTRIBUTING.md).
 
@@ -94,13 +100,13 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    worse with vibration at a bearing frequency is the spindle.
 6. **Coolant is a machine component (Jason's addition).** Concentration (refractometer),
    temperature, pH and level drift slowly and silently, and they change tool life, surface
-   finish, thermal size and corrosion. Measured inline by sensors on the edge box, they belong
+   finish, thermal size and corrosion. Measured inline by sensors on SolidCraft Edge, they belong
    in the same health record and the same trend tests.
 7. **The output is a maintenance order, not a dashboard.** Each finding names the asset, the
    likely cause, the evidence (with links to the G-code line and the trend), the check to make,
    how urgent it is and an estimate of time left. It is sent to whatever the shop uses: a
    computerised maintenance management system (CMMS) by its API, email, a printed ticket from the
-   edge box, or the machine's own OPC UA `MaintenancePrognosisType` where a control supports it.
+   SolidCraft Edge, or the machine's own OPC UA `MaintenancePrognosisType` where a control supports it.
 8. **The CAM reacts to health.** A machine whose shop instance carries an open finding (for
    example "spindle vibration zone C") gets derated limits in the machine library, the
    conservative-to-aggressive slider cannot push past them, and self-tuning stops pushing on
@@ -113,7 +119,7 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    evidence.
 10. **Tools: three layers, and stop and re-measure when in doubt (Jason's point).** The
     control's own load monitor reacts in about a tenth of a second, and SolidCraft can give it
-    the right limit per tool from the predicted load instead of a guess. The edge box, comparing
+    the right limit per tool from the predicted load instead of a guess. SolidCraft Edge, comparing
     spindle torque, axis load and vibration with the prediction, spots a missing tool, a chipped
     tooth (once-per-revolution vibration) and wear trends, and catches setup errors on the first
     part (stock size, offsets, wrong material). The tool setter and probe confirm. When the
@@ -150,8 +156,8 @@ Mapping to the SolidCraft pieces (opinion):
 
 | ISO 13374 block | Where it lives |
 |---|---|
-| Data acquisition | the edge box (in-process inspection file): control signals, added accelerometer and temperature sensors, coolant sensors |
-| Data manipulation | the edge box: per-segment features (RMS, peak, band energies, dominant frequency, mean load, temperature rise) |
+| Data acquisition | SolidCraft Edge (in-process inspection file): control signals, added accelerometer and temperature sensors, coolant sensors |
+| Data manipulation | SolidCraft Edge: per-segment features (RMS, peak, band energies, dominant frequency, mean load, temperature rise) |
 | State detection | this file: baselines, residuals against the physics prediction, thresholds |
 | Health assessment | this file: failure-mode table, cause ranking |
 | Prognostic assessment | this file: trends and time-to-limit |
@@ -211,7 +217,7 @@ What limits how well this can work (fact where cited, otherwise opinion):
 
 - **Polled control data is slow** (about 100–1,000 ms per sample, per the inspection file).
   Enough for load trends and residuals per segment; not enough for bearing frequencies or
-  chatter, which need the added accelerometer sampled at kHz by the edge box.
+  chatter, which need the added accelerometer sampled at kHz by SolidCraft Edge.
 - **Sensor position dominates.** A housing-mounted accelerometer far from the front bearing sees
   a weak, filtered version of the bearing signal. ISO/TR 17243-2 and -3 evaluate spindle
   vibration **measured on the spindle housing** (non-rotating parts), so mount the sensor where
@@ -405,7 +411,7 @@ the check for a planned stop.
 | **Note** | a feature past "watch" once | logged on the machine's health page; no work order |
 | **Watch** | past "watch" on several consecutive fingerprints, or an EWMA signal | work order "inspect" at the next planned stop; self-tuning stops pushing harder on this machine |
 | **Act** | past "act", or time-to-limit shorter than the next planned stop | work order "repair/inspect" with priority; machine library limits derated; operator told at job start |
-| **Stop** | sudden step change (crash-like), zone D on a spindle, temperature runaway | alarm at once through the edge box's alarm output, which the program checks at a safe point (inspection file); machine flagged not fit for critical work |
+| **Stop** | sudden step change (crash-like), zone D on a spindle, temperature runaway | alarm at once through SolidCraft Edge's alarm output, which the program checks at a safe point (inspection file); machine flagged not fit for critical work |
 
 ### Predicting bad work
 
@@ -440,7 +446,7 @@ characteristic per part; this file adds trend detection and cause ranking (opini
 
 ### Tool condition: chipped, broken and worn tools (Jason's point)
 
-**Jason's idea:** read spindle torque and axis load in real time (through the edge box) to
+**Jason's idea:** read spindle torque and axis load in real time (through SolidCraft Edge) to
 detect or predict tool failure, setup problems and generally bad cutting; detect chipped,
 broken and worn tools from the machine's loads and vibration as well as probing and the tool
 setter, and **if there is a possibility, stop and re-measure the tool**.
@@ -464,7 +470,7 @@ covers both (opinion, following from the signal rates in the interfaces note):
 | Layer | Runs where | Reacts in | Catches | Acts by |
 |---|---|---|---|---|
 | **1. The control's own load monitor** | inside the CNC | about 0.1 s (Haas autofeed steps every 0.1 s, per a copy of Haas's tool-monitoring guide; other controls unverified) | overload, a jammed or broken tool that spikes the load, a crash-like hit | alarm, feed hold or automatic feed reduction (Haas Setting 84: Alarm, Feedhold, Beep, Autofeed; limits per tool) or the maker's equivalent (Fanuc and others offer abnormal-load detection options; unverified per control) |
-| **2. The edge box** | the Pi beside the machine | polled control data: a few hundred ms to about 1 s; its own accelerometer: per spindle revolution, reduced on the box | missing load where load was predicted (tool gone), slow load rise (wear), one tooth doing more work than the others (chipping), chatter, setup errors | a finding; a stop request **at the next safe point** through the input the interfaces note's safety model allows (for example "stop after this tool"); never a feed or offset change on its own |
+| **2. SolidCraft Edge** | the Pi computer beside the machine | polled control data: a few hundred ms to about 1 s; its own accelerometer: per spindle revolution, reduced on the Edge | missing load where load was predicted (tool gone), slow load rise (wear), one tooth doing more work than the others (chipping), chatter, setup errors | a finding; a stop request **at the next safe point** through the input the interfaces note's safety model allows (for example "stop after this tool"); never a feed or offset change on its own |
 | **3. Measure the tool** | tool setter (contact or laser) and spindle probe, run by the program | seconds, between operations | broken, chipped or shortened tool for certain; length and radius change from wear; features cut by the tool out of size | the macro decides: continue, update the wear offset, switch to a sister tool, or stop for the operator |
 
 **What SolidCraft adds to layer 1 (opinion; the biggest cheap win).** Shops leave control load
@@ -479,9 +485,9 @@ notice anything. The fast reaction stays inside the control, where it is determi
 CAM only supplies better numbers. How the limits get into each control is in the interfaces note's section
 [Posting limits into the control](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#posting-limits-into-the-control).
 
-**Why the edge box cannot be the breakage guard.** At 1,200 mm/min the tool moves 10 mm in a
-0.5 s poll (computed). A broken end mill can be dragged that far before the box even sees the
-sample, then the request still has to reach a safe point. So the box detects, records and
+**Why SolidCraft Edge cannot be the breakage guard.** At 1,200 mm/min the tool moves 10 mm in a
+0.5 s poll (computed). A broken end mill can be dragged that far before the Edge even sees the
+sample, then the request still has to reach a safe point. So the Edge detects, records and
 stops the *next* damage (a missing tool going into the next feature, a whole batch cut with a
 chipped tool); the control's monitor and the tool setter stop the immediate damage.
 
@@ -491,7 +497,7 @@ All signals are compared with the per-segment prediction (the residual `r_P` fro
 [Why the physics prediction changes condition monitoring](#why-the-physics-prediction-changes-condition-monitoring)),
 which is what lets the monitor tell an unusual cut from an unusual tool.
 
-| Fault | Spindle torque / power | Axis load | Vibration (edge box accelerometer) | Tool setter / probing | Confidence from load alone |
+| Fault | Spindle torque / power | Axis load | Vibration (SolidCraft Edge accelerometer) | Tool setter / probing | Confidence from load alone |
 |---|---|---|---|---|---|
 | **Broken tool** (gone or snapped short) | a spike or step, then load near idle where cutting was predicted (`r_P` ≈ 0 on following segments) | feed-direction load near zero | burst at the break, then no tooth-passing content | length short or beam not broken: certain | high when predicted load is well above idle; low for small tools (below) |
 | **Chipped edge** (one tooth damaged) | small rise in mean load; often hidden at polled rates | small rise | **once-per-revolution component grows** relative to tooth passing, because one tooth now cuts more or less than the others (same signature as runout) | laser setter radius or profile check may see it (unverified for small chips); probed finish and size worse | low; needs the accelerometer |
@@ -542,7 +548,7 @@ keeps cutting. Opinion:
 1. **Each tool gets a check policy** in the program, chosen by the CAM from the tool and the risk:
    - *always after use*: small drills and taps, tools whose breakage the load cannot see, and the
      last tool before a costly feature or a finished surface;
-   - *on suspicion*: most tools; checked when the control's monitor or the edge box raises a flag;
+   - *on suspicion*: most tools; checked when the control's monitor or SolidCraft Edge raises a flag;
    - *by count*: every N parts or N minutes of cut, where wear is the main risk.
 2. **Suspicion comes from evidence, graded:**
 
@@ -558,7 +564,7 @@ keeps cutting. Opinion:
    set, go to the tool setter, measure length (and radius on a laser setter), compare with the
    stored values and the limits, then continue, update the wear offset, call a sister tool, or
    stop with a message*. The flag is set by the control's own monitor, by a macro variable the
-   edge box may write **only where the interfaces note's safety model allows it**, or by the
+   SolidCraft Edge may write **only where the interfaces note's safety model allows it**, or by the
    operator. The decision itself stays in the control's macro, the same principle as in-cycle
    compensation in the inspection file.
 4. **Then check what the tool already cut.** A tool that measured short or chipped may have
@@ -582,7 +588,7 @@ develop such estimators; a shop's own history is what calibrates them.
 
 ### Coolant condition (Jason's addition)
 
-Jason's idea (other thread): the edge box kit could include machine sensors (vibration,
+Jason's idea (other thread): the SolidCraft Edge kit could include machine sensors (vibration,
 temperature) and **measure coolant refraction (concentration) and temperature**, "to really
 upgrade any machine while optimizing production and quality". The hardware, sensor choice,
 costs and selling paths are in the inspection file's section [A commercial retrofit kit: upgrade any machine](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md#a-commercial-retrofit-kit-upgrade-any-machine); here is how
@@ -648,7 +654,7 @@ hand refractometer check, logged as a manual test, keeps the inline sensor hones
 **Where it goes (opinion; the shop chooses):**
 
 - **A CMMS through its API.** Most maintenance systems accept work orders by REST API or webhook
-  (vendor guides in Sources; marketing). SolidCraft (or the edge box service) should send a
+  (vendor guides in Sources; marketing). SolidCraft (or the SolidCraft Edge service) should send a
   plain, documented record and keep the CMMS's ID; it should not become a CMMS.
 - **OPC UA prognosis.** Where the machine has an OPC UA server per OPC 40501-1, the machine's own
   `MaintenancePrognosisType` entries (predicted time, activity) can be read and shown next to
@@ -710,7 +716,7 @@ inspection file defines.
 
 ### Privacy, trust and sharing (opinion)
 
-- **Local first.** Health data stays on the edge box and the shop's own storage; nothing goes to a
+- **Local first.** Health data stays on SolidCraft Edge and the shop's own storage; nothing goes to a
   vendor cloud unless the shop chooses (same principle as the inspection file).
 - **Shared learning is opt-in and labelled.** A shop may contribute anonymised trend histories and
   confirmed failure labels ("bearing replaced at 6,200 spindle hours, BPFO envelope 4× baseline")
@@ -729,11 +735,11 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
 | Step | Adds | Needs | Useful because |
 |---|---|---|---|
 | H0 | health fields in the machine library's shop instance; maintenance log | machine library | a place for maintenance history from day one |
-| H1 | fingerprint folded into the warm-up; idle power, axis load and vibration per step; baselines; relative thresholds | edge box with accelerometer; warm-up gate | catches spindle and axis degradation with no CAM prediction at all |
+| H1 | fingerprint folded into the warm-up; idle power, axis load and vibration per step; baselines; relative thresholds | SolidCraft Edge with accelerometer; warm-up gate | catches spindle and axis degradation with no CAM prediction at all |
 | H2 | findings and work orders (CMMS API, email, printed ticket); closing the loop after maintenance | H1 | turns data into action |
 | H3 | per-segment residuals and EWMA trends on production cuts | physics predictions per segment; G-code alignment | machine-wide drift and tool wear on jobbing work |
 | H4 | bad-work prediction: control charts on characteristics and corrections, cause ranking | in-process inspection records | catches drift before a part is out of tolerance |
-| H3b | tool condition: per-tool load limits written by the post into the control's monitor; tool check cycles with check policies; missing-tool, chipping and setup-error detection; tool histories | post-processor; tool setter; edge box accelerometer for chipping | fewer broken tools carried into the next feature, setup errors caught on the first part |
+| H3b | tool condition: per-tool load limits written by the post into the control's monitor; tool check cycles with check policies; missing-tool, chipping and setup-error detection; tool histories | post-processor; tool setter; SolidCraft Edge accelerometer for chipping | fewer broken tools carried into the next feature, setup errors caught on the first part |
 | H5 | coolant sensors and coolant findings | sensor kit (inspection file) | removes a silent cause of bad work |
 | H6 | CAM reacts: deratings, self-tuning hold, job routing | limits engine | the monitor changes what the CAM does |
 | H7 | opt-in shared histories per machine model; learned models where pooled data allows | many shops | better starting limits for everyone |
@@ -749,7 +755,7 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
   data must never stop a CAM job from being planned; it only removes the health-based deratings
   and says so.
 - **Rust only, wasm-safe below the apps.** Feature extraction (RMS, spectra, envelope, EWMA) is
-  ordinary numeric code that fits the engine layers; the edge box service is separate.
+  ordinary numeric code that fits the engine layers; the SolidCraft Edge service is separate.
 
 ## Glossary
 
@@ -785,7 +791,7 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
    already does?
 5. Which controls let a program change the load-monitor limit per segment, and which let an
    outside device set a check flag safely? (Interfaces note.)
-6. Is a printed maintenance ticket from the edge box useful, or does everything go to phones?
+6. Is a printed maintenance ticket from SolidCraft Edge useful, or does everything go to phones?
 7. Which coolant sensors are robust enough inline (refractometer fouling, pH probe drift) for a
    small-shop kit? Needs hands-on testing.
 8. How should SolidCraft treat a finding on a machine owned by someone else (a subcontractor's
