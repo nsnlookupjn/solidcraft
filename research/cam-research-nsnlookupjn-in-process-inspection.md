@@ -118,6 +118,20 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
     and process changes that improve performance, time, cost and quality, and route each change
     through a controlled revision and release. See
     [From inspection back to the design](#from-inspection-back-to-the-design).
+12. **Learn from the reference products (Jason's pointers).** Renishaw is the reference for
+    on-machine probing: guided apps that generate the probing code, a macro library of standard
+    cycles with tolerance and offset-update logic, tool setters, and 5-axis probing and machine
+    checks. Hexagon (m&h), Verisurf MTP, CAPPS-NC and Vericut show CAD-based on-machine inspection.
+    SolidCraft's version generates the same routines from the model instead of from typed
+    parameters. See [Reference products](#reference-products-for-on-machine-probing).
+13. **Check before cutting, for lights-out (Jason).** Probing confirms the part is present and the
+    right way round, and that the workholding and stock match the CAM setup, before the first cut.
+    That prevents operator error and makes unattended running safer. See
+    [Pre-start checks](#pre-start-checks-part-present-orientation-and-setup).
+14. **Cameras for some probing tasks (Jason).** A camera on the machine, or held in the spindle like
+    a tool, linked to the Pi box, can do fast checks: presence, orientation, rough location,
+    reading the serial. Precise sizes stay with the touch probe. Cameras must be kept clean with an
+    air blast or a wash-and-dry cycle. See [Cameras](#cameras-instead-of-or-beside-the-probe).
 
 ## Fundamentals
 
@@ -577,7 +591,8 @@ Public descriptions only; no program was run for this file.
 
 | Area | What exists (public descriptions) |
 |---|---|
-| Probe macro packages | Renishaw Inspection / Inspection Plus, Haas WIPS (VPS templates), Blum, Marposs, Heidenhain touch-probe cycles on TNC controls (unverified for Blum/Marposs/Heidenhain details). Run on the control; correct offsets; print results. |
+| Probe macro packages | Renishaw Inspection / Inspection Plus, Haas WIPS (VPS templates), Blum, Marposs, Heidenhain touch-probe cycles on TNC controls (unverified for Blum/Marposs/Heidenhain details). Run on the control; correct offsets; print results. Renishaw's apps (GoProbe, Set and Inspect, Reporter, AxiSet Check-Up) are described in [Reference products](#reference-products-for-on-machine-probing). |
+| CAD-based on-machine inspection | Hexagon (m&h) HxGN NC Measure, 3D Form Inspect, PC-DMIS on machine tools; Verisurf MTP; CAPPS-NC (AAT3D); Vericut (CGTech) simulates probing moves (unverified details). |
 | CAM with probing | Several commercial CAM programs output probing moves and cycle calls from the CAM setup (e.g. an Autodesk blog on using Fusion with a Renishaw spindle probe). Fusion's help pages describe Probe WCS, Probe Geometry, Inspect Surface, part alignment and manual inspection; see [From inspection back to the design](#from-inspection-back-to-the-design). Not run for this file. |
 | PC-based on-machine inspection | Probe makers sell PC software that plans and reports probing on the machine from the CAD model (unverified details). |
 | CMM software | Reads PMI or QIF, runs DMIS, writes QIF/PDF reports. |
@@ -948,6 +963,166 @@ events: program start, each tool change and each reported block number.
 (unverified; prices move). Mount position and cable routing away from coolant matter more than
 sensor grade for chatter detection.
 
+### Reference products for on-machine probing
+
+**Jason's pointer:** Renishaw is the gold standard for on-machine probing. Its website documents
+part inspection and tool setting in depth, its GUI pages show the common processes for on-machine
+inspection and part setup, it ships a macro library of common inspection routines, and it now
+covers 5-axis probing. Jason also names Hexagon (m&h) NC measuring software, Verisurf MTP,
+CAPPS-NC (AAT3D) and Vericut (CGTech) as references.
+
+Everything below comes from public product pages and trade articles. No program was run, and no
+manual text is copied. The paid or registration-only programming manuals (for example the
+Inspection Plus programming manuals) were not read; the cycle and variable details they hold
+should be checked against them by whoever implements this.
+
+#### Renishaw's layers
+
+| Layer | Products (public pages) | What it does |
+|---|---|---|
+| Macro library on the control | **Inspection Plus** (and the basic Inspection software) | "a wide range of easy-to-use probing cycles", from job setup to "more complex vector and angular inspection routines"; results go to machine variables for further logic; optional printing; **SupaTouch** optimises cycle time; "compatible with all major machine tool controls"; uses include job setup, component identification and interval inspection. The basic package lists single surface, web/pocket, bore/boss, external corner, single point and two-point diameter, with automatic tool and work offset updates. |
+| Guided programming | **GoProbe** (smartphone app and training kit; a version for Fanuc ROBODRILL iHMI) | a few taps build a single-line probing command for the control. |
+| GUI at the machine | **Set and Inspect** (Windows CNC control or a tablet over Ethernet) | the operator jogs the probe, picks a cycle from a menu and fills in fields; covers part setup, inspection and contact and non-contact tool setting; a program builder chains cycles into automated routines; the app generates and loads the machine code; data sheets for Mazak (using the Mazak API for live status), Okuma, Fanuc, Mitsubishi and Kitamura. |
+| Results display | **Reporter** | pass/fail, trends per probed part and live results at the machine, for Set and Inspect and Inspection Plus routines. |
+| Tool setting | contact tool setters (e.g. OTS), non-contact laser **NC4**, arm tool setters on lathes | tool length and diameter, broken-tool detection; NC4 has its own install and troubleshooting app. |
+| Probe configuration | **Probe Setup** app (Trigger Logic) | sets optical and radio probe options and pairs radio probes with their interface. |
+| 5-axis machine checks | **AxiSet Check-Up** | probing macros and one calibration sphere check rotary-axis alignment and pivot-point errors "in just a few minutes", can update pivot parameters, and chart the history. |
+| 5-axis part probing | **RMP600** strain-gauge probe; SPRINT scanning (on-machine scanning of form, for example blades) | an aerospace shop programs probing offline (OMV Pro) for a Siemens 840D, probes holes and contours from any direction after one calibration, and gets GD&T reports on a PC (MMS article). |
+
+What stands out (opinion): the **cycle library is the stable core**, and the GUIs are different
+ways of filling in its parameters. Every GUI still asks a person to choose the cycle and type the
+nominal, the tolerance and the offset to update.
+
+#### CAD-based on-machine inspection (other references)
+
+- **Hexagon NC measuring software** (from m&h): HxGN NC Measure (modular inspection on the
+  machine), 3D Form Inspect (forms and ruled geometry on all sides and axes, automated analysis),
+  HxGN NC Gage (a "PTB-certified" measuring algorithm) and PC-DMIS on machine tools.
+  Case studies describe less rework and documented on-machine measurement.
+- **Verisurf MTP** (Machine Tool Probing suite): measures in process in the same setup and compares
+  with the CAD model, "closing the loop between the physical machined part and the intelligent CAD
+  model". Runs alongside Mastercam.
+- **CAPPS-NC** (AAT3D): CAD-based on-machine measurement software (unverified details; public
+  pages not checked for this file).
+- **Vericut** (CGTech): mainly G-code simulation and verification. It also simulates probing moves
+  so that collisions and wrong probe paths are caught before the machine runs them (unverified
+  details). This is the same "simulate before you run" gate as the CAM physics system file.
+
+#### Mapping the routines to SolidCraft's model-generated plan (opinion)
+
+| Routine | Who fills it in today | What SolidCraft can fill in from the model |
+|---|---|---|
+| Single surface / Z height | operator types the expected position | the face, its nominal, its tolerance, the approach direction (the face normal) |
+| Web / pocket, boss / bore | operator picks the cycle and types size and tolerance | the cycle type from the feature (hole, slot, pocket, boss), size and fit limits, and which tool's wear to update (the tool that finished it) |
+| Corner / edge, datum setting | operator jogs to the corner | the datum faces of the setup's datum reference frame; the work offset to set |
+| Feature to feature, PCD, angle | operator types the positions | positions from the pattern or the GD&T position tolerance |
+| Vector and angled probing (3+2, 5-axis) | offline software, specialists | the face normal at each point; tilt angles from the CAM setup |
+| Free-form surface, scanning | specialist software (Hexagon, Verisurf) | points sampled on the face with the profile tolerance; a deviation map back on the model |
+| Tool setting and broken-tool check | operator per tool | every tool in the program, from the tool library; broken-tool checks after the risky tools |
+| Rotary-axis check (5-axis) | scheduled by the shop | scheduled by the machine library entry, with the history on the machine record (see the [machine health research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-9w3gq9/research/cam-research-nsnlookupjn-machine-health.md)) |
+
+The post-processor then emits **calls to the shop's existing cycle library** (Renishaw, Haas WIPS,
+Blum, Heidenhain cycles and so on) when one is installed, or generic skip-move macros when none is.
+Writing calls to a probe maker's macros needs that maker's published call format, and is
+interoperability rather than copying (opinion; confirm licence terms for each package).
+
+**UX lesson taken from the GUIs (opinion):** keep what makes Set and Inspect and GoProbe easy (pick
+a picture of the feature, see the probe move, get a one-line result), but remove the typing,
+because the model already knows the answers.
+
+### Pre-start checks: part present, orientation and setup
+
+**Jason's requirements:** probing should check that the part is present and oriented correctly,
+and that the workholding and the work are set up correctly in the machine before the cycle
+starts. This is for lights-out automation and to prevent operator error.
+
+Today shops do some of this with hand-written macros, and probe makers list "component
+identification" and "checks whether parts are loaded correctly" among the uses (Renishaw, Haas
+WIPS pages). CAM already has everything needed to write the check automatically, because the setup
+(machine, fixture, vise jaws, stock, part and work offset) is modelled for simulation.
+
+**A pre-flight routine generated from the CAM setup (opinion):**
+
+1. **Fixture or vise in place:** touch one or two known faces of the fixture or the fixed jaw.
+   Compare with the stored position, within a set tolerance (for example 0.1 mm). A miss means the
+   wrong fixture, a moved vise, or a work offset left over from another job.
+2. **Part present:** a protected move toward a face that is only there when the part is loaded. No
+   trigger within the expected travel means no part, so stop. Robot and pallet cells need this
+   most.
+3. **Right part, right way round:** touch an **asymmetric feature**, one that would be somewhere
+   else if the part were flipped or rotated: an off-centre hole, a chamfer, a step. CAM can pick it
+   automatically by looking for the feature whose position changes most under the part's likely
+   wrong orientations. Or read the part's serial or DataMatrix (camera below).
+4. **Stock size and height:** check that the stock is within the size the CAM assumed. Oversize
+   stock is a collision risk; undersize stock may not clean up.
+5. **Clamp and obstacle heights:** check the top of clamps or jaws against the clearance plane used
+   by the toolpaths.
+6. **Set the work offset** from the datum features, then compare it with the expected value. A
+   large shift means something is wrong, so stop instead of cutting.
+7. **Tools present and intact:** a quick tool-setter check of the tools the program needs (from the
+   tool library), and a broken-tool check after risky operations.
+8. **Record it:** every check result goes into the part's record. A part that was stopped by a
+   pre-start check is "held", not "rejected".
+
+For lights-out running, each failed check maps to an action: stop and alarm, skip this pallet and
+continue with the next, or call the robot to reload. This ties into the
+[cell automation research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-g08nas/research/cam-research-nsnlookupjn-cell-automation.md). The checks cost seconds per part, and one prevented crash
+pays for many hours of them (opinion).
+
+### Cameras instead of, or beside, the probe
+
+**Jason's ideas:** use a digital camera for some probing tasks, for speed and flexibility. The Pi
+box could link wirelessly to a camera mounted in the machine, or the camera could be held in the
+mill spindle like a tool so it can be positioned for inspection. Cameras need keeping clean with an
+air blast or a wash-and-dry cycle.
+
+**What a camera is good at (opinion, general machine-vision practice):**
+
+| Task | Camera | Touch probe |
+|---|---|---|
+| Part present, right part, right way round | very good: one image, no motion near the part | good, but needs moves |
+| Reading a serial, DataMatrix or engraving | yes; the probe cannot | no |
+| Fixture, clamp and jaw check, foreign objects (chips, a forgotten wrench) | yes: compare with the expected image or 3D view | only at the points it touches |
+| Rough 2D location of a part or hole (tenths of a mm) | good with calibration and good lighting | good |
+| Precise size, position and form (µm) | poor without special optics; coolant film, edges and lighting add error | very good |
+| Depth, heights, 3D form | needs stereo or structured light | good |
+| Surface defects (burrs, scratches, chatter marks) | good for visible defects | no |
+| Tool presence and gross breakage | yes | tool setter is better for length and diameter |
+
+So the camera does the **fast, broad** checks, and the probe does the **precise** ones (opinion).
+In the pre-start routine above, steps 1–3 and 5 can be camera checks, with a probe touch only
+where the tolerance needs it.
+
+**Mounting options:**
+
+- **Fixed camera inside the enclosure:** sealed housing (IP67 or better), protective window, an
+  air knife or air blast across the window, and a shutter or cover during cutting. Sees the whole
+  table; cannot get close.
+- **Camera held in the spindle like a tool:** stored in the tool changer and positioned by the
+  machine axes, so it can look at any feature from close up, square to the face, at a known
+  position. Spindle-mounted imaging units have existed since at least 2005 (OptoVue: imager,
+  optics and lighting in a standard tool holder, about 10 µm resolution, used to locate the
+  workpiece). Needs: the spindle locked (oriented, not turning), power from a battery, a wireless
+  link to the Pi, and coolant off with the part blown dry before imaging.
+- **Wireless link:** Wi-Fi or Bluetooth from inside a steel enclosure can be weak. An antenna
+  through the enclosure wall, or a window, fixes most cases (unverified; site-dependent). For a
+  spindle camera, take the image, store it on the camera, and send it after the camera returns to
+  the magazine. That avoids needing a live link inside the machine.
+- **Keeping it clean (Jason's point):** air blast before every image, a wash-and-dry cycle when the
+  image quality check fails (the software can measure blur and contrast on a known target), and a
+  covered parking position.
+
+**On the Pi:** Raspberry Pi cameras connect directly to the board, and OpenCV (Apache-2.0) covers
+the standard vision tasks: template matching for presence and orientation, edge and circle finding
+for rough positions, and DataMatrix decoding with an open library. The camera calibration (pixel
+size, lens distortion, position relative to the spindle) is done once on a calibration target and
+checked against a probe touch, and the record says which method measured each value.
+
+**What this means for SolidCraft (opinion):** the expected view is computed from the CAM setup
+(the model, fixture and stock as seen from the camera's position), so the check is "does the
+picture match the model", with the differences highlighted. That is the same idea as the probing
+checks, using a different sensor.
+
 ### From inspection back to the design
 
 **Jason's vision:** the inspection features in Fusion (automatic probing, manual measuring and
@@ -1233,6 +1408,16 @@ Connectivity and the edge device:
 - Autodesk forum thread titles (pages not fetched): https://forums.autodesk.com/t5/fusion-manufacture-forum/live-inspection-fusion-360-and-my-machine-wont-connect/m-p/12330730 ; https://forums.autodesk.com/t5/fusion-support-forum/surface-inspection-deprint-error-on-haas-ngc/td-p/9575587 ; https://forums.autodesk.com/t5/fusion-manufacture-forum/fanuc-inspection-connector/m-p/12806864 ; https://forums.autodesk.com/t5/fusion-support-forum/inspection-results-problem/m-p/9786577
 - Tormach forum, Fusion machine connect support question: https://forums.tormach.com/t/fusion-360-machine-connect-supported-on-tormach/872
 - Compliance research (same author; revision/release, FAI, NCR/CAPA): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-ymp2ma/research/compliance-research-nsnlookupjn-itar-quality.md
+- Renishaw, Inspection Plus macro software: https://www.renishaw.com/en/6094.aspx
+- Renishaw, Set and Inspect: https://www.renishaw.com/setandinspect
+- Renishaw, machine tool apps (GoProbe, Probe Setup, NC4, Reporter): https://www.renishaw.com/en/machine-tool-apps--42373
+- Renishaw, AxiSet Check-Up: https://www.renishaw.com/axiset
+- MMS, strain-gauge probe (RMP600) for 5-axis aerospace parts: https://mmsonline.com/articles/strain-gauge-machine-tool-probe-has-the-right-touch-for-form-measurement-of-five-axis-aerospace-parts
+- Hexagon, NC measuring software: https://hexagon.com/products/product-groups/measurement-inspection-hardware/machine-tool-measurement/nc-measuring-software
+- Digital Engineering 24/7, Verisurf MTP: https://www.digitalengineering247.com/article/in-process-inspection-integrated-with-machine-tools
+- MMS, OptoVue spindle-mounted imaging system (2005): https://mmsonline.com/products/spindle-mounted-imaging-system-saves-time-and-reduces-error
+- Cell automation research (same author): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-g08nas/research/cam-research-nsnlookupjn-cell-automation.md
+- Machine health research (same author): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-9w3gq9/research/cam-research-nsnlookupjn-machine-health.md
 - Revolution Pi products: https://revolutionpi.com/en/products
 - Raspberry Pi Integrator Programme and Powered by Raspberry Pi: https://www.raspberrypi.com/for-industry/integrator-programme/
 - Zebra CUPS driver configuration: https://support.zebra.com/cpws/docs/cups/cups_driver1_4_configure.pdf
