@@ -550,7 +550,9 @@ planned model would then be the starting point and the safety net.
 **Live feedback from the machine: "self-tuning CAM operations" (Jason's name and idea).** Some controls publish spindle load, axis
 loads or torques and vibration while cutting (for example over an open machine-data protocol
 such as MTConnect; which machines publish which signals is unverified and belongs in the
-machine library). The Raspberry Pi edge box from the in-process inspection topic could collect
+machine library). **SolidCraft Edge**, the Raspberry Pi based box from the in-process inspection topic (Jason's
+name: it sits at the edge of CAM and brings the machine and automation back into CAM for
+closed-loop process improvement), could collect
 these in real time and feed them back. For workholding this gives three things:
 - **validation:** compare measured loads with the predicted force per step, so the friction
   values and the torque curves in the library get corrected from real cuts, shop by shop;
@@ -580,19 +582,19 @@ the likely cause and order a maintenance check (for example "inspect vise screw 
 plates" or "spindle vibration trend") before parts are scrapped. The machine-side detail
 belongs to the separate "Predict machine failure and order maintenance" topic (in progress), with the machine library and the CAM Physics System topics.
 
-**Add-on sensors.** Jason's idea of a sensor package for the edge box (vibration, temperature,
+**Add-on sensors.** Jason's idea of a sensor package for SolidCraft Edge (vibration, temperature,
 coolant concentration by refractometer and coolant temperature) matters for workholding too:
 coolant changes the friction at the jaws (see "Friction holds"), so a measured concentration
 lets the check pick the right friction value instead of assuming one. The package itself is
 covered in the machine monitoring topics.
 
-**Cameras and machine connections (Jason's ideas).** Cameras on the edge box (covered in the
+**Cameras and machine connections (Jason's ideas).** Cameras on SolidCraft Edge (covered in the
 inspection and cell automation topics) could one day watch the part and the hold and detect
 slip or lift directly, as a change in the part's position against the jaws (aspirational:
 chips, coolant and lighting make this hard). The connections themselves, such as a CAM program
 talking to a Haas mill over Ethernet for in-process control and probing, what interfaces
-machine makers offer today, and the suggestion that makers add an MCP interface so an edge
-device can monitor and control the machine, are researched in the separate
+machine makers offer today, and the suggestion that makers add an MCP interface so SolidCraft
+Edge can monitor and control the machine, are researched in the separate
 [machine interfaces](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#what-each-control-maker-offers)
 topic. Slip and lift detection from those signals stays in this file.
 
