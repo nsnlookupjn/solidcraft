@@ -229,7 +229,10 @@ Inputs (illustrative):
 
 Required clamp force: `F_N = 2 × 2 000 / (2 × 0.2) = 10 000 N` (10 kN, about 2 250 lbf).
 From the Kurt HDL6 table, 20 ft·lb gives 2 500 lbf (11.1 kN), so the recommendation is
-**about 20 ft·lb (27 N·m)**. If the same force pointed into the fixed jaw, friction would not
+**about 20 ft·lb (27 N·m)**. On a Kurt DX6 (table in "A shared (cloud) workholding
+library" below) the same 10 kN needs **about 30 ft·lb (41 N·m)**, which gives 10.9 kN: the
+same job needs different torque on different vises, which is why the curve belongs in the
+library entry. If the same force pointed into the fixed jaw, friction would not
 be needed at all; if it pointed toward the moving jaw, CAM should flag the move or suggest
 reversing the cut direction.
 
@@ -375,9 +378,10 @@ source are left empty on purpose):
   "geometry": { "step": "kurt-dx6.step", "jaw_width_mm": 152.4, "jaw_depth_mm": 44.07,
                 "max_opening_mm": 230.6, "bed_height_mm": 73.0 },
   "clamp_force": {
-    "max_N": 32660,
-    "torque_curve_Nm_to_N": null,
-    "note": "curve not found publicly for DX6; DX4 and HDL6 manuals give one"
+    "max_N": 32694,
+    "torque_curve_Nm_to_N": [[13.6, 2224], [27.1, 6450], [40.7, 10898], [54.2, 15346],
+                             [67.8, 19572], [81.3, 24020], [94.9, 28246], [108.5, 32694]],
+    "curve_source": "Kurt DX6 clamping force table, supplied by Jason (10-80 ft·lb)"
   },
   "screw": { "max_handle_torque_Nm": null, "no_extensions": true },
   "jaws": [
@@ -393,11 +397,21 @@ source are left empty on purpose):
 Public figures for the DX6 from a distributor listing: maximum clamping force 7 342 lbf
 (32.7 kN), jaw width 6" (152.4 mm), jaw depth 1.735" (44.1 mm), maximum opening 9.08" (230.6 mm),
 repeatability "within .001"" (0.025 mm) ([KBC Tools](https://www.kbctools.ca/itemdetail/1-5721-DX6),
-not checked against a Kurt datasheet). The torque-to-force curve was not found publicly for the
-DX6. For comparison the Kurt DX4 manual gives 20 ft·lb → 1 900 lbf (8.5 kN) up to
+not checked against a Kurt datasheet). The DX6 torque-to-force curve, from Kurt's DX6 data as supplied by Jason, is:
+
+| Handle torque (ft·lb) | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 |
+|---|---|---|---|---|---|---|---|---|
+| Handle torque (N·m) | 13.6 | 27.1 | 40.7 | 54.2 | 67.8 | 81.3 | 94.9 | 108.5 |
+| Clamp force (lbf) | 500 | 1 450 | 2 450 | 3 450 | 4 400 | 5 400 | 6 350 | 7 350 |
+| Clamp force (kN) | 2.2 | 6.5 | 10.9 | 15.3 | 19.6 | 24.0 | 28.2 | 32.7 |
+
+Its top row (7 350 lbf at 80 ft·lb) agrees with the distributor's 7 342 lbf maximum. Above
+10 ft·lb the curve is close to linear, about 95–100 lbf per ft·lb (roughly 0.44 kN per N·m), so
+CAM can interpolate between rows; it should not extrapolate past 80 ft·lb. For comparison
+the Kurt DX4 manual gives 20 ft·lb → 1 900 lbf (8.5 kN) up to
 70 ft·lb → 7 400 lbf (32.9 kN), and says extensions and impact wrenches void the warranty
 ([DX4/DX4R manual via MSC](https://cdn.mscdirect.com/global/images/ProductDataSheet/pds_sku_365071_installationguide_install.pdf)).
-**Filling the missing fields (torque curve, friction for each jaw type, jaw-lift stiffness) is
+**Filling the remaining fields (friction for each jaw type, maximum handle torque, jaw-lift stiffness) is
 exactly what a collaborative library is for**: makers, shops and test rigs contribute measured,
 cited values, and reviewers check them, as for cutting data.
 
