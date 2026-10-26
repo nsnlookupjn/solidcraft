@@ -707,7 +707,13 @@ overtravel; search not centred over the stylus for the tool's diameter; setter i
 toolpath's or fixture's swept volume. *Warn*: blind search with no tool diameter; setter in the
 coolant stream; setter mount not calibrated since it was moved.
 
-**TODO (Jason):** your setter (make, mount), and how operators handle a new tool today.
+**Jason's shop experience (personal experience, 2026-10-26):** today offsets are loaded in one of
+two ways: tools are set to a known length on a tool setter and the values are typed into the
+machine by hand, or the machine's own tool setter measures length (and optionally diameter) with
+its built-in macros. Both normally need a **rough tool length, measured with a tape measure**, to
+save setting time. That tape-measure step is what Part A removes.
+
+**TODO (Jason):** your setter (make, mount).
 
 ## Accuracy
 
