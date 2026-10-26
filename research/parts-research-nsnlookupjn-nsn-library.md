@@ -36,14 +36,20 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 - **Marking:** "(unverified)" marks a claim not confirmed against a source. **Fact**,
   **opinion** and **marketing** are labelled where they mix.
 
-> **[TODO Jason: affiliation disclosure]** State here whether you have any relationship with
-> NSN Lookup (nsnlookup.com) or any other NSN data provider named below (employee, owner,
-> contractor, partner, none). The offer that "NSN Lookup could make this free for SolidCraft
-> users" is your proposal; maintainers will want to know who is making it.
+> **Disclosure of interest.** The author, Jason, is the **owner and operator of NSN Lookup Inc**
+> (nsnlookup.com), one of the NSN data providers compared in this file. The offer that "NSN
+> Lookup could make this free for SolidCraft users" comes from him in that role. For that reason
+> the provider comparison below is written to stand on public facts, keeps an offline,
+> government-sourced baseline that needs no vendor, and lists the questions maintainers should
+> put to any provider, NSN Lookup included.
 
-> **[TODO Jason: personal experience]** Where NSNs show up in your work (parts lists, technical
-> manuals, procurement, maintenance), how you find a part's dimensions today, and which parts
-> you most often wish you could drop into a model. Label this as personal experience.
+> **Personal experience (Jason).** Running NSN Lookup has given me a deep understanding of how
+> the militaries in NATO specify, manufacture, test, inspect (QC) and use their parts and
+> equipment.
+>
+> **[TODO Jason: optional detail]** Concrete examples would help maintainers: where NSNs show up
+> in that work, how users of NSN Lookup find a part's dimensions today, and which parts people
+> most often wish they could drop into a model.
 
 ## Summary
 
@@ -83,7 +89,8 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    **DEMIL code** gives a usable first screen.
 6. **Data provider: keep it neutral (opinion).** SolidCraft should define one provider interface
    with an **offline PUB LOG extract as the baseline** and online providers (nsnlookup.com,
-   OpenFLIS and others) as optional plug-ins the user turns on. NSN Lookup's offer to make its
+   OpenFLIS and others) as optional plug-ins the user turns on. NSN Lookup's offer (made by the
+   author as its owner; see the disclosure above) to make its
    data free for SolidCraft users is a real option; its value, terms and risks are laid out in
    "Data providers" below.
 
@@ -261,7 +268,7 @@ How NSN data is used today, from public pages (no programs were run):
 | FED LOG (DLA) | Fuller offline FLIS for government. | .mil/.gov and CAC holders. |
 | [WebFLIS](https://www.dla.mil/Customer-Support/Training/Details/Article/2925963/webflis-federal-logistics-information-system/) (DLA) | Online FLIS, updated several times a day. | Mainly government and sponsored contractors. |
 | [NMCRL](https://www.nato.int/structur/AC/135/nmcrl/data/nsn) (NATO) | NATO-wide NSN and NCAGE catalogue. | Account; terms per country (unverified). |
-| [nsnlookup.com](https://www.nsnlookup.com/) | Search by NSN/NIIN; says it covers 37+ million NSNs with characteristics, technical manuals and supply data; earns affiliate commissions on merchant links. No public API page found. | Free web search. |
+| [nsnlookup.com](https://www.nsnlookup.com/) | Search by NSN/NIIN; says it covers 37+ million NSNs with characteristics, technical manuals and supply data; earns affiliate commissions on merchant links. No public API page found. Owned by this file's author (see disclosure). | Free web search. |
 | [OpenFLIS](https://openflis.com/) (Synergetics Inc.) | JSON API over 50+ FLIS tables by NIIN, CAGE, FSC; public, releasable FLIS data only; free plan with monthly API credits. | Free tier + enterprise. |
 | [Niinja](https://niinja.co/Welcome/Developers) | NSN/CAGE API, pay as you go. **Going offline December 2026**, moving into OpenFLIS. | Paid. |
 | [ISO Group](https://iso-dlms.com/Help) | API with demand, availability and risk indexes per NSN. | Commercial. |
@@ -273,13 +280,15 @@ at data; CAD part libraries stop at supplier part numbers. That gap is the oppor
 
 ## Data providers: the NSN Lookup offer and the alternatives
 
-Jason's proposal: NSN Lookup could make its data or API free for SolidCraft users. Presented
+Jason's proposal, as owner of NSN Lookup Inc: NSN Lookup could make its data or API free for
+SolidCraft users. Because the proposer has a commercial interest, maintainers should weigh it
+on its written terms like any other provider. Presented
 neutrally, alongside the alternatives (opinion throughout this section):
 
 | Option | For | Against / questions |
 |---|---|---|
 | **A. Offline PUB LOG extract** built by a SolidCraft tool into a library pack (e.g. FSC 53xx only) | Free; government source; no account; works offline and in the browser; no lookups leave the user's machine; monthly refresh is easy to automate. | Size (millions of rows; a hardware-only pack must be measured); US-only; no images or manuals; someone must maintain the build script. |
-| **B. NSN Lookup API, free for SolidCraft users** | Curated search; may add images, manuals, cross-references beyond PUB LOG; offer made in good faith by an interested party. | Needs a published API and written terms: rate limits, whether results may be **cached in packs and saved in designs** (libraries.md requires designs to open offline), attribution, how long "free" lasts, and what happens if the service changes (Niinja shutting down in December 2026 is a live example). Privacy: which NSNs a user looks up can reveal what program they work on. An open-source project should not appear to endorse a vendor; affiliate links must not appear inside SolidCraft. |
+| **B. NSN Lookup API, free for SolidCraft users** | Curated search; may add images, manuals, cross-references beyond PUB LOG; offered by its owner, who can answer the questions in the next column directly. | Needs a published API and written terms: rate limits, whether results may be **cached in packs and saved in designs** (libraries.md requires designs to open offline), attribution, how long "free" lasts, and what happens if the service changes (Niinja shutting down in December 2026 is a live example). Privacy: which NSNs a user looks up can reveal what program they work on. An open-source project should not appear to endorse a vendor; affiliate links must not appear inside SolidCraft. |
 | **C. OpenFLIS API** | Documented JSON API; free tier; states it serves only releasable FLIS data. | Same terms, privacy and longevity questions as B. |
 | **D. User-supplied provider** | Organisations with FED LOG or their own catalogue can plug it in. | Needs a stable, documented provider interface. |
 
