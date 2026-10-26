@@ -39,6 +39,10 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
   the CAM tool libraries are set up both by machine and by material, with each tool tracked by
   its tag ID (details under "Tool identification" below).
 
+**This research is not complete.** It is a starting point: the author will keep researching
+and adding to it, and others are encouraged to do the same, correct it and contribute their own
+findings and shop experience.
+
 ## Summary
 
 1. **The idea.** A tool (for example a vendor end mill by part number) and a holder are each
