@@ -6,7 +6,9 @@ the physics that decides whether that hold is good enough, and how CAM could rec
 the workholding** instead of leaving it entirely to the machinist. Other CAM topics are out of
 scope here.
 
-It is written to pair with two other files from the same author:
+It is one part of a set that together describes machining as a complete physical system (see
+"The complete physical system" below): tool library, cutting physics, workholding, stock
+structural integrity and the machine library. It pairs most closely with:
 
 - [Cutting tool physics](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md)
   (section "Outputs for workholding"): where the cutting forces, torque, power and tooth-passing
@@ -430,6 +432,39 @@ Directions into a positive stop get the device's structural limit; friction dire
 and keeps every move's force and moment inside it, by lowering feed or width of cut where needed
 (the workholding term in min(tool, holder, spindle, machine, workholding)).
 
+**1a. The negotiation is continuous along the toolpath (Jason's point).** It is not one check
+per operation. As the cutter moves through three dimensions it pushes and pulls the part in
+directions that keep changing: into the fixed jaw on one pass, along the jaws on the next, up
+out of the vise as a helical tool ramps, around the grip as it turns a corner. The hold is strong
+in some directions (into a positive stop) and weak in others (along the jaws, toward the moving
+jaw, upward), so **the right tool load depends on the direction of the force at that instant**,
+and the workholding physics decides which directions are weak.
+
+How CAM can do this (opinion on the method, mechanics as above):
+
+1. Walk the toolpath in small steps over the **in-process stock** (the stock as it is at that
+   point in the cycle, see the stock integrity topic below).
+2. At each step take the cutting force vector `F` and moment `M` from the cutting physics, and
+   its direction `u = F / |F|`.
+3. Ask the workholding model for the **allowed load in that direction**, `F_allow(u)`, after the
+   safety factor: very large into a positive stop, `k μ F_N / S` along friction directions, the
+   lift limit upward, and so on, together with the moment limits.
+4. Scale the feed so the load meets the limit and no more. Cutting force grows with chip thickness
+   `h` roughly as `h^(1 − m_c)` (Kienzle exponent from the cutting physics file), and chip
+   thickness grows with feed per tooth, so a feed scale of about
+   `s = (F_allow(u) / |F|)^(1 / (1 − m_c))` brings the force to the limit (approximate; capped by
+   the tool, spindle and machine limits and by the slider).
+5. Where a different choice would point the force into a strong direction (cut toward the fixed
+   jaw, climb instead of conventional, ramp instead of plunge, a different entry side), suggest
+   it, or let the path planner prefer it, instead of only slowing down.
+
+The result is a feed that changes **along the path** (written into the program as varying
+feed per segment, the way feed optimisers already work, see the cutting physics file), so the
+tool works as hard as the weakest of tool, machine, stock and hold allows in **each** direction,
+not as hard as the worst direction of the whole operation allows. A further step, outside this
+file, is closing the loop on the machine with measured spindle load or force (adaptive control);
+the planned model would then be the starting point and the safety net.
+
 **2. A torque window, not a single number.** Torque `T` sets clamp force `F_N(T)` through the
 vise curve. Two constraints bound it:
 
@@ -469,6 +504,41 @@ It moves the safety factors on the workholding side (table above) together with 
 
 Opinion: the slider should show its effect in the setup, for instance "conservative: 40 N·m,
 cycle 12 min; aggressive: 25 N·m, cycle 9 min", so the trade-off is visible rather than hidden.
+
+### The complete physical system
+
+Jason's view: these topics are one physical system, not separate features. The load path in a
+cut runs **spindle → holder → tool → chip → stock → workholding → table → machine axes**, and
+the weakest link at any instant sets how hard the tool may work. Each link gets a library
+entry or a model, and the toolpath calculator reads all of them:
+
+| Link | What it supplies | Where it is researched |
+|---|---|---|
+| **Tool library** (tools, holders, cutting data) | geometry, stick-out, coefficients, tool limits | [shared tool library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-tool-library/research/cam-research-nsnlookupjn-tool-library.md) |
+| **Cutting physics** | force vector, torque, power, tooth-passing frequency per step; feed optimiser; risk/confidence slider | [cutting tool physics](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md) |
+| **Workholding library and physics** | allowed load per direction, torque window, best hold | this file |
+| **Stock structural integrity** | how stiff and strong the in-process stock is at each point of the cycle; cut sequence that keeps it stiff; deformation under tool and clamp | [stock integrity](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-stock-integrity/research/cam-research-nsnlookupjn-stock-integrity.md) (new topic, in progress) |
+| **Machine library** | the machine model: stiffness and available force in each axis, spindle power and torque curves, table load, rotary-axis clamp torque, work envelope | [machine library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md) (new topic, in progress) |
+
+How workholding ties into the two new topics:
+
+- **Stock integrity.** The hold's limits change during the cycle because the stock changes. A
+  part on vacuum loses sealed area as it is cut free; a thin part in a vise distorts more under
+  the same clamp force once its centre is pocketed; a wall far from the jaws loses stiffness as
+  material behind it is removed. So the workholding check runs on the in-process stock, and
+  the cut **sequence** is part of the negotiation: the stock integrity topic plans the order of
+  cuts so the stock stays stiff while forces are high, and this file supplies the hold's limits
+  for each candidate order.
+- **Machine library.** The machine model closes the load path. Its axis stiffness adds to the
+  deflection budget, its axis thrust and spindle torque cap the load just like the hold does, and
+  on a 4th or 5th axis the **rotary axis brake or clamp torque is itself part of the
+  workholding**: a heavy part on a trunnion is held by the vise *and* by the rotary clamp, so the
+  moment about the rotary axis must stay under both. The workholding entry's position on the
+  table (or on the trunnion) comes from the machine model.
+
+All five read and write through the same setup: one machine (from the machine library), one or
+more holds (from the workholding library), the stock, and tools (from the tool library). The
+confidence slider applies to the whole chain at once.
 
 ### Interface with the cutting physics file
 
