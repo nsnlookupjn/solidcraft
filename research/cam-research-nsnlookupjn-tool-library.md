@@ -71,7 +71,9 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    instead ([Control Design, 2024-05-13](https://controldesign.com/industry-news/news/55038158/collaboration-transfers-tool-information-to-mms-software)).
    A **printed label in a 3D-printed holder that clips into that bore**
    ([MakerWorld model 1291677, HSK63/SK40 data-holder label holder](https://makerworld.com/en/models/1291677-hsk63_sk_40_dataholder-label-holder))
-   is a near-zero-cost way to get the same benefit in small shops.
+   is a near-zero-cost way to get the same benefit in small shops. Tags are **recommended but
+   optional**: everything in this file works without them, with the tool picked from a list
+   instead of scanned.
 5. **The complaints are consistent:** tools re-entered in every program, duplicates, CAM library
    and machine tool table drifting apart, holders missing geometry. A shared catalogue plus
    per-shop assemblies plus scannable tags addresses all four.
@@ -179,6 +181,12 @@ entry instead of each typing their own copy.
   belong in the cutting-data set (unverified that any GTC package carries them).
 
 ### Tool identification (tool tags)
+
+**Tags are recommended but optional (the author's decision).** Every workflow in this file has
+a manual path: where the text says "scan the tag", a user without tags picks the tool from the
+library by tool number, ID or part number, and the same record is made. Tags make that faster
+and remove picking errors; they are never required to use the library, run the physics or
+produce a setup sheet. SolidCraft can print tags for shops that want them.
 
 - **RFID in the holder.** DIN 69873 ("Data media for tools and clamping devices; dimensions for
   data media and their mounting space", 1993-07) standardises the chip and its mounting bore
