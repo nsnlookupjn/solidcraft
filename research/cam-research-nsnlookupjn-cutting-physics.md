@@ -388,6 +388,15 @@ Proposed mapping (opinion; every number is a starting point for discussion):
 | Target tool life (Taylor) | e.g. 60 min | e.g. 30 min | e.g. 15 min |
 | Workholding safety factor, friction-held (from the workholding file) | ≈ 3.0 | ≈ 2.5 | ≈ 2.0, never below 1.5 |
 
+**Why this matters most for novices (Jason's observation):** a novice CAM programmer has little
+idea of the limits of a tool or of the workholding. An experienced programmer carries those
+limits in their head and edits presets to suit; a novice copies the preset and finds the limit by
+breaking a tool or moving the part. The physics checks put that experience into the program.
+Opinion, following from this: new users should start at the conservative end (or Balanced at
+most), every result should name the limit that set the feed in plain words ("the vise would let
+the part slip above this feed"), and moving toward Aggressive should be a deliberate choice, not
+the default.
+
 **Never moved by the slider (hard limits):** the lowest of tool `RPMX`, holder balance speed and
 machine maximum speed; machine feed and power maxima; the finishing tolerance (finishing
 deflection must stay inside it); minimum chip thickness (going thinner rubs and wears tools,
