@@ -495,7 +495,38 @@ Grouped by theme, most common first. Vote counts are given where the page showed
 **Requests implied (opinion):** define once and reference everywhere; offline-first with sync,
 not cloud-only; holders with real geometry; one source of truth for tool numbers per machine.
 
-> **[TODO Jason: personal experience]** Your own top complaints, in your words.
+**Author's complaints (personal experience, from 35+ years using most major CAM packages):**
+
+6. **Missing parameters.** Tool libraries always seem to miss certain parameters, so the
+   definition is never complete enough to trust.
+7. **Stack-up errors on mill tools.** Stacking the dimensions of cutter, holder and extensions
+   to get gauge length "nearly always causes a math error".
+8. **Physical data doesn't carry between libraries.** It is hard to keep one tool definition
+   whose physical parameters carry from, say, a mild steel library to an aluminium library while
+   only the cutting parameters (speed, feed, chip load) change. In practice the tool is copied
+   and the copies drift.
+9. **No material lock.** CAM software doesn't lock tools to a material, so aluminium parameters
+   can easily be run on a mild steel part, and a tool breaks.
+
+**How the proposal answers each (opinion):**
+
+- **(6) Missing parameters:** the field list is ISO 13399's, not a program's own subset, and a
+  tool shows which fields are empty and what each empty field blocks (e.g. no `LU` → no
+  long-reach collision check; no substrate → physics derated to the generic class).
+- **(7) Stack-up:** gauge length is never typed. It is **computed** from the components: holder
+  gauge-face-to-collet distance, extension lengths, and the cutter's stick-out, each stored once
+  on its catalogue item with its own reference point (ISO 13399 connection coordinate systems,
+  (unverified) detail). The chain is shown as a labelled sum, and the computed nominal length is
+  compared with the **measured** tool-setter length; a difference above a tolerance
+  (e.g. 0.5 mm, value to be chosen) flags a wrong component or a typing error.
+- **(8) One physical tool, many cutting data:** this is the layer split above. The catalogue item
+  and assembly hold geometry only; **cutting data is a separate record keyed by
+  (tool or tool class) × material**. Moving a tool from the steel library to the aluminium
+  library adds a reference, not a copy, and edits to geometry reach every library at once.
+- **(9) Material lock:** the `material_scope` on the tool, the library and the machine (see
+  "Material-scoped libraries"). The job's stock material selects the cutting data; there is no
+  way to pick "aluminium" cutting data for a steel stock without a visible override, and in
+  `locked` mode not even that.
 
 ## What users need
 
