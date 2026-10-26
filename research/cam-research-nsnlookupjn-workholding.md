@@ -512,6 +512,14 @@ these in real time and feed them back. For workholding this gives three things:
   the control allows it, ask for a feed hold;
 - **part and fixture modes:** vibration spectra show where the hold or a thin wall rings,
   which checks the frequency estimates above.
+**Aligned with the G-code and the timeline (Jason's point).** Every recorded sample is stamped
+so it can be placed on the program: the time, the G-code line or block number being executed,
+and the machine position. The simulation's per-step predictions are indexed the same way, so a
+measured load jump lands on the exact move (line, toolpath step, position on the part) that
+caused it, next to the predicted force and the hold's limit at that step. Clock drift between
+the box and the control is corrected by matching known events (program start, tool changes,
+the block number the control reports). This is what turns "it chattered somewhere in op 3" into
+"line N1234, corner at X…, Y…: load 40 % over prediction, hold margin fell to 1.2".
 (Opinion: start with recording and comparison only; letting the box change feeds on the machine
 is a later step that needs the control maker's interface and its own safety review.)
 
