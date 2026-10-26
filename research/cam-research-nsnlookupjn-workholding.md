@@ -347,7 +347,25 @@ and are placeholders, not a design):
      the moving jaw: reverse the direction or add a stop", and points at the move in the viewport;
    - the setup sheet prints the recommended torque, grip depth and stop position, so the person
      at the machine gets the same guidance.
-7. **No dialogs from scripts:** like every SolidCraft command, the check and the recommendation
+7. **Built into the simulation, so the rules are enforced (Jason's point).** The physics checks
+   are not a separate report a novice can skip. The toolpath simulation runs them on the
+   in-process stock as it plays, and they decide what happens next:
+   - the simulation shows the hold's utilisation per step (colour on the part and a timeline),
+     and stops at the first step where the part would slip, lift, tip, turn or distort past
+     tolerance, with the reason in plain words and the fix;
+   - a program that fails a **hard** workholding limit (below the slider floor, past the vise's
+     maximum force, moment over the rotary clamp torque) cannot be posted to G-code until it is
+     fixed; the user may only override with an explicit, recorded acknowledgement (opinion on
+     whether to allow even that is an open question);
+   - **soft** findings (margin below the chosen slider setting) are fixed automatically by the
+     feed optimiser where possible and listed where not;
+   - the setup sheet carries the conditions the simulation assumed (hold, torque, grip depth,
+     stop position, warm-up done), so the machine is set up the way it was simulated.
+   This is what protects the work, the tools and the machine from novice errors. The system-wide
+   version of this rule, covering tool, spindle, machine and stock limits, is in the
+   [CAM Physics System](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
+   file.
+8. **No dialogs from scripts:** like every SolidCraft command, the check and the recommendation
    run from the JSON form, so agents and scripts can use them.
 
 ### A shared (cloud) workholding library
