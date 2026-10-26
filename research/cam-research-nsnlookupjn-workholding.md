@@ -524,7 +524,7 @@ cycle 12 min; aggressive: 25 N·m, cycle 9 min", so the trade-off is visible rat
 ### The complete physical system
 
 System-level design (shared setup, per-step solver, one slider across the chain, roadmap) lives
-in the umbrella [CAM Physics System](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-physics-system/research/cam-research-nsnlookupjn-physics-system.md)
+in the umbrella [CAM Physics System](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
 file; this section keeps the load path and the workholding interfaces.
 
 Jason's view: these topics are one physical system, not separate features. The load path in a
