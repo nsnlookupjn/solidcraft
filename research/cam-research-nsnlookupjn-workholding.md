@@ -38,6 +38,12 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 
 ## Summary
 
+0. **Why this matters: novices cannot see the limits.** A novice CAM programmer has little idea
+   of the limits of a tool or of the workholding (Jason's observation). Experienced machinists
+   carry those limits in their heads: how hard a 6" vise can grip, how shallow a grip is too
+   shallow, which direction to push toward the fixed jaw. A novice sees a toolpath that looks
+   fine on screen and learns the limits by scrapping parts or breaking tools. If CAM computes the
+   limits and explains them, that knowledge becomes visible to everyone.
 1. **The gap.** CAM programs compute toolpaths from the cutting tool, the part and the stock.
    Workholding enters them mostly as **geometry**: a fixture body to avoid and to show in
    simulation. In the public sources reviewed, none checks whether the hold is **strong
@@ -326,7 +332,17 @@ and are placeholders, not a design):
 
    Numbers are a starting proposal; the floors follow Schmalz's 1.5 legal minimum for vacuum
    and Carr Lane's 2:1 recommendation.
-6. **No dialogs from scripts:** like every SolidCraft command, the check and the recommendation
+6. **Defaults built for novices** (because a novice has little idea of tool or workholding
+   limits; opinion on the details):
+   - the slider starts at **conservative**, and moving it toward aggressive says what changes;
+   - the check runs **automatically** whenever a toolpath is computed, not only on request;
+   - an unknown value (friction, torque curve) falls back to the cautious end of its range and
+     is labelled "assumed", so the user is told what to measure or look up;
+   - every warning is in plain words with the fix, for example "this cut pushes the part toward
+     the moving jaw: reverse the direction or add a stop", and points at the move in the viewport;
+   - the setup sheet prints the recommended torque, grip depth and stop position, so the person
+     at the machine gets the same guidance.
+7. **No dialogs from scripts:** like every SolidCraft command, the check and the recommendation
    run from the JSON form, so agents and scripts can use them.
 
 ### A shared (cloud) workholding library
