@@ -529,6 +529,43 @@ not be read):
 
 ## What users need
 
+### SolidCraft Edge: Jason's five functions, mapped to the interfaces
+
+**Jason's definition (2026-10-26, summarised; the in-process inspection file owns the full
+definition):** SolidCraft Edge is an edge computer on a **Raspberry Pi 5, programmed in Rust**,
+for connecting CNC machines and physical sensors. It has five functions: (1) **data
+acquisition** from machines (spindle speed, tool position, temperature) and sensors over serial,
+**Modbus** or Ethernet machine interfaces; (2) **machine communication**, sending commands and
+status requests for coordinated operation; (3) **data transmission to the CAM station** over
+REST, MQTT or WebSocket; (4) a **visual dashboard** on a connected monitor (machine state,
+alerts, production metrics); (5) **report printing** (production logs, maintenance summaries,
+quality checks). The operator uses a **keyboard and mouse**. It is built for reliability, low
+latency and safe continuous operation.
+
+What each function needs from this file (opinion where not cited above):
+
+| Function | Interfaces it uses (from [What each control maker offers](#what-each-control-maker-offers)) | Limits from this file |
+|---|---|---|
+| 1. Data acquisition | Haas MDC (serial or Ethernet) and DPRNT; MTConnect; OPC UA (40501); FOCAS (separate process); Heidenhain OPC UA/DNC; **Modbus RTU/TCP for add-on sensors, coolant monitors and small PLCs** (Modbus is not a CNC interface on the controls surveyed; it fits the retrofit sensor kit) | polled control data at 100–1,000 ms, add-on sensors at kHz; see [Signal rates](#signal-rates-what-real-time-really-means) |
+| 2. Machine communication | status requests: all of the above. **Commands: supervision level only**, per [Writing to the control](#writing-to-the-control-the-safety-model): Advise (messages), Stage (programs, offset and load-limit proposals the operator confirms on the control), Request (feed hold, stop after this tool, block next start); Commit off by default | **never** cycle start, jog, override increase, parameters or safety I/O. "Coordinated, real-time operation" means coordination at safe points through handshakes (reserved variables, MTConnect Interfaces), not motion control; the cell automation file's three layers keep the Edge out of the safety and real-time handshake layers |
+| 3. Transmission to the CAM station | REST for records and reports, MQTT for live values (publish per machine topic), WebSocket for the live dashboard in SolidCraft; all outbound from the Edge, no inbound ports on the plant side (high-security file) | records carry the alignment keys (program, block, CAM segment, tool, timestamp) so the CAM station can line measured up with predicted |
+| 4. Visual dashboard | the [machine station](#solidcraft-at-the-machine-on-a-mini-pc) screens, drawn by the Edge itself on its monitor | big targets and contrast (aging-eyes file); keyboard and mouse as Jason specifies, touch optional |
+| 5. Report printing | none from the control; reports come from the part record (inspection file) | report levels as in the inspection file |
+
+**"Low latency" (opinion):** the Edge should keep its own loop fast (collect, timestamp, show
+and forward within about a second), but nothing that must happen within milliseconds (stopping a
+breaking tool) is the Edge's job. That stays in the control, fed with limits SolidCraft posts
+(see [Posting limits into the control](#posting-limits-into-the-control)). Written this way, the
+Edge stays safe when its network, its software or its power fails: the machine carries on under
+its own program and its own monitors.
+
+**MCP on the Edge (opinion):** the Edge is the natural place for SolidCraft's side of the MCP
+proposal. It is an **MCP client** of a maker's machine MCP server where one exists, and it can
+itself be an **MCP server** to the CAM station and agents, exposing the same tiers (read,
+advise, stage, request; no motion tools) over whatever interface the machine actually has.
+That way an agent sees one safe tool set whether the machine is a Haas on MDC or a Heidenhain on
+OPC UA.
+
 ### A connector layer in SolidCraft (opinion)
 
 - **One connector per interface, not per machine:** Haas MDC (serial and Ethernet), DPRNT
@@ -536,7 +573,7 @@ not be read):
   process, closed library), Heidenhain DNC/OPC UA, Okuma THINC (on the control's Windows). Each
   reports what it found (`/probe`, browse) into the machine's shop record in the machine
   library.
-- **Runs in SolidCraft Edge or the machine station**, not in the desktop app; the desktop app reads
+- **Runs in SolidCraft Edge (or a machine-station PC)**, not in the desktop app; the desktop app reads
   the recorded data through the part record and sync (inspection file).
 - **Rust, separate crate or process**, so SolidCraft's own crates keep the no-`unsafe`,
   wasm-buildable rules (AGENTS.md); closed vendor libraries only behind a process boundary.
@@ -624,6 +661,8 @@ motion tools".
 **Jason's idea:** run SolidCraft at the machine on a small mini PC with a simple screen and mouse,
 to integrate the process into the machine and feed back to design and CAM.
 
+**SolidCraft Edge already has a screen.** Jason's definition gives the Edge its own monitor, keyboard and mouse and a live dashboard, so the simplest machine station is the Edge's own dashboard. Running the full SolidCraft app (the model, the toolpath, report-back on the design) at the machine is the richer option below, either on the Edge's Pi 5 or on a separate mini PC beside it.
+
 **Can it run there? (fact for SolidCraft, opinion for hardware).** SolidCraft ships Linux ARM64
 packages (AppImage, .deb, .rpm), Windows ARM64 and x86, and a browser build (`docs/downloads.md`);
 it renders with the GPU (wgpu) and has a headless CLI and an MCP server. So:
@@ -678,6 +717,7 @@ is down (offline-first; sync later).
 - **Elicitation (MCP):** a server asking the client's user for input during a tool call.
 - **FOCAS:** Fanuc's library for reading and writing CNC data over Ethernet or HSSB.
 - **HSSB:** High-Speed Serial Bus, Fanuc's fibre link to a PC.
+- **Modbus (RTU/TCP):** a simple industrial register protocol, common for sensors, coolant monitors and small PLCs; not a CNC control interface on the controls surveyed here.
 - **MCP (Model Context Protocol):** an open protocol for AI applications to discover and call
   tools and read resources on servers, with JSON Schema inputs and outputs.
 - **MDC (Haas Machine Data Collection):** the Q-command query interface (Setting 143).
