@@ -20,6 +20,7 @@ It builds on a set of files from the same author and does not repeat them:
 | Workholding | [cam-research-nsnlookupjn-workholding.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-workholding/research/cam-research-nsnlookupjn-workholding.md) | workholding-side trends (worn vise screw, jaws), slip and lift detection |
 | Cutting physics | [cam-research-nsnlookupjn-cutting-physics.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md) | predicted force, torque and power per segment; Taylor tool life |
 | Tool library | [cam-research-nsnlookupjn-tool-library.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-tool-library/research/cam-research-nsnlookupjn-tool-library.md) | tool and holder records where wear history lives |
+| CNC monitoring and control interfaces | [cam-research-nsnlookupjn-machine-interfaces.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md) | which controls publish spindle torque and axis load and how fast, how to read them, the safety model for writing to the control, SolidCraft at the machine on a mini PC |
 | Stock integrity | [cam-research-nsnlookupjn-stock-integrity.md](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-stock-integrity/research/cam-research-nsnlookupjn-stock-integrity.md) | wall and part modes, which must not be mistaken for machine faults |
 
 **Ownership (so nothing is said twice):** the edge box hardware, how it connects to each
@@ -27,8 +28,9 @@ control, and how samples are lined up with the program stay in the in-process in
 (the sensor kit itself is in its section [A commercial retrofit kit: upgrade any machine](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md#a-commercial-retrofit-kit-upgrade-any-machine)).
 The machine model and its published-signal list stay in the machine library. This file owns
 **what the recorded history means for health**: failure modes and their signatures, baselines,
-thresholds and trends, predicting bad work, coolant condition, and turning a finding into a
-maintenance work order.
+thresholds and trends, predicting bad work, **tool condition (chipped, broken and worn tools,
+setup errors, when to stop and re-measure)**, coolant condition, and turning a finding into a
+maintenance work order. Reading and writing the control is in the interfaces note.
 
 Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of CONTRIBUTING.md).
 
@@ -109,6 +111,15 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    **baselines, trends and plain rules** (explainable, little data), add learned models only
    when a fleet of shops chooses to pool labelled histories, and never let a model hide its
    evidence.
+10. **Tools: three layers, and stop and re-measure when in doubt (Jason's point).** The
+    control's own load monitor reacts in about a tenth of a second, and SolidCraft can give it
+    the right limit per tool from the predicted load instead of a guess. The edge box, comparing
+    spindle torque, axis load and vibration with the prediction, spots a missing tool, a chipped
+    tooth (once-per-revolution vibration) and wear trends, and catches setup errors on the first
+    part (stock size, offsets, wrong material). The tool setter and probe confirm. When the
+    evidence says a tool may be damaged, the program's own check cycle measures it at the next
+    safe point and decides: continue, correct, sister tool, or stop; then the features that tool
+    cut are checked.
 
 ## Fundamentals
 
@@ -294,7 +305,7 @@ Fact where cited; the signal mapping is opinion based on general condition-monit
 | **Linear guides / ways** | lubrication starvation, wear, damaged wipers | axis load at fixed feed rising (friction); stick-slip at low feed | straightness and squareness change | way-lube system check; wiper inspection; ballbar |
 | **Axis drives and couplings** | coupling slip, motor bearing, encoder | load ripple at a fixed feed; following error (where published) | servo alarms | builder diagnostic; coupling torque check |
 | **Thermal drift** | spindle and structure growth; failing chiller | probe drift of a reference artefact vs spindle temperature changes shape compared with baseline | size drifting through a shift (inspection file SPC) | chiller and spindle cooling check; thermal compensation check (ISO 230-3) |
-| **Tool wear** (not a maintenance item, but the commonest drift) | flank and crater wear, chipping | `r_P` rising along a tool's cut time; vibration rising | size and finish drift; breakage | change tool earlier; correct tool-life record in the tool library |
+| **Tool wear** (not a maintenance item, but the commonest drift) | flank and crater wear, chipping | `r_P` rising along a tool's cut time; vibration rising | size and finish drift; breakage | change tool earlier; correct tool-life record in the tool library; see [Tool condition](#tool-condition-chipped-broken-and-worn-tools-jasons-point) |
 | **Workholding** | worn vise screw, jaw plates, hydraulic leaks | covered in the workholding file: torque needed to pass rising, slip events | part movement | the workholding file's checks |
 | **Coolant** (Jason's addition) | concentration drift, contamination, bacteria, temperature | concentration and temperature trends; pH drop | rust, odour, short tool life, poor finish, skin complaints | coolant test and correction (below) |
 | **Lubrication systems** | empty reservoir, blocked line | way-oil consumption off its normal rate (if a level sensor exists); control lube alarms | guide and screw wear | lube system check |
@@ -426,6 +437,147 @@ characteristic per part; this file adds trend detection and cause ranking (opini
    fingerprint, tool remaining life, coolant state, warm-up done. A job with tight tolerances is
    steered away from a machine with an open thermal or spindle finding, or the sheet asks for a
    first-part check.
+
+### Tool condition: chipped, broken and worn tools (Jason's point)
+
+**Jason's idea:** read spindle torque and axis load in real time (through the edge box) to
+detect or predict tool failure, setup problems and generally bad cutting; detect chipped,
+broken and worn tools from the machine's loads and vibration as well as probing and the tool
+setter, and **if there is a possibility, stop and re-measure the tool**.
+
+Which controls publish spindle torque and axis load, at what rate, how to read them, and how
+anything may write back to the control (feed hold, stop requests) is in the companion note on
+CNC monitoring and control interfaces:
+[What each control maker offers](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#what-each-control-maker-offers),
+[Signal rates: what "real time" really means](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#signal-rates-what-real-time-really-means)
+and [Writing to the control: the safety model](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#writing-to-the-control-the-safety-model).
+Running SolidCraft itself beside the machine is in its section
+[SolidCraft at the machine on a mini PC](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#solidcraft-at-the-machine-on-a-mini-pc).
+This section owns the **detection logic and the decision**: what each tool fault looks like,
+which layer catches it, and when to stop and re-measure.
+
+#### Three layers, three speeds
+
+A broken tool does its damage in milliseconds to seconds; wear takes hours. No single device
+covers both (opinion, following from the signal rates in the interfaces note):
+
+| Layer | Runs where | Reacts in | Catches | Acts by |
+|---|---|---|---|---|
+| **1. The control's own load monitor** | inside the CNC | about 0.1 s (Haas autofeed steps every 0.1 s, per a copy of Haas's tool-monitoring guide; other controls unverified) | overload, a jammed or broken tool that spikes the load, a crash-like hit | alarm, feed hold or automatic feed reduction (Haas Setting 84: Alarm, Feedhold, Beep, Autofeed; limits per tool) or the maker's equivalent (Fanuc and others offer abnormal-load detection options; unverified per control) |
+| **2. The edge box** | the Pi beside the machine | polled control data: a few hundred ms to about 1 s; its own accelerometer: per spindle revolution, reduced on the box | missing load where load was predicted (tool gone), slow load rise (wear), one tooth doing more work than the others (chipping), chatter, setup errors | a finding; a stop request **at the next safe point** through the input the interfaces note's safety model allows (for example "stop after this tool"); never a feed or offset change on its own |
+| **3. Measure the tool** | tool setter (contact or laser) and spindle probe, run by the program | seconds, between operations | broken, chipped or shortened tool for certain; length and radius change from wear; features cut by the tool out of size | the macro decides: continue, update the wear offset, switch to a sister tool, or stop for the operator |
+
+**What SolidCraft adds to layer 1 (opinion; the biggest cheap win).** Shops leave control load
+limits off or set them by guesswork because the right value depends on the cut. SolidCraft's CAM
+predicts the spindle and axis load of every segment, so the post-processor can **write a load
+limit per tool** (from the highest predicted load for that tool in the program, plus the
+slider's margin, capped by the tool and spindle limits) into the control's tool table or as
+program settings, and choose the action. Where a control allows the limit to change inside the
+program (by macro variable or a command; unverified per control), the post can lower it for
+light finishing segments, where a single per-tool limit set for roughing is far too high to
+notice anything. The fast reaction stays inside the control, where it is deterministic; the
+CAM only supplies better numbers.
+
+**Why the edge box cannot be the breakage guard.** At 1,200 mm/min the tool moves 10 mm in a
+0.5 s poll (computed). A broken end mill can be dragged that far before the box even sees the
+sample, then the request still has to reach a safe point. So the box detects, records and
+stops the *next* damage (a missing tool going into the next feature, a whole batch cut with a
+chipped tool); the control's monitor and the tool setter stop the immediate damage.
+
+#### What each fault looks like
+
+All signals are compared with the per-segment prediction (the residual `r_P` from
+[Why the physics prediction changes condition monitoring](#why-the-physics-prediction-changes-condition-monitoring)),
+which is what lets the monitor tell an unusual cut from an unusual tool.
+
+| Fault | Spindle torque / power | Axis load | Vibration (edge box accelerometer) | Tool setter / probing | Confidence from load alone |
+|---|---|---|---|---|---|
+| **Broken tool** (gone or snapped short) | a spike or step, then load near idle where cutting was predicted (`r_P` ≈ 0 on following segments) | feed-direction load near zero | burst at the break, then no tooth-passing content | length short or beam not broken: certain | high when predicted load is well above idle; low for small tools (below) |
+| **Chipped edge** (one tooth damaged) | small rise in mean load; often hidden at polled rates | small rise | **once-per-revolution component grows** relative to tooth passing, because one tooth now cuts more or less than the others (same signature as runout) | laser setter radius or profile check may see it (unverified for small chips); probed finish and size worse | low; needs the accelerometer |
+| **Worn tool** (flank wear) | `r_P` rises slowly over the tool's cut time; sharper rise near end of life (rule of thumb, unverified as general) | feed and radial loads rise (rubbing) | broadband level rises; finish proxy worse | length or radius smaller by tens of µm (laser setter measures radius); probed walls thicker as deflection rises; wear-offset corrections growing | medium; best from trends across the tool's life |
+| **Built-up edge / chip packing** (aluminium, deep slots) | erratic rises that clear and return | erratic | broadband, irregular | finish and size scatter | medium |
+| **Chatter** | mean load may barely change | — | a strong peak **not** at tooth passing or its harmonics, near a known tool or machine mode (cutting physics, machine library) | finish marks | none from load; needs vibration |
+| **Wrong tool loaded** | residual pattern consistently off for that tool's segments (bigger tool: higher; smaller: lower) | same | tooth-passing frequency differs if the flute count differs | length/diameter mismatch with the tool record: certain | medium |
+
+**Worked example: seeing a chipped tooth (computed for this file).** A 4-flute end mill at
+8,000 rev/min has a tooth-passing frequency of `8000 · 4 / 60 = 533 Hz` and a once-per-revolution
+frequency of 133 Hz. With all four teeth sharp and little runout, the vibration is dominated by
+533 Hz and its harmonics. A chipped tooth makes one tooth cut differently every revolution, so
+energy grows at 133 Hz and its multiples that are not multiples of 533 Hz (266, 400 Hz). The
+box tracks the ratio of once-per-revolution to tooth-passing energy per segment against the same
+tool's history: a step change mid-batch is a chipping event; a value high from the first cut is
+runout from the holder (cutting physics file). Spindle load polled at 1 Hz cannot show any of
+this.
+
+**Small tools are the hard case.** A 1 mm drill or end mill may need a few watts of cutting power
+against a spindle that idles at hundreds of watts (opinion; idle power varies by machine), so
+its break hardly changes the spindle load. For those tools the reliable checks are the tool
+setter (laser setters are made to check tools under a millimetre for breakage, per Renishaw's
+TRS2 page) and acoustic or vibration sensing close to the cut. The CAM knows which tools are
+too small for load monitoring (predicted load below a set fraction of the spindle's idle
+power) and should plan a tool-setter check after them instead.
+
+#### Setup problems and bad cutting
+
+The same residuals catch setup errors on the first part, often within the first operation
+(opinion; the timings come from the CAM's predicted engagement):
+
+| Problem | What the monitor sees | Check |
+|---|---|---|
+| **Stock larger or smaller than modelled, or wrong work offset** | load starts earlier or later than the predicted engagement on entry moves; the shift in time × feed gives the size error (computed example: load starts 0.25 s early at 1,200 mm/min → about 5 mm more stock than modelled) | probe the stock before roughing (inspection file) |
+| **Wrong tool length offset** | Z plunges and ramps start cutting early or late; floors cut by that tool are deep or shallow | re-measure the tool on the setter |
+| **Part not seated, slipping, lifting** | load drops or steps unexpectedly in one direction (workholding file) | stop at a safe point; re-clamp; probe the datum |
+| **Wrong material or a hard lot** | residual off by a similar factor for every tool from the first cuts | check the material certificate; update `kc1.1` for the lot (cutting physics file) |
+| **Coolant off or misdirected** | residual and spindle temperature rising together; finish worse | coolant check (coolant section below) |
+| **Operator overriding feed or speed** | actual feed or speed differs from programmed (published by most controls) | not a fault; recorded so residuals are computed at the real feed |
+| **Air cutting** (program too conservative or stock already removed) | idle-level load on segments planned as cuts | CAM: refine the in-process stock model; self-tuning candidate |
+
+#### Stop and re-measure: the decision
+
+**Jason's rule: if there is a possibility, stop and re-measure the tool.** The question is how to
+make that cheap enough that it happens every time it should, and rare enough that the machine
+keeps cutting. Opinion:
+
+1. **Each tool gets a check policy** in the program, chosen by the CAM from the tool and the risk:
+   - *always after use*: small drills and taps, tools whose breakage the load cannot see, and the
+     last tool before a costly feature or a finished surface;
+   - *on suspicion*: most tools; checked when the control's monitor or the edge box raises a flag;
+   - *by count*: every N parts or N minutes of cut, where wear is the main risk.
+2. **Suspicion comes from evidence, graded:**
+
+   | Evidence | Example | Response |
+   |---|---|---|
+   | Certain | the control's load monitor tripped; tool setter beam not broken | stop (control's own action); operator |
+   | Strong | `r_P` near zero on segments predicted to cut; vibration burst followed by silence | request a stop at the next safe point; tool-setter check before the next tool touches the part |
+   | Moderate | once-per-revolution energy stepped up; `r_P` up by more than its EWMA limit; probed size jumped | tool-setter length and radius check at the next tool change; probe the features this tool cut |
+   | Weak | slow wear trend inside limits | no stop; change the tool earlier at the next planned point; adjust the tool-life count |
+
+3. **The check is a cycle the post already wrote.** Opinion: the program carries, after each
+   tool (or at chosen safe points), a short conditional call: *if the check flag for this tool is
+   set, go to the tool setter, measure length (and radius on a laser setter), compare with the
+   stored values and the limits, then continue, update the wear offset, call a sister tool, or
+   stop with a message*. The flag is set by the control's own monitor, by a macro variable the
+   edge box may write **only where the interfaces note's safety model allows it**, or by the
+   operator. The decision itself stays in the control's macro, the same principle as in-cycle
+   compensation in the inspection file.
+4. **Then check what the tool already cut.** A tool that measured short or chipped may have
+   left features out of size. The CAM knows which features that tool cut since its last good
+   measurement, so the program probes those (or the part record marks them for bench
+   inspection) before the part moves on.
+5. **Record everything.** Each flag, check result and decision goes into the part record and the
+   tool's history in the tool library (shop instance): tool life used, how it ended (worn,
+   chipped, broken), and the load trend before it. That history is what lets the CAM predict
+   the next failure of the same tool type and set the *by count* interval from evidence instead
+   of guesswork.
+
+**Predicting tool failure, not just detecting it (opinion).** The Taylor tool-life estimate in
+the cutting physics file gives the starting expected life; the wear trend of the current tool
+(residual rise per minute of cut, setter radius loss, probed deflection) updates it as the tool
+works; the shop's history of the same tool type in the same material gives the spread. Together
+they give a remaining-life estimate with a range, and the CAM can schedule the tool change or the
+re-measure at a convenient safe point *before* the predicted end of life, rather than at a fixed
+count. The datasets in the Accuracy section (PHM 2010 milling) are the kind of data used to
+develop such estimators; a shop's own history is what calibrates them.
 
 ### Coolant condition (Jason's addition)
 
@@ -580,6 +732,7 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
 | H2 | findings and work orders (CMMS API, email, printed ticket); closing the loop after maintenance | H1 | turns data into action |
 | H3 | per-segment residuals and EWMA trends on production cuts | physics predictions per segment; G-code alignment | machine-wide drift and tool wear on jobbing work |
 | H4 | bad-work prediction: control charts on characteristics and corrections, cause ranking | in-process inspection records | catches drift before a part is out of tolerance |
+| H3b | tool condition: per-tool load limits written by the post into the control's monitor; tool check cycles with check policies; missing-tool, chipping and setup-error detection; tool histories | post-processor; tool setter; edge box accelerometer for chipping | fewer broken tools carried into the next feature, setup errors caught on the first part |
 | H5 | coolant sensors and coolant findings | sensor kit (inspection file) | removes a silent cause of bad work |
 | H6 | CAM reacts: deratings, self-tuning hold, job routing | limits engine | the monitor changes what the CAM does |
 | H7 | opt-in shared histories per machine model; learned models where pooled data allows | many shops | better starting limits for everyone |
@@ -609,6 +762,8 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
 | Cpk | process capability index relative to the nearer tolerance limit |
 | Envelope analysis | demodulating high-frequency vibration to find repetition rates of impacts, used for rolling bearings |
 | EWMA | exponentially weighted moving average chart |
+| Check policy | when a tool is measured on the tool setter: always after use, on suspicion, or by count |
+| Chipping | loss of a small piece of a cutting edge; one tooth then cuts differently from the others |
 | Fingerprint cycle | a fixed no-cut routine run regularly to compare a machine with its own baseline |
 | P-F interval | time from first detectable sign (P) to functional failure (F) |
 | Residual | measured divided by predicted, for the same segment or condition |
@@ -627,10 +782,12 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
 3. How long a baseline is enough? A fixed number of warm-up runs, or until the spread settles?
 4. Should the fingerprint add time to the builder's warm-up, or only record what the warm-up
    already does?
-5. Is a printed maintenance ticket from the edge box useful, or does everything go to phones?
-6. Which coolant sensors are robust enough inline (refractometer fouling, pH probe drift) for a
+5. Which controls let a program change the load-monitor limit per segment, and which let an
+   outside device set a check flag safely? (Interfaces note.)
+6. Is a printed maintenance ticket from the edge box useful, or does everything go to phones?
+7. Which coolant sensors are robust enough inline (refractometer fouling, pH probe drift) for a
    small-shop kit? Needs hands-on testing.
-7. How should SolidCraft treat a finding on a machine owned by someone else (a subcontractor's
+8. How should SolidCraft treat a finding on a machine owned by someone else (a subcontractor's
    machine running SolidCraft programs)?
 
 > **[TODO Jason: personal experience]** Which of these findings would have saved you money in
@@ -681,6 +838,18 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
   https://data.epo.org/gpi/EP2023224A1
 
 ### Trade press and vendor pages (marketing where they describe products)
+
+- Haas tool load monitoring and autofeed, Setting 84 (secondary copy of Haas's guide):
+  https://www.mfgrobots.com/Article/equipment/cnc/46178.html ; Haas tool life management:
+  https://www.haas.co.uk/?p=1266
+- Renishaw TRS2 non-contact broken tool detection (checks tools under a millimetre):
+  https://www.renishaw.com/trs2 ; NC4 non-contact tool setter (CTE article):
+  https://ctemag.com/?p=110714
+- Cho, Han, Chi, Yoo, "A tool breakage detection system using load signals of spindle motors in
+  CNC machines", ICUFN 2016, pp. 160–163, doi:10.1109/ICUFN.2016.7537007:
+  https://pure.seoultech.ac.kr/en/publications/a-tool-breakage-detection-system-using-load-signals-of-spindle-mo/
+- Toshiba Kikai, "Numerical controlling unit having tool-breakage detecting function",
+  US 6859680 B2 (expired): https://patents.google.com/patent/US6859680B2
 
 - The ins and outs of ballbar calibration (MoldMaking Technology):
   https://www.moldmakingtechnology.com/articles/the-ins-and-outs-of-ballbar-calibration
