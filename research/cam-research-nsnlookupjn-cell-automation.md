@@ -18,6 +18,37 @@ improvement). "Raspberry Pi" is the hardware it runs on today; "the Edge" in thi
 box and its software. Using the SolidCraft name on a device or product needs the maintainers'
 agreement (the trademark question in the inspection file); until then it is a working name.
 
+**Jason's description of SolidCraft Edge (October 2026, his words summarised).** An edge
+computer built on a **Raspberry Pi 5, programmed in Rust**, for IoT integration with CNC
+machines and physical sensors, with five functions:
+
+1. **Data acquisition**: continuously collects machine data (spindle speed, tool position,
+   temperature) and sensor data, over serial, Modbus or Ethernet machine interfaces.
+2. **Machine communication**: sends commands and status requests to the CNC for coordinated
+   operation.
+3. **Data transmission to the CAM station**: processes and packages the data and sends it to
+   SolidCraft by REST API, MQTT or WebSocket for monitoring, analysis and optimisation.
+4. **Visual display**: a live dashboard on a connected monitor (machine state, alerts,
+   production metrics).
+5. **Report printing**: hard-copy production logs, maintenance summaries and quality checks on
+   an attached printer.
+
+The operator uses a keyboard and mouse for input, configuration and reports. It is meant for
+reliable, low-latency, continuous operation, bridging machines, CAM and people.
+
+**How this file reads those functions for a robot cell (opinion).** Functions 1, 3, 4 and 5 fit
+the supervision layer as they stand: the cell adds handshake events, tool-tag scans, tool-setter
+results and raw-part counts to what is acquired, sent to CAM, shown and printed. Function 2 needs
+one boundary: "commands for coordinated operation" here means **supervision-level** commands
+(status requests, selecting the next job while the cell is idle, staging offsets), climbing the
+Record → Advise → Stage → Commit ladder below with Commit off by default. It does **not** mean
+the millisecond robot/machine handshake or anything in the safety chain, which stay in the robot
+and machine controls and certified safety hardware. "Low latency" and "safe continuous operation"
+are goals for the software, not a safety rating. The write and safety model for machine commands
+in general is owned by the [machine interfaces](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md)
+file ("may always ask the machine to be safer, never make it move"); this file applies it to the
+cell.
+
 It builds on earlier files from the same author and does not repeat them:
 
 - [In-process inspection](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md):
