@@ -30,6 +30,29 @@ Each topic file owns its own physics and its side of each interface. This file o
 system-level parts: the shared setup, the solver loop that combines every limit, the one slider
 across the whole chain, the closed loop with measurement, the phased plan, and the request.
 
+**Scope: milling first, all subtractive CNC in principle (Jason's clarification).** This file
+and its topic files are written mainly from a **milling** point of view, because milling has
+the most varied force directions and the most to gain. The same principle applies to **every
+subtractive CNC process**: each one has a process load, a load path through tool, part, hold
+and machine, and a point of stress where something fails, and the same setup, limits engine,
+slider, simulation gate and Self-tuning CAM Operations apply. For example (general process
+knowledge, details per process left to their own research):
+
+- **Turning and mill-turn:** cutting force against the chuck's grip and the part's stiffness
+  (long, slender parts), spindle torque at low speed; the chuck is the hold.
+- **Drilling, tapping, boring:** thrust and torque limits of small tools, chip evacuation.
+- **Grinding:** wheel load, heat into the part (burn), wheel speed limits.
+- **EDM (wire and sinker):** almost no mechanical cutting force, but it still has a failure
+  point: wire breakage from too much discharge energy or poor flushing, wire tension, thin
+  sections pushed by flushing pressure, and a slug or part that shifts or drops as it is cut
+  free (the stock integrity question again).
+
+**Additive manufacturing** can be described by the same kind of system, but its limits are
+mostly **material and machine properties** (melt pool, cooling, residual stress, flow rate)
+rather than force vectors; that side is covered in the additive research,
+[3d-printing-research-nsnlookupjn-process-physics.md](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-j72y6h/research/3d-printing-research-nsnlookupjn-process-physics.md)
+(#1626).
+
 Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of CONTRIBUTING.md).
 
 ## About this research
@@ -587,8 +610,8 @@ leave room for it in the right places.
    distortion after unclamping) inside this system or a later topic?
 6. Where should real-time adaptive control live: in the control's own option, in SolidCraft Edge
    (the inspection file's Raspberry Pi device), or not in SolidCraft at all?
-7. Does lathe and mill-turn work fit the same setup (chuck as hold, turret as tool holder), or
-   does it need its own model?
+7. How much of the setup and limits engine can turning, grinding and EDM share with milling
+   (chuck as hold, turret as tool holder, wire as tool), and which process needs its own model?
 
 ## Sources
 
