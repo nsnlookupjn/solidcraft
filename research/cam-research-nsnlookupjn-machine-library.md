@@ -200,6 +200,46 @@ Two separate roles:
   planning has been under development (LinuxCNC forum). Closed controls have equivalent
   parameters, often visible to the user only as a "smoothing" or "high-speed machining" mode.
 
+### The control: block processing, look-ahead and accuracy modes
+
+*Jason: "tolerances can drive the toolpath required accuracy making speedier cuts possible on
+non critical areas. Features like G187 and High-Speed Machining (HSM code look forward) come
+into play here. Arc fitting vs interpolated points to meet tolerances. Consider the line
+processing speed of the machine and try to stay away from processing limits so machine is
+always smooth."*
+
+The tolerance budget and the choice of CAM tolerance per face are in the
+[in-process inspection file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md) (section "Tolerance-driven toolpath accuracy"). This file
+holds the **machine and control facts** that choice depends on:
+
+- **Block processing rate.** A control executes a limited number of blocks per second and reads
+  a limited number of blocks ahead. Demand is `feed (mm/min) / 60 / segment length (mm)` blocks
+  per second: 6000 mm/min on 0.05 mm segments needs 2000 blocks/s, on 0.2 mm segments 500
+  blocks/s. Above the control's rate it slows, hesitates and marks the part. Rates and look-ahead
+  depth vary widely by control and option and are rarely published (unverified per model), so
+  the entry stores a published or **measured** value with its source.
+- **Smoothness margin.** CAM keeps block demand below a fraction of the rate, by default 70 %
+  (Jason: stay away from the processing limit), and the slider does not raise it above the rate.
+  Segments over the margin are fixed by arc or spline fitting first, then merging points within
+  the face's allowed tolerance, and only then by lowering feed (inspection file).
+- **Drip-feed (DNC) link speed.** A program streamed over a serial line has a second limit: at
+  115,200 baud and 10 bits per character about 11,520 characters/s, roughly 380 blocks/s at 30
+  characters per block before handshake pauses (arithmetic, inspection file). Network transfer
+  and memory size decide whether a program can be loaded whole instead.
+- **Accuracy / high-speed modes.** Which smoothing modes the control has and their parameters:
+  Haas **G187** P1/P2/P3 (rough, medium, finish; default from Setting 191, optional E corner
+  limit, unverified detail); Heidenhain **Cycle 32 TOLERANCE** (path tolerance T, HSC mode 0
+  accuracy / 1 speed, rotary tolerance TA); Fanuc AI contour / high-speed high-precision modes
+  (G05.1 and related, option-dependent, unverified); Siemens **CYCLE832** (unverified details).
+  The post emits the mode chosen from the tolerance budget at each operation.
+- **Arcs and splines.** Whether the control accepts G2/G3 arcs in each plane (XY, XZ, YZ; usually
+  only principal planes, not in simultaneous 5-axis moves), helical arcs, and spline/NURBS input
+  (option-dependent, unverified per control). CAM arc-fits by default where the planes allow it
+  and uses splines only where the entry says they exist.
+- **Link to real feed.** Block rate, look-ahead and the smoothing mode, together with axis
+  acceleration and jerk above, decide the feed the control really runs (Ward et al. 2021), which
+  is what the cutting physics should use.
+
 ### Rotary axes, tables and the workholding chain
 
 - **Rotary table torque and brake.** A 4th or 5th axis has a drive torque (to index under load)
@@ -528,7 +568,7 @@ deflection, **C** chatter, **V** feed/cycle time, **G** geometry/collision, **W*
 | Warm-up | routine steps `(n, duration)`, idle time before it is needed again, cold derating of `M`, `P`, `n_max`; shop instance: last warm-up time | rpm, s, – | P H |
 | Accuracy | positioning accuracy and repeatability per axis (ISO 230-2 / 10791-4 style), ballbar result, thermal drift | µm | H |
 | Signals | protocols (MTConnect, OPC UA, maker API); per signal: name, unit, meaning, update rate; block/line number and position published with it (alignment level); shop: endpoint, added sensors and sample rate | –, Hz | closed loop |
-| Control | look-ahead, smoothing/tolerance modes, corner behaviour if known | | V |
+| Control | block processing rate (published or measured, with source), look-ahead depth, smoothness margin (default 70 %), DNC link speed and program memory, accuracy/HSM modes with parameters (G187 P1–P3 + E, Cycle 32 T/HSC/TA, CYCLE832, G05.1…), arcs per plane (XY/XZ/YZ, helical), spline/NURBS support, corner behaviour if known | blocks/s, –, baud | V H |
 | 3D model | link to model (STEP/STL), part-to-axis mapping, tool attach point, table frame, licence | | G |
 
 ### Interface with the other files
@@ -547,6 +587,7 @@ physics file's "Machine" row).
 | Machine → cutting physics (chatter) | modes `(f_n, ζ, k)` or spindle receptances for RCSA | Hz, –, N/µm | tool-point FRF with the tool library's tool and holder |
 | Machine → workholding | rotary brake/clamp torque, table load, mounting frames | N·m, kg, frame | brake is part of the hold |
 | Machine ↔ tool library / workholding | `material_scope` and machine group; job's allowed set is the intersection | – | refuses or warns, naming the item that excludes the material |
+| Machine → CAM tolerance / post (inspection file) | block rate and margin, DNC speed, accuracy modes and parameters, arc planes and spline support | blocks/s, baud | block demand checked along every path; mode chosen per operation from the tolerance budget |
 | Machine → simulation | kinematics, travel limits, 3D model and axis mapping | mm, rad | collision and travel checks |
 | Cutting physics → machine check | `Mc`, `Pc`, `Fx`, `Fy`, `Fz`, `n` per step | N·m, W, N, rpm | compared with the limits above |
 | Machine → closed loop / edge box | list of signals the control publishes, with units and rates; added sensors | –, Hz | what can be measured on this machine |
