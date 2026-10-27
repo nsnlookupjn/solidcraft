@@ -736,6 +736,8 @@ not cloud-only; holders with real geometry; one source of truth for tool numbers
   per catalogue item (geometry, 3D model, substrate and coating, cutting data with valid range,
   verified by shop results), and tools with incomplete data are derated and ranked lower. This
   gives vendors a direct reason to publish good data instead of aggressive headline numbers.
+- **Which makers publish what today, where to find it and where to buy:** see the companion
+  file [tool makers and physics data](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-tool-library/research/cam-research-nsnlookupjn-tool-makers-physics-data.md).
 - **Vendors as physics-data contributors (the author's request):** vendors should be encouraged
   to provide **real-world physics data** for their tools, not just geometry and start values.
   Proposed (opinion):
@@ -942,6 +944,7 @@ vise clamping-torque curves could sit in the shared catalogue next to holders (o
 - Aggarwal, V. et al., "Information Extraction From Fiscal Documents Using LLMs", arXiv
   2511.10659v2, 2025 ([HTML](https://arxiv.org/html/2511.10659v2))
 - Companion research in this fork:
+  [tool makers and physics data](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-tool-library/research/cam-research-nsnlookupjn-tool-makers-physics-data.md),
   [cutting physics](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md),
   [machine library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md),
   [workholding](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-workholding/research/cam-research-nsnlookupjn-workholding.md)
