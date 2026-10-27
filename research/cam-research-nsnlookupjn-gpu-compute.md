@@ -404,6 +404,38 @@ engagement. With GPU compute:
 - **Machine and warm-up gates are unaffected.** Compute speed never changes a limit. The
   warm-up gate and every other hard rule in the physics files still apply to the final program.
 
+### Jason's further input (October 2026)
+
+Jason added the points below after discussing the architecture with another AI assistant. They
+are his design input, **not verified claims**; where that discussion was wrong for SolidCraft,
+the correction is given.
+
+- **A hybrid stock: exact B-rep plus a GPU proxy.** The exact B-rep (SolidCraft's own kernel,
+  `crates/kernel`) stays the source of truth for the design's boundaries, feature recognition and
+  finishing passes. The changing in-process stock is held as a **sparse voxel grid or a
+  narrow-band signed distance field** (distances stored only in a thin band around the surface)
+  in GPU buffers, updated by `wgpu` compute shaders, and used for engagement, force and collision.
+  This fits the dexel and SDF models above and the "GPU proposes, CPU certifies" rule.
+- **Per-flute forces by axial slices, summed in parallel.** A helical cutter is split into thin
+  axial disks; each disk of each flute in the cut gets its chip thickness and force, and a GPU
+  parallel reduction sums them into the force vector on the tool for that step. The force form is
+  the mechanistic edge-force model in the
+  [cutting physics file](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-cutting-physics/research/cam-research-nsnlookupjn-cutting-physics.md#4-mechanistic-edge-force-model)
+  (`dF = (Kc · h + Ke) · dz` per direction, `h = fz · sin φ`, slice angle lagged by the helix),
+  with Kienzle's `kc1.1`/`mc` as the starting point where edge-force coefficients are not known.
+  The sum must be in a fixed order (or fixed-point) so results stay deterministic (see Precision
+  above).
+- **Corrections to that discussion.**
+  - It named the kernel "SolidCore". SolidCraft's kernel is `crates/kernel`; SolidCore is an
+    unrelated project.
+  - It treated the GPU as the core engine. In SolidCraft, GPU code lives in `crates/gpu`, a
+    higher layer than the kernel, and everything below the apps must build for wasm. So any GPU
+    path is an **optional accelerator** that must match a CPU reference, never the only path.
+  - Its force equation (a chip-thickness exponent applied inside the edge-force model) and its
+    feed scaling (an extra damping factor on an inverse-proportional feed correction) are not
+    standard forms. Use the cutting physics file's equations, and the CAM Physics System's solver
+    loop (feed from the binding limit) for feed adjustment.
+
 ### A phased plan
 
 1. **CPU reference first.** Write each CAM kernel as a clear, tested, multi-threaded CPU
@@ -617,6 +649,9 @@ were not separately collected for this topic (TODO).
    document how to run the worker image, leaving provider automation to the user?
 9. How should cost be shown and capped for rented compute, and who sets the cap in an
    organisation?
+10. For the GPU stock proxy, which keeps memory access more cache-coherent on GPUs for CAM's
+    access pattern (a tool sweeping through a local region): a sparse voxel octree or a
+    narrow-band SDF in hashed blocks? (Jason's question; compare with the tiled tri-dexel above.)
 
 ## Sources
 
