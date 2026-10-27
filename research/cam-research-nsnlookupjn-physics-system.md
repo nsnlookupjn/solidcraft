@@ -65,6 +65,11 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
   sources. Claims new to this file cite their own sources below. No commercial CAD/CAM program
   was driven or scripted, no GPL/LGPL/AGPL source was read, and no text is copied beyond short
   quotes.
+- **Further input from Jason (27 October 2026):** notes from a discussion Jason had with another
+  AI assistant (Google Gemini), building on an architecture sketch from a computer engineer.
+  Jason's own points from it are labelled as his below. The assistant's text is not copied, and
+  its technical suggestions appear here only where they were checked against this repository or
+  a source, labelled as opinion.
 - **Units:** millimetres, newtons, newton-metres, watts, hertz, radians; stiffness in N/µm.
 - **Marking:** "(unverified)" marks a claim not confirmed against a source. **Fact**,
   **opinion** and **Jason's idea** are labelled where they mix. The architecture in "What users
@@ -356,6 +361,22 @@ dexel or voxel in-process stock and beam/plate estimates for stiffness (no B-rep
 also keeps this out of the paused kernel work), and allow an FEA check from the FEA research
 (#1620) as an optional, slower, more accurate stock model later.
 
+**Compute: making the inner loop fast (opinion).** The inner loop is the same small calculation
+repeated over many steps, flutes and stock cells, which suits parallel hardware. Candidates
+raised in Jason's further input: a sparse voxel or signed-distance-field (SDF) stock on the GPU,
+with the exact B-rep kept for final boundaries and finishing, and per-flute force summed in
+parallel. Two constraints from this repository shape it: the GPU crate (`crates/gpu`, `wgpu`) is
+at layer 5, and everything below the apps must build for wasm. So the physics core needs a
+**CPU reference implementation** below layer 5 that defines the answers and carries the tests,
+with a GPU path as an optional accelerator that must give the same results. GPU details belong
+to the GPU research topic.
+
+**Stock states as a graph (opinion, from Jason's further input).** The outer loop's operation
+order can be stored as a graph of stock states: each node is the in-process stock after an
+operation, each edge an operation with its tool, feeds and predicted peak load. That gives the
+stock integrity topic a place to compare cut orders, gives the simulation a state to resume
+from, and lets an edit to the design re-run only the operations downstream of the change.
+
 ### Physics in the simulation: the gate before G-code (Jason's point)
 
 The rules above are only useful if nothing gets past them. Jason's requirement: the physics
@@ -498,6 +519,35 @@ device. Opinion: feedback should **update the shop instance**
 (this machine, this vise, this material lot), never silently change the shared catalogue; a shop
 can choose to contribute measured values back, labelled as measured.
 
+### Inspection feedback: machining within tolerance (Jason's point)
+
+Jason's further input: **part inspection data should feed back to optimise the toolpaths**, so
+the process machines inside tolerance, run after run. Self-tuning CAM Operations tunes the
+*physics* from machine data; this tunes the *result* from measured parts.
+
+How (opinion):
+
+- **A deviation per feature.** Probe or CMM results (from the in-process inspection file, ideally
+  as QIF) are matched to the design feature and to the toolpath segments that cut it, giving a
+  measured deviation (for example a wall 0.02 mm thick on its tool side).
+- **Explain it with the physics first.** The system already predicts tool and wall deflection
+  for that segment; if the measured error matches the prediction, the fix is in the model (a
+  stiffness or coefficient in the shop instance), and every similar cut benefits. Only the part
+  that the physics does not explain is treated as a fixed offset.
+- **Correct the next part.** The finishing allowance, wear offset or deflection compensation of
+  that operation is adjusted for the next part or batch, within limits, and logged with the part
+  record. The control's own in-cycle compensation (probing macros) stays the fast path inside a
+  cycle, as the inspection file recommends; this loop works between parts.
+- **Decision rules.** Corrections use the measurement uncertainty and decision rules covered in
+  the inspection file (ISO 14253-1), so the loop does not chase noise.
+
+**Lock in the data contracts early (Jason's point).** Jason's advice to the developers, from
+experience: settle the **math model and the closed-loop data contracts** at the start, so shop
+data can be added later without reworking the core. That means public schemas from day one for
+(a) calibration data coming in (cutting coefficients per material and tool, machine stiffness,
+measured spindle curves) and (b) inspection results coming in (deviation per feature, with
+uncertainty and method), even before anything produces them.
+
 ### The libraries, one pattern
 
 Tools, workholding and machines all use the pattern from the tool library file: a **shared
@@ -545,6 +595,7 @@ in the CAM core from the start.
 | 5. Stock integrity | stock stiffness as it is cut, deflection and wall modes, cut-order planning, re-clamp before finishing | 4 (+ FEA #1620) | thin parts; balancing stock against tool and hold |
 | (every phase) Simulation gate | each phase's checks run over the final program in simulation, and *Stop* findings block posting | all | novice errors are caught before they reach the machine, from the first phase on |
 | 6. Self-tuning CAM Operations | live load, torque and vibration (SolidCraft Edge), aligned to G-code lines and the timeline, plus probing, feeding back into shop instances | inspection file | lets the shop trust and move the slider |
+| 7. Within-tolerance machining | inspection deviations per feature corrected through the physics model first, then finishing offsets for the next part | inspection file | holds tolerance across a production run |
 
 ### The request to the maintainers
 
@@ -569,6 +620,10 @@ designed around this system from the start:
    moves), and posting G-code requires no open *Stop* findings. Any finding, hard limits
    included, can be overridden item by item after a disclaimer, with the approval recorded in
    the design and on the setup sheet.
+7. **Closed-loop data contracts from day one (Jason's point).** Public schemas for calibration
+   data (cutting coefficients, machine stiffness, spindle curves) and for inspection results
+   (deviation per feature, with uncertainty), so Self-tuning CAM Operations and within-tolerance
+   correction can be added later without a core refactor.
 
 None of this requires the physics itself to be finished first; it asks that the first CAM code
 leave room for it in the right places.
