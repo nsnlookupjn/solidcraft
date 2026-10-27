@@ -159,6 +159,12 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
     design in SolidCraft, sees the model with every requirement and finish in a clear display,
     does interactive QC on real parts, and sends the measured data back to the engineer, each in
     their own language. See [Supplier QC mode](#supplier-qc-mode-one-model-from-designer-to-any-shop).
+17. **Tolerances set the toolpath's accuracy (Jason).** Tight tolerances and critical faces get a
+    tight CAM tolerance and the control's finishing mode; non-critical areas get a looser tolerance
+    and the control's fast mode (Haas G187, Heidenhain Cycle 32 and similar), arc fitting instead
+    of many short points, and segments long enough that the control never hits its block-processing
+    limit, so the machine always runs smoothly. See
+    [Tolerance-driven toolpath accuracy](#tolerance-driven-toolpath-accuracy).
 
 ## Fundamentals
 
@@ -1657,6 +1663,111 @@ designer's data better, and every designer who sends a package introduces SolidC
 SolidCraft Edge at the shop's machines and the QC mode at their bench produce the same records, so
 in-process and final inspection from many suppliers land in one place for the engineer.
 
+### Tolerance-driven toolpath accuracy
+
+**Jason's point:** tolerances can drive the accuracy each toolpath needs, making faster cuts
+possible on non-critical areas. Control features such as Haas G187 and high-speed machining
+look-ahead come into play, as does arc fitting versus interpolated points to meet the tolerance.
+Consider the machine's line (block) processing speed and stay away from its limits so the machine
+always runs smoothly.
+
+#### Where the accuracy goes: a tolerance budget (opinion, with cited examples)
+
+A finished face can deviate from the model for several reasons, and they share the part's
+tolerance band:
+
+| Contributor | Set by | Typical size |
+|---|---|---|
+| CAM approximation (chord error of line segments, arc-fit or spline-fit tolerance) | CAM tolerance | Heidenhain's guidance: CAM chord error typically 1–4 µm for finishing, 4–30 µm for roughing |
+| Control path smoothing (corner rounding, look-ahead blending) | control mode or cycle | Heidenhain: path tolerance T about 110–300 % of the CAM chord error for finishing; 0.05–0.3 mm for roughing |
+| Tool and part deflection, wear | cutting physics, workholding | from those files |
+| Machine geometry and thermal growth | machine library | from that file |
+| Measurement uncertainty (guard band) | ISO 14253-1 | see the probing section |
+
+A simple rule (opinion): on finishing passes, CAM approximation plus control smoothing should use
+no more than about a tenth to a quarter of the band, leaving the rest for the physical errors and
+the guard band. So the toleranced faces set the numbers:
+
+- An H7 bore at Ø20 (band 21 µm): CAM about 1–2 µm, control in finishing mode, a few µm path
+  tolerance.
+- A face with ISO 2768-m at 50 mm (band ±0.3 mm, 600 µm) and importance 0–1: CAM 10–30 µm,
+  control in its fast mode. Several times fewer blocks, and the control is free to keep feed
+  through corners.
+- Roughing: the stock allowance left for finishing already covers the errors, so roughing uses the
+  loosest settings everywhere.
+
+Because the model knows each face's tolerance and [importance](#scaled-importance-critical-down-to-dont-worry-about-it-jason),
+CAM can set these **per operation, and even per segment** (tight where the tool is on a critical
+face, loose where it is on a "don't care" face or in the air).
+
+#### The control's own accuracy modes (public descriptions)
+
+| Control | Mode | What it sets |
+|---|---|---|
+| Haas | **G187** P1 / P2 / P3 | smoothness: rough, medium, finish; Setting 191 sets the default (medium unless changed). An E value limits corner rounding (unverified detail; widely discussed in user forums) |
+| Heidenhain TNC | **Cycle 32 TOLERANCE** | path tolerance T, HSC MODE 0 (accuracy, for finishing) or 1 (speed, for roughing), rotary-axis tolerance TA for 5-axis |
+| Fanuc | AI contour control / high-speed, high-precision modes (G05.1 and related, option-dependent) | look-ahead blocks and smoothing; exact codes vary by control and option (unverified) |
+| Siemens Sinumerik | CYCLE832 (high-speed settings) | machining type (roughing to finishing) and tolerance (unverified details) |
+
+**Proposal (opinion):** the machine library entry lists which modes the control has and their
+parameters; the post-processor emits the right mode at the start of each operation (and changes
+it between segments where the control allows it cheaply), chosen from the tolerance budget above.
+A programmer can override it, and the override is recorded.
+
+#### Arc fitting, splines and points
+
+- **Line segments (G1)** approximate a curve within a chord tolerance; the tighter the tolerance,
+  the shorter the segments and the more blocks.
+- **Arc fitting (G2/G3)** replaces runs of points with arcs that stay within the tolerance. On
+  geometry that is near-circular it cuts the block count dramatically and lets the control move
+  smoothly. Limits (fact, general practice): arcs only in the principal planes (XY, XZ, YZ) on most
+  controls; no arcs in simultaneous 5-axis moves.
+- **Spline or NURBS output** where the control supports it (option-dependent) sends the curve
+  itself; fewer blocks still, but not universal (unverified per control).
+- **Point filtering** merges colinear segments within tolerance.
+
+Choice (opinion): arc fitting by default on 2.5D and 3-axis finishing where planes allow it;
+splines where the machine library says the control supports them; plain points only where needed.
+
+#### Block processing speed: stay away from the limit
+
+A control executes a limited number of blocks per second (its block processing time), and it
+reads ahead a limited number of blocks (look-ahead). If segments are too short for the feed, the
+control cannot keep up: it slows down, hesitates, and leaves marks. The arithmetic (fact):
+
+- Blocks per second needed = feed (mm/min) ÷ 60 ÷ segment length (mm).
+- At 6,000 mm/min with 0.05 mm segments: 2,000 blocks/s. With 0.2 mm segments: 500 blocks/s.
+- Chord error of a segment of length L on a radius R: about **L² / (8R)**. A 0.2 mm segment on a
+  10 mm radius deviates about 0.5 µm; on a 1 mm radius about 5 µm. So most faces do not need tiny
+  segments; small radii do.
+- **Drip-feeding (DNC) over a serial line** adds a second limit: at 115,200 baud with 8 data
+  bits, no parity and one stop bit (10 bits per character), about 11,520 characters per second;
+  at about 30 characters per block that is roughly 380 blocks per second at best, before handshake
+  pauses.
+
+Block rates and look-ahead depth vary widely between controls and options (unverified per
+model), so they belong in the machine library as measured or published values.
+
+**Proposal (opinion):**
+
+1. The machine library stores the control's block rate (and DNC link speed if drip-fed) and a
+   **smoothness margin**, by default for example 70 % of the limit, as Jason asks: stay away from
+   the processing limit.
+2. CAM computes the block demand along every toolpath in simulation and flags segments over the
+   margin.
+3. It fixes them in order of preference: arc fit or spline; merge points within the face's allowed
+   tolerance (looser on low-importance faces); and only then lower the programmed feed there.
+4. SolidCraft Edge measures commanded versus actual feed per segment (from the control's data, see
+   [Machine monitoring](#machine-monitoring-loads-torque-and-vibration)). Where the actual feed
+   drops below the commanded one on short-segment stretches, the control was starving; the
+   self-tuning loop raises the tolerance or lowers the feed for the next run there, and the shop's
+   machine record learns the real block rate.
+
+The machine library research covers the machine's acceleration and jerk limits and look-ahead
+behaviour ([machine library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md)), and the milling best-practices research covers keeping blocks
+long enough on its own toolpath rules ([milling best practices](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-wgv8vf/research/cam-research-nsnlookupjn-milling-best-practices.md)); this section adds the link
+from the part's tolerances and importance.
+
 ### Self-tuning CAM operations
 
 **Jason's idea:** call it *self-tuning CAM operations*: the live machine data from SolidCraft Edge,
@@ -1859,6 +1970,8 @@ Connectivity and SolidCraft Edge:
 - ISO 15787:2016 catalogue (heat-treated ferrous parts on drawings): https://www.iso.org/standard/56851.html
 - Xometry, finishes: https://www.xometry.com/finishes/
 - Physical properties research (same author; hardness regions, case depth, coatings): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uxzal2/research/design-research-nsnlookupjn-physical-properties.md
+- Haas UK, "Smooth Operator" (G187 smoothness levels, Setting 191): https://www.haas.co.uk/?p=1296
+- Heidenhain Klartext 61, Cycle 32 TOLERANCE: https://www.heidenhain.us/addl-materials/enews-pro/pdf/KLARTEXT_61_Cycle_32.pdf
 - Revolution Pi products: https://revolutionpi.com/en/products
 - Raspberry Pi Integrator Programme and Powered by Raspberry Pi: https://www.raspberrypi.com/for-industry/integrator-programme/
 - Zebra CUPS driver configuration: https://support.zebra.com/cpws/docs/cups/cups_driver1_4_configure.pdf
