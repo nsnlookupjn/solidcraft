@@ -406,9 +406,7 @@ engagement. With GPU compute:
 
 ### Jason's further input (October 2026)
 
-Jason added the points below after discussing the architecture with another AI assistant. They
-are his design input, **not verified claims**; where that discussion was wrong for SolidCraft,
-the correction is given.
+The points below are Jason's design input, **not verified claims**.
 
 - **A hybrid stock: exact B-rep plus a GPU proxy.** The exact B-rep (SolidCraft's own kernel,
   `crates/kernel`) stays the source of truth for the design's boundaries, feature recognition and
@@ -425,16 +423,10 @@ the correction is given.
   with Kienzle's `kc1.1`/`mc` as the starting point where edge-force coefficients are not known.
   The sum must be in a fixed order (or fixed-point) so results stay deterministic (see Precision
   above).
-- **Corrections to that discussion.**
-  - It named the kernel "SolidCore". SolidCraft's kernel is `crates/kernel`; SolidCore is an
-    unrelated project.
-  - It treated the GPU as the core engine. In SolidCraft, GPU code lives in `crates/gpu`, a
-    higher layer than the kernel, and everything below the apps must build for wasm. So any GPU
-    path is an **optional accelerator** that must match a CPU reference, never the only path.
-  - Its force equation (a chip-thickness exponent applied inside the edge-force model) and its
-    feed scaling (an extra damping factor on an inverse-proportional feed correction) are not
-    standard forms. Use the cutting physics file's equations, and the CAM Physics System's solver
-    loop (feed from the binding limit) for feed adjustment.
+- **The GPU is an optional accelerator.** GPU code lives in `crates/gpu`, a higher layer than
+  the kernel, and everything below the apps builds for wasm, so every GPU path matches a CPU
+  reference and is never the only path. Feed is adjusted by the CAM Physics System's solver loop
+  (feed from the binding limit), not inside the force kernel.
 
 ### A phased plan
 
