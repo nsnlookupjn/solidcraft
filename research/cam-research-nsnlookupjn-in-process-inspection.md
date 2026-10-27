@@ -154,6 +154,11 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
     programming, inspection, QC and the final acceptance report. All of it is optional: a design
     with no tolerances works exactly as today, and production users add detail in steps. See
     [Engineering intent in the model](#engineering-intent-in-the-model).
+16. **One model from designer to any shop in the world (Jason).** Export the model and 2D detail
+    drawings for traditional shops, and offer a **supplier QC mode**: a third-party shop opens the
+    design in SolidCraft, sees the model with every requirement and finish in a clear display,
+    does interactive QC on real parts, and sends the measured data back to the engineer, each in
+    their own language. See [Supplier QC mode](#supplier-qc-mode-one-model-from-designer-to-any-shop).
 
 ## Fundamentals
 
@@ -1556,6 +1561,101 @@ Rules for the loop (opinion):
 - **The loop runs during production, not after.** The suggestions appear while the lot is still
   running, so the next lot (or the next revision) benefits at once. This is what makes the design
   "iteratively better" rather than reviewed once a year.
+
+### Supplier QC mode: one model from designer to any shop
+
+**Jason's vision:** we should still be able to export the model and 2D detail drawings so that
+traditional shops can understand the part they need to make. There should also be a mode where a
+third-party shop opens a design in SolidCraft and sees the model, the dimensional requirements,
+the finishes and so on in a beautiful, intuitive display, and does interactive QC of a part. This
+could be a huge selling point for the whole SolidCraft ecosystem: an engineer designs a part in
+France, a QC inspector in China or Vietnam works directly from the same model, and the measured
+data of the actual parts flows back to the engineer, each working in their native language.
+
+#### For shops that work from paper (opinion)
+
+- **3D export:** STEP AP242 with semantic PMI (for shops with CAM and CMM software that reads it)
+  and presentation PMI (for viewers that only display it). QIF MBD for inspection software.
+- **2D detail drawings generated from the model's intent:** views, dimensions with their
+  tolerances and fit codes, GD&T frames, datums, finish and hardness symbols, the general
+  tolerance note, importance marks with the customer's symbols, the revision. Exported as PDF and
+  DXF. SolidCraft's Drawings workspace is in progress (RFC #860; today a view can be exported as
+  DXF), so this depends on that work. Because the drawing is generated from the same data, it can
+  never disagree with the model.
+- **Drawing conventions per destination:** first-angle projection (usual in Europe and much of
+  Asia) or third-angle (usual in North America), ISO or ASME symbols, mm or inch display, and the
+  language of the notes. A shop gets a drawing in the convention it is used to (fact for the
+  regional projection habits; the rest is opinion).
+
+#### The supplier QC mode (opinion)
+
+A view of a **released design revision** for people who make and check the part, not design it.
+It works in the desktop app and in the browser app (SolidCraft already runs in the browser at
+solidcraft.io/app, so a supplier needs no install and no licence).
+
+What the inspector sees and does:
+
+1. **Open a release package:** the model at one released revision with its requirements: geometry,
+   characteristics, limits, importance, finishes, hardness, notes, the inspection plan and the
+   report level. The design cannot be edited here.
+2. **The characteristic list beside the model:** balloon number, requirement, limits, importance
+   (critical first), method, and the instrument to use. Clicking a characteristic highlights the
+   face in 3D and turns the view to it; clicking a face lists its characteristics.
+3. **Enter results per serial:** type values, press a gauge button, scan the traveller,
+   import a CMM's QIF Results or DMIS output, attach photos. Each value turns green, amber (inside
+   the tolerance but outside the guard band) or red on the model as it is entered.
+4. **Finish and hardness checks** sit in the same list: coating thickness, masking, colour,
+   roughness, hardness readings.
+5. **Report:** at the chosen [report level](#the-per-part-record-and-report), generated from the
+   entries: a ballooned view, the results table, AS9102 forms if asked.
+6. **Send the data back:** a QIF Results file (plus photos) returned by any channel (email, a
+   supplier portal, a shared folder), or synced if both sides use the same service. Nothing
+   requires a SolidCraft cloud.
+
+What the engineer sees: the supplier's results land on the **same characteristics in the
+engineer's own model**, with the trend across serials and suppliers, and feed the
+[design-feedback loop](#from-inspection-back-to-the-design) and the readiness check.
+
+#### Native languages (opinion, with the facts it rests on)
+
+- **The interface is already translated.** SolidCraft embeds its translations and works offline;
+  the repository has catalogues for about 27 languages, including French, Simplified and
+  Traditional Chinese, Vietnamese, Japanese, Korean, German, Spanish and others
+  (docs/localization.md; assets/locales). The QC mode's labels would use the same catalogues.
+- **Most of the content needs no translation.** Numbers, limits, fit codes, thread classes, GD&T
+  symbols, finish specs and standard numbers are the same in every language. That is the main
+  reason a model-based record crosses borders better than a drawing full of notes.
+- **Free text is the hard part.** Notes ("no sharp edges on the inside face"), reasons, and
+  non-conformance comments are stored in the author's language with optional translations. A
+  machine translation is marked as such, and the original is always shown next to it, because a
+  mistranslated note can make a bad part.
+- **Each side reads in their own language and units** (mm or inch display), while the stored data
+  stays in millimetres and one language-neutral form.
+
+#### What must be protected (opinion, important)
+
+- **Export control comes first.** Sending a design abroad can be an export of technical data.
+  ITAR-controlled technical data may not go to countries on the US prohibited list, which includes
+  China; EAR and other countries' controls apply too. A release package must carry the design's
+  export classification, and SolidCraft should block or warn before packaging a controlled design
+  for a destination it is not cleared for. The [compliance research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-ymp2ma/research/compliance-research-nsnlookupjn-itar-quality.md) and the
+  [high-security research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-2fa4g1/research/security-research-nsnlookupjn-high-security.md) own those rules; this mode must obey them. Jason's France-to-Asia
+  example works for commercial parts, not for export-controlled ones.
+- **Intellectual property:** the package contains what the supplier needs (final geometry, the
+  requirements, the plan), not the feature history, sketches or design calculations. Optional
+  watermarking with the supplier's name, and an expiry.
+- **Integrity:** the package is signed and tied to a released revision, so a supplier cannot
+  inspect against a superseded revision without a clear warning. Returned results are signed by
+  the supplier, so the engineer knows who measured what.
+
+#### Why it could be a selling point (opinion)
+
+Commercial CAD vendors offer free viewers because suppliers need to open customer files. A free
+viewer that is also a **QC workstation** (characteristics, gauging, reports, data returned to the
+designer) goes further than a viewer: every supplier that inspects in SolidCraft makes the
+designer's data better, and every designer who sends a package introduces SolidCraft to a shop.
+SolidCraft Edge at the shop's machines and the QC mode at their bench produce the same records, so
+in-process and final inspection from many suppliers land in one place for the engineer.
 
 ### Self-tuning CAM operations
 
