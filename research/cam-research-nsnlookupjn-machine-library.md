@@ -581,8 +581,11 @@ Two VF-2s are not the same machine: one has a 2001 classic control and no probe,
 Edge may read depends on the **combination** of machine model, control, control software
 version and options fitted. The tables of real machines, controls, software versions and their
 monitoring and control features live in the
-[Edge machine integration research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-i8m3ue/research/cam-research-nsnlookupjn-edge-machine-integration.md) and its companion tables file; this section defines
-the model they fill, and does not repeat them.
+[Edge machine integration research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-i8m3ue/research/cam-research-nsnlookupjn-edge-machine-integration.md), section
+[machine tables](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-i8m3ue/research/cam-research-nsnlookupjn-edge-machine-integration.md#machine-tables-controls-versions-features-and-user-base); its section
+[every factory feature, every cut](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-i8m3ue/research/cam-research-nsnlookupjn-edge-machine-integration.md#every-factory-feature-every-cut) lists each control's
+smoothing, adaptive feed, chatter, thermal and probing features as seed flags for the groups
+below. This section defines the model they fill, and does not repeat them.
 
 **Key.** A capability set belongs to `(machine model, control family and generation, software
 version range, options fitted)`. The catalogue holds the sets for each published combination;
