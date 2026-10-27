@@ -571,6 +571,71 @@ deflection, **C** chatter, **V** feed/cycle time, **G** geometry/collision, **W*
 | Control | block processing rate (published or measured, with source), look-ahead depth, smoothness margin (default 70 %), DNC link speed and program memory, accuracy/HSM modes with parameters (G187 P1–P3 + E, Cycle 32 T/HSC/TA, CYCLE832, G05.1…), arcs per plane (XY/XZ/YZ, helical), spline/NURBS support, corner behaviour if known | blocks/s, –, baud | V H |
 | 3D model | link to model (STEP/STL), part-to-axis mapping, tool attach point, table frame, licence | | G |
 
+### Capability model: which features each machine has, and how we know (Jason's requirement)
+
+*Jason: "The machine library in SolidCraft will need to determine which features and
+capabilities each machine has."*
+
+Two VF-2s are not the same machine: one has a 2001 classic control and no probe, another a
+2023 NGC with MTConnect, wireless probing and the 8M relay option. What CAM may post and what
+Edge may read depends on the **combination** of machine model, control, control software
+version and options fitted. The tables of real machines, controls, software versions and their
+monitoring and control features live in the
+[Edge machine integration research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-i8m3ue/research/cam-research-nsnlookupjn-edge-machine-integration.md) and its companion tables file; this section defines
+the model they fill, and does not repeat them.
+
+**Key.** A capability set belongs to `(machine model, control family and generation, software
+version range, options fitted)`. The catalogue holds the sets for each published combination;
+the shop instance points at one and adds what is unique to that machine.
+
+**Capability groups (opinion; each one a list of named flags or parameters):**
+
+| Group | Examples of what is recorded | Who uses it |
+|---|---|---|
+| Data interfaces | MTConnect (port, version), OPC UA / umati, Haas Ethernet Q commands (`?Q` list, variable read), DPRNT over network or serial, FOCAS, serial DNC, status relays, user relays | Edge: which drivers to start, read-only |
+| Monitoring signals | spindle load, axis loads, actual feed and speed, block/line number, positions, temperatures, and their rates (see "Signals the machine publishes") | Edge and closed loop: what can be measured and how well it aligns with the G-code |
+| Motion and smoothing | HSM / smoothing modes and parameters (G187, Cycle 32, CYCLE832, G05.1), block rate, look-ahead, arcs per plane, helical, splines, TCPC / 5-axis modes (see "The control") | CAM tolerance and post |
+| Load monitor and autofeed | in-control tool load monitor, reaction choices (alarm, feed hold, autofeed: Haas Setting 84), **whether per-tool limits can be set from the program** (unverified for Haas, open question in the integration file) | post: write per-tool load limits from CAM Physics |
+| Probing | spindle probe and tool setter fitted, probe cycles available (maker or Renishaw), result variables, DPRNT of results | inspection and setup |
+| Machine options | 4th/5th axis model, through-spindle coolant and pressure, chip conveyor, high-speed spindle option, rigid tapping, program memory, network | CAM operations and limits |
+| Physics data | everything in "Machine entry schema" above | feed optimiser |
+
+**How each capability is known (provenance), from strongest to weakest:**
+
+1. **Discovered** from the control by Edge: e.g. Haas NGC `?Q100`/`?Q101`/`?Q102` give serial,
+   software version and model; MTConnect `/probe` lists the device's components and data items;
+   OPC UA servers can be browsed; FOCAS `cnc_sysinfo` gives series, version and axis count
+   (integration file; Cybus FOCAS docs). Discovery confirms interfaces and identity well, options
+   less well.
+2. **Verified by test**: a short test proves a feature works on this machine (e.g. a G187 block
+   accepted, a DPRNT line received, a probe cycle returning a value, the integration file's
+   "fingerprint" air cut).
+3. **Declared by the maker or catalogue**: published spec or software release notes for that
+   version (e.g. Haas recommending software 100.20.000.1200 or later for MTConnect, from the
+   integration file).
+4. **Declared by the user**: options the shop says are fitted.
+5. **Unknown**: treated as absent.
+
+Each flag stores its provenance and date. When a discovered value contradicts a declared one
+(e.g. a software update), discovery wins and the change is logged.
+
+**How CAM and Edge use it (opinion):**
+
+- **The post emits only what the machine has.** No G187 on a control without it, no arcs in a
+  plane it cannot do, no probe cycle without a probe, no DPRNT markers without a channel to
+  receive them; a fallback is chosen instead (points within tolerance, manual check, time-only
+  alignment), and the job sheet says so.
+- **Capabilities gate features, not just code.** Per-tool load limits from CAM Physics are
+  written into the program only where the control can take them; otherwise they go to the setup
+  sheet for the operator. Tolerance-driven smoothing is only offered where modes exist.
+- **Unknown or declared-only capabilities pull toward conservative**, the same rule as missing
+  physics data; a feature the program depends on (e.g. a probe cycle that sets a work offset)
+  must be at least *verified* before it runs unattended.
+- **Edge picks its drivers from the discovered identity and version**, and stays read-only
+  (integration file).
+- **Machine choice**: capabilities join material scope and physics in ranking machines for a job
+  ("needs probing and 4th axis: only Machine 2 qualifies").
+
 ### Interface with the other files
 
 Names agreed with the workholding and stock integrity threads (and consistent with the cutting
@@ -588,6 +653,7 @@ physics file's "Machine" row).
 | Machine → workholding | rotary brake/clamp torque, table load, mounting frames | N·m, kg, frame | brake is part of the hold |
 | Machine ↔ tool library / workholding | `material_scope` and machine group; job's allowed set is the intersection | – | refuses or warns, naming the item that excludes the material |
 | Machine → CAM tolerance / post (inspection file) | block rate and margin, DNC speed, accuracy modes and parameters, arc planes and spline support | blocks/s, baud | block demand checked along every path; mode chosen per operation from the tolerance budget |
+| Machine ↔ Edge integration file | capability set per (model, control, version, options) with provenance; tables of real controls come from the integration file | – | post emits only supported features; Edge picks drivers |
 | Machine → simulation | kinematics, travel limits, 3D model and axis mapping | mm, rad | collision and travel checks |
 | Cutting physics → machine check | `Mc`, `Pc`, `Fx`, `Fy`, `Fz`, `n` per step | N·m, W, N, rpm | compared with the limits above |
 | Machine → closed loop / edge box | list of signals the control publishes, with units and rates; added sensors | –, Hz | what can be measured on this machine |
