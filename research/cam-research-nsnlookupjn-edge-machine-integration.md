@@ -148,6 +148,10 @@ kit, then Fanuc and Haas, then everyone else.** In order (opinion, from the rank
 - **Every factory feature, every cut** (Jason): novices get the machine's best features switched
   on and explained by default; pros see and override all of them (see
   [Every factory feature, every cut](#every-factory-feature-every-cut)).
+- **Keeping up with control software** (Jason): versions tracked as catalogue data fed by Edge
+  discoveries and release notes, and an **upgrade advisor** that re-runs the shop's own recent
+  jobs with a new feature on and shows hours saved, cost and payback (see
+  [Keeping up with control software](#keeping-up-with-control-software-and-a-reason-to-upgrade)).
 - **Machine tables** (Jason): control generations and software versions with their monitoring
   and control features, builder and model tables, user-base estimates by continent, and the
   capability record the machine library needs (see
@@ -552,6 +556,56 @@ in the machine library's "Motion and smoothing", "Load monitor and autofeed" or 
   recorded with its reason, like the risk slider.
 - **Both:** a feature is used only when the machine library says this machine has it (verified
   or discovered for anything unattended), with a stated fallback otherwise.
+
+### Keeping up with control software, and a reason to upgrade
+
+Jason's point: makers keep releasing control software, updating is often a paid service-tech job,
+so SolidCraft should **keep up with new revisions and give the shop a reason to upgrade**: "you
+can have this feature and run this much faster if you upgrade to this". A design (opinion):
+
+**1. Track versions as data, not code.** Each control generation in the catalogue lists its
+software versions and what each adds or fixes (a feature flag, a new MTConnect data item, a
+changed setting). Sources, best first:
+
+- **Edge discoveries:** every Edge reads the version (`?Q101`, `cnc_sysinfo`, OPC UA) and which
+  capabilities actually work, so a new version shows up in the catalogue the day a shop installs it
+  (opt-in, anonymous).
+- **Maker release notes and service pages** where published: for example Haas's NGC software
+  revision pages, and Haas's own advice that MTConnect works best from 100.20.000.1200.
+- **Shops and dealers** correcting entries through ordinary reviewed changes to the catalogue.
+
+The capability key already carries a software version range (machine library file), so a new
+version is a new range, not a code change.
+
+**2. The upgrade advisor.** SolidCraft knows three things no one else has together: the
+machine's current version (Edge), what newer versions and paid options add (catalogue), and **the
+shop's own jobs** (CAM, with real cycle times from the Edge). So it can price an upgrade in the
+shop's own numbers:
+
+| Step | What SolidCraft does |
+|---|---|
+| Find the gap | "This VF-2 runs 100.17; 100.20.000.1200+ adds full MTConnect data; option X adds feature Y." |
+| Re-run the shop's history | Re-post the last 90 days of jobs on this machine **with the feature turned on** (a smoothing mode, adaptive feed, a faster block rate) and simulate cycle time with CAM Physics. No machine time is needed. |
+| Show the benefit | "On your last 90 days: 31 hours saved (8 %), 4 tool breaks that the load monitor would have caught, live load data for self-tuning." |
+| Show the cost | the shop enters the dealer's quote (service visit, option price, downtime); SolidCraft computes payback ("about 7 weeks at your shop rate") |
+| Show the risk | requalification (aerospace and defence shops may need a first-article or process re-approval after a control software change; compliance file), program compatibility, and a **backup of the control first** (connection route 6) |
+| Check afterwards | after the upgrade, the Edge verifies the new capabilities and compares real cycle times with the prediction, so the next advisor estimate is more trustworthy |
+
+**3. The same advisor for paid options and hardware:** a control option (for example an
+adaptive feed or high-speed smoothing option), a probe or tool setter, through-spindle coolant or
+a faster spindle. "Adding a tool setter removes 14 manual tool touch-offs a week."
+
+**Rules (opinion):**
+
+- **Neutral and honest.** No sponsored recommendations, and estimates show their confidence and
+  method. A recommendation that turned out wrong is shown as wrong. Shops will trust it only if
+  makers cannot buy a place in it.
+- **Never pushed during a job;** advice appears in planning and the machine's page, not on the
+  machine screen mid-shift.
+- **Pros see the working** (which jobs, which feature, what the simulation changed); novices see
+  one sentence and the payback.
+- **Aggregated, anonymous demand** ("2,300 Haas machines on SolidCraft would gain from feature Y")
+  is useful evidence in the conversations with makers above (opinion; only with shops' opt-in).
 
 ### From CAM physics to the control and back: load limits and learning
 
