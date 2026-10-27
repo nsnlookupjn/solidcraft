@@ -157,6 +157,12 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
     evidence says a tool may be damaged, the program's own check cycle measures it at the next
     safe point and decides: continue, correct, sister tool, or stop; then the features that tool
     cut are checked.
+11. **Shop infrastructure (Jason's addition).** Power quality (dips, imbalance, harmonics),
+    compressed air (pressure, moisture, oil) and shop climate (temperature, gradients,
+    humidity, floor vibration) affect every machine at once: thermal size, contouring
+    accuracy, clamp force, spindle bearing life and probing. Logged on the same clock as
+    everything else, they become causes the monitor can name, facilities work orders, and
+    inputs that tighten the CAM's limits.
 
 ## Fundamentals
 
@@ -655,6 +661,144 @@ those signals feed failure and bad-work prediction.
 by tramp oil or other fluids raises the reading and hides a lean mix. A periodic titration or
 hand refractometer check, logged as a manual test, keeps the inline sensor honest.
 
+### Shop infrastructure: power, air and climate (Jason's addition)
+
+**Jason's idea:** track infrastructure problems such as **power quality, air quality and
+temperature**, and how they affect the whole physics system. A machine can be healthy and still
+make bad parts or fail early because what feeds it is not. These causes are invisible to the
+machine's own alarms until something trips, and they usually hit **every machine in the shop at
+once**, which is itself the strongest clue (opinion).
+
+How conditions enter the limits: the [CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md#the-shared-setup)
+carries the setup the solver plans against, and the [machine library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md#accuracy-thermal-growth-and-wear)
+holds thermal growth and the [warm-up gate](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md#warm-up-before-maximum-torque-jasons-requirement).
+This section proposes that the shop's measured conditions become one more input to that setup
+(a *shop conditions* record per site and per machine), so the same plan is judged against the
+conditions it will actually run in. The sensor hardware belongs to the inspection file's
+[A commercial retrofit kit: upgrade any machine](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md#a-commercial-retrofit-kit-upgrade-any-machine);
+the list below is what this file needs from it.
+
+#### What each condition does to the physics
+
+| Condition | Physical effect | Shows up as | Who it hurts most |
+|---|---|---|---|
+| **Voltage sags (dips)** | drive DC bus and control supply drop for a few cycles | control shutdown and re-home, or worse, a machine that rides through but contours badly: NIST tests (Damazo, Donmez, Soons et al., 2003) found 40 % five-cycle sags degraded contouring accuracy before the machine faulted, so a part can be out of tolerance with no alarm | finishing passes, long unattended runs |
+| **Swells, transients** (switching of big loads, lightning) | stress on drive electronics and power supplies | drive and power-supply failures over time (opinion, general electrical practice; unverified rate) | drives, spindle amplifiers |
+| **Harmonics** (from variable-speed drives on the same supply) | extra heating in motors and transformers; possible interference with encoders and sensors | warmer motors, nuisance faults (opinion, unverified per machine) | spindle and axis motors, sensitive measuring circuits |
+| **Phase imbalance, low or high supply voltage** | unequal phase currents, motor heating; less torque headroom at the top of the spindle curve (opinion) | spindle load higher than predicted on the same cut; overload alarms near the curve limit | heavy roughing at the spindle limit |
+| **Compressed air pressure low or unstable** | tool changer, drawbar release, pallet and fixture clamps, spindle air seal and probe/tool-setter air blast all rely on it (per machine, unverified) | slow or failed tool changes; fixtures that clamp below their rated force (workholding file); dirty probe or setter readings | pneumatic workholding, tool changes, probing |
+| **Wet or oily compressed air** | water and oil carried into spindle air seals, valves and air blasts | spindle bearing contamination over months (a cause in the failure-mode table); corroded valves; contaminated probe and tool-setter optics; rust on parts | spindle bearings, laser tool setters, finished steel parts |
+| **Shop air: dust, oil mist** | dirt in electrical cabinets and filters; mist from coolant | cabinet overheating, filter clogging, sticky surfaces (opinion); also a health issue for people, outside this file | control cabinets, chillers |
+| **Ambient temperature (level and change)** | the machine structure, the part and the measuring scales all grow or shrink; ISO 230-3 has a dedicated *environmental temperature variation error* (ETVE) test for this | size drift through the day; first parts after the weekend different from Friday's; probing errors versus a part that is not at 20 °C | tight-tolerance work, large parts, aluminium |
+| **Temperature gradients** (sun on one side, doors, heaters, the floor colder than the air) | the machine bends rather than just grows | squareness and position errors that change with time of day (opinion) | large machines, 5-axis |
+| **Humidity and condensation** | condensation in cabinets and on cold parts when warm humid air meets cold surfaces | electrical faults, corrosion of parts and fixtures; coolant water balance (opinion) | electronics, cast iron |
+| **Floor vibration** (nearby presses, forklifts, other machines) | adds to the tool-to-part vibration | finish marks unrelated to the program; probing scatter; a vibration feature in the fingerprint that comes and goes with the neighbour's work (opinion) | finishing, probing, grinding |
+
+**Reference temperature (fact).** Dimensions on a drawing are defined at **20 °C** (ISO 1). A
+part measured warm is not wrong, it is just not at reference conditions: a 300 mm steel part
+3 K above 20 °C is about **10 µm longer**, aluminium about **21 µm** (computed with 11.5 and
+23 µm/(m·K)). A 1 K front-to-back gradient through a 400 mm deep, 600 mm tall steel column tips
+its top by about **5 µm** (computed, simple bending estimate). On a ±0.01 mm feature both are the
+whole tolerance. This is why temperature appears here as a cause of bad work, not just as a
+comfort figure.
+
+#### Signatures: telling the shop from the machine
+
+The key test (opinion): **does the change appear on several machines at the same time?**
+
+| Pattern | Likely cause |
+|---|---|
+| a step in idle power, spindle temperature or residual on **every** machine at once | supply voltage or ambient temperature |
+| control resets, drive faults or tool-change failures clustered at the same time across machines | a sag or an air pressure drop (check the logged supply and air data at that moment) |
+| size drift that follows ambient temperature (or the clock) on all machines doing tight work | shop climate; compare with each machine's own thermal model |
+| only one machine affected | the machine, its tooling or its local supply (one phase, one air drop, a door near it) |
+| problems that start when a neighbouring machine or the compressor starts | shared supply, shared air, or floor vibration |
+
+Because every record from SolidCraft Edge already carries a UTC timestamp (inspection file's
+alignment keys), shop conditions logged with the same clock line up with every segment, every
+probe result and every alarm with no extra work.
+
+#### Read the machine's own sensors first (Jason's point)
+
+Many machines already measure their environment: thermal compensation sensors on the spindle,
+structure and sometimes ambient air; spindle and coolant temperatures; air pressure switches or
+transducers; and, on some controls, supply voltage and power monitoring (which ones varies by
+builder, model and options; unverified per machine). The rule (opinion): **SolidCraft Edge reads
+what the control already publishes first, and external sensors only fill the gaps.** The
+[machine library](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md#signals-the-machine-publishes-for-the-closed-loop)
+already lists, per machine model and control version, each published signal with its unit,
+meaning and update rate; environment signals go in the same list (for example "ambient
+temperature, °C, from the thermal compensation sensor, 1 s"). How to read them per control is in
+the interfaces note's
+[What each control maker offers](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md#what-each-control-maker-offers).
+When the shop sets up a machine, SolidCraft compares the conditions this file wants with what the
+entry says the machine publishes, and shows the shortlist of external sensors still needed for
+that machine (often only the shop-level ones: supply quality, dryer dew point, a reference
+ambient sensor away from the machine). Built-in sensors have two further advantages: they are
+already calibrated into the builder's thermal compensation, and they need no wiring. A pressure
+*switch* only says above or below a threshold, so an inlet transducer is still worth adding where
+pneumatic clamp force matters (opinion).
+
+#### Sensors SolidCraft Edge would add where the machine lacks them (for the inspection file's kit)
+
+Opinion, cheapest useful set first; only for signals the machine does not already publish.
+Hardware choice, cost and wiring stay in the inspection file:
+
+| Measure | Sensor type | Rate | Where |
+|---|---|---|---|
+| Supply voltage per phase, dips and swells, imbalance, harmonics (THD) | a three-phase power-quality meter with Modbus or Ethernet output, ideally measuring to IEC 61000-4-30 (class S or A; the standard defines the measurement methods, unverified which class a given meter meets); or clip-on current transformers for current only | event capture for dips; 1 s to 10 min summaries | machine's main supply, inside the cabinet (by an electrician) |
+| Compressed air pressure | 4–20 mA or I²C pressure transducer | 1–10 Hz (catches drops during tool changes) | at the machine's air inlet, after its regulator |
+| Compressed air dew point (moisture) | dew-point sensor | minutes | air inlet; shop-level sensor on the dryer outlet |
+| Compressed air oil and particles | not practical inline for a small kit (opinion); log the dryer and filter service and periodic tests to **ISO 8573-1** classes (particles, water as pressure dew point, oil; written as e.g. Class 1.2.1) | manual, by schedule | — |
+| Ambient temperature | several cheap digital sensors: near the spindle head height, at the table, near the floor, and one away from the machine | 1 per minute | on and around the machine |
+| Machine structure temperature | stick-on sensors on the column and bed (optional) | 1 per minute | structure |
+| Humidity | combined temperature/humidity sensor | 1 per minute | in the shop and inside the electrical cabinet |
+| Shop air particulates (PM2.5/PM10) | low-cost particle sensor (optional) | minutes | near the cabinet air intake |
+| Floor vibration | the kit's accelerometer on the floor or base, or a second one | fingerprint and idle periods | machine base |
+
+**One per shop or one per machine?** Opinion: supply and compressed air quality are often shared,
+so one shop-level SolidCraft Edge (or a shared sensor) can serve many machines, while air
+pressure at the inlet, ambient temperature at the machine and the cabinet humidity are worth
+having per machine.
+
+#### Findings and maintenance orders
+
+Shop-condition findings go through the same levels and work orders as machine findings
+([From finding to maintenance order](#from-finding-to-maintenance-order)), but to a different
+owner: **facilities** rather than the machine's maintenance (opinion). Examples:
+
+- "Voltage dips below 80 % on L2 three times this week, all during the compressor start; two
+  coincide with control resets on VF2-01 and VF2-02" → electrician: check supply and compressor
+  starter; consider ride-through or UPS for the controls.
+- "Air pressure at VF2-01 inlet falls to 5.2 bar during tool changes" → check the drop, regulator
+  and receiver size; the workholding file's pneumatic clamp force is derated until fixed.
+- "Dryer outlet dew point rising for 10 days" → service the dryer before water reaches spindle
+  air seals.
+- "Shop temperature swung 6 K on Monday morning; bores cut before 08:30 measured 8 µm smaller on
+  the CMM" → heating schedule; first-part check after cold starts.
+- "Cabinet humidity above 70 % with the door seal open" → close and check the cabinet cooler.
+
+#### How the CAM reacts to shop conditions
+
+Opinion, following the same rule as machine health (conditions can tighten limits, never loosen
+the hard ones):
+
+- **Thermal state in the setup.** Measured ambient and structure temperatures, alongside the
+  machine library's thermal model and warm-up state, decide whether the tightest finishing
+  passes and in-process probing should wait, and whether probed values are corrected to 20 °C
+  using the part material's expansion coefficient.
+- **Air-dependent limits.** Pneumatic clamp force from the workholding library is computed at
+  the **measured** inlet pressure, not the nominal one; if pressure is below the fixture's
+  minimum, the job is blocked like any other hard workholding limit.
+- **Power-dependent warnings.** A shop with a recent record of dips gets a setup-sheet warning
+  for long unattended jobs, and the program can add re-probing after any control reset (a reset
+  mid-cycle makes the in-process stock state uncertain).
+- **Residuals cleaned of shop effects.** Supply voltage and ambient temperature are recorded
+  with every segment, so trends in the machine's own residuals can be corrected for them
+  instead of blaming the machine for the weather.
+- **Scheduling (opinion).** Tight-tolerance finishing is planned for the thermally stable part
+  of the day if the shop's temperature history shows a pattern.
+
 ### From finding to maintenance order
 
 **What a finding carries (opinion):**
@@ -774,6 +918,7 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
 | H3 | per-segment residuals and EWMA trends on production cuts | physics predictions per segment; G-code alignment | machine-wide drift and tool wear on jobbing work |
 | H4 | bad-work prediction: control charts on characteristics and corrections, cause ranking | in-process inspection records | catches drift before a part is out of tolerance |
 | H3b | tool condition: per-tool load limits written by the post into the control's monitor; tool check cycles with check policies; missing-tool, chipping and setup-error detection; tool histories | post-processor; tool setter; SolidCraft Edge accelerometer for chipping | fewer broken tools carried into the next feature, setup errors caught on the first part |
+| H5b | shop conditions: supply power quality, air pressure and dew point, ambient temperature and humidity; facilities findings; measured air pressure in clamp force; temperature correction of probing | sensor kit (inspection file); workholding library | causes shared by all machines are named instead of blamed on one |
 | H5 | coolant sensors and coolant findings | sensor kit (inspection file) | removes a silent cause of bad work |
 | H6 | CAM reacts: deratings, self-tuning hold, job routing | limits engine | the monitor changes what the CAM does |
 | H7 | opt-in shared histories per machine model; learned models where pooled data allows | many shops | better starting limits for everyone |
@@ -870,6 +1015,14 @@ Fits the CAM physics system's phases; each step is useful on its own (opinion):
 - OPC 40001-1 Machinery Basic Building Blocks: https://opcfoundation.org/developer-tools/documents/view/213
 
 ### Papers, data and research
+
+- Damazo, Donmez, Soons et al., Investigating power quality solutions for computer numerical
+  control machine tools (NIST, 2003; voltage sag tests on a CNC machine):
+  https://www.academia.edu/108907821/Investigating_Power_Quality_Solutions_ForComputer_Numerical_Control_Machine_Tools
+- ISO 230-3:2020, thermal effects, including the environmental temperature variation error test
+  (ISO catalogue): https://committee.iso.org/standard/73291.html
+- ISO 8573-1 compressed air purity classes (distributor summary):
+  https://jhfoster.com/wp-content/uploads/2025/01/ISO8573-1_CompressedAirQualityStandard_2025.pdf
 
 - Han, Miller, Vogl, Chen, Jia, ball screw degradation and axial natural frequency as an early
   indicator of rigidity loss, Manufacturing Letters 41 (2024) (NIST record):
