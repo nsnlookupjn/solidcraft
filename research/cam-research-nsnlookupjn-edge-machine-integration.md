@@ -137,6 +137,10 @@ kit, then Fanuc and Haas, then everyone else.** In order (opinion, from the rank
   read-only, high-rate stream (spindle load, axis loads, actual feed, block number) on the
   existing Ethernet port. The route in is the local Haas Factory Outlet first, then Haas Automation
   engineering in Oxnard (see [Working with Haas](#working-with-haas-on-a-factory-integrated-interface)).
+- **SolidCraft Edge as an open hardware project inside SolidCraft** (Jason's proposal): an open
+  board, bare-metal embedded Rust firmware for the real-time I/O and read-only enforcement, and a
+  minimal Linux image running only Rust services on the Pi (see
+  [SolidCraft Edge as an open hardware project](#solidcraft-edge-as-an-open-hardware-project-inside-solidcraft)).
 - **Renishaw gets its own pitch**, because its probes sit on almost every brand in the ranking:
   one documented probe-result record on every control, and Renishaw Central serving the same
   read-only profile (see [A pitch to Renishaw](#a-pitch-to-renishaw)).
@@ -517,6 +521,58 @@ read-only module never grows that ability.
   for serial ports, GPIO and SPI exist, but each must be checked before use. Nothing under GPL, so
   no LinuxCNC, Klipper or OctoPrint code.
 
+### SolidCraft Edge as an open hardware project inside SolidCraft
+
+**Jason's proposal:** an open hardware design, with its embedded software and operating system in
+Rust, hosted as a project within SolidCraft. What that could look like (opinion; the structure is
+a proposal for maintainers):
+
+**Two processors, each doing what it is good at.**
+
+| Part | Runs | Job |
+|---|---|---|
+| **I/O co-processor** on the module (a microcontroller such as Raspberry Pi's RP2350) | **bare-metal embedded Rust** (for example the Embassy async framework, MIT OR Apache-2.0; licence to be confirmed by `cargo xtask licences`) | samples the ADC and digital inputs on a fixed clock, timestamps every block, and enforces read-only in firmware: the serial and RS-485 transmit lines are driven only by this chip, and its firmware can send nothing except allow-listed queries |
+| **Raspberry Pi 5** (or Compute Module 5) | a **minimal Linux image** with every user-space program in Rust | network connectors (MTConnect, OPC UA, Haas MDC, FOCAS), the dashboard, report printing, the link to SolidCraft CAM (REST, MQTT, WebSocket), updates |
+
+**Why not a Rust operating system on the Pi too (opinion):** the Linux kernel is GPL, but running
+it is not reading it, and it is the only practical way today to get the Pi 5's Ethernet, USB,
+display and Wi-Fi drivers. Rust-written operating systems (for example Redox, MIT) do not support
+the Pi 5's hardware well enough yet (unverified for late 2026). Bare-metal Rust is the right
+choice for the real-time part, where it shines. The Linux layer should be small, read-only
+(squashfs root, A/B updates) and built reproducibly. Image build tools also need a licence check:
+Yocto and Buildroot are themselves GPL tools, which the project would run but never copy into the
+repository.
+
+**Repository layout (sketch):**
+
+- `edge/firmware/` – the co-processor firmware (embedded Rust, `no_std`).
+- `edge/apps/` – the Pi user-space services (Rust): connectors, dashboard, reports, CAM link.
+- `edge/os/` – the image recipe and update scheme (configuration only).
+- `edge/hardware/` – schematics, PCB layout, bill of materials, enclosure model (the enclosure
+  modelled in SolidCraft itself).
+- `edge/docs/` – the installation and safety guide (electrician steps, lockout/tagout, standards).
+
+**How it fits SolidCraft's rules (facts from AGENTS.md; consequences opinion):**
+
+- **"Application code is Rust only and builds for wasm."** The firmware and the Pi services cannot
+  build for wasm. Edge would need its own Cargo workspace or an agreed exception, with the shared
+  data types (signals, machine library entries, results) in a crate that does build for wasm, so
+  the desktop and web apps read Edge data with the same code.
+- **Layering:** Edge services would sit beside `apps`, depending on `doc` and `io` types but never
+  on `ui-egui`; `cargo xtask layers` would need a rule for them.
+- **No GPL code read or copied**, which rules out reusing LinuxCNC, Klipper or GPL MTConnect
+  agents; MIT/Apache crates only, checked by `cargo xtask licences`.
+- **Licences:** software MIT OR Apache-2.0 like the rest of SolidCraft; hardware under a
+  permissive open hardware licence such as **CERN-OHL-P-2.0**. The PCB tool matters: KiCad is a
+  GPL application, but designs made with it are the designer's own (running a tool is not reading
+  its code). Maintainers should confirm that reading confirms this.
+- **Name:** "SolidCraft Edge" is still a working name.
+
+**Why host it inside SolidCraft (opinion):** one repository means the CAM side, the machine library
+and the Edge share one signal vocabulary and one release. The read-only allow-list is reviewed in
+the same open PRs as the code that depends on it. For defence and aerospace shops, an auditable,
+open, read-only device is easier to approve than a closed vendor box (high-security file).
+
 ## Working with Haas on a factory-integrated interface
 
 **What to ask for (opinion), in order of size:**
@@ -755,9 +811,11 @@ Edge can promise the CAM side.
 2. **Haas DPRNT network settings** (261, 262, 263) and the status relay mapping for outputs 90–97.
 3. **Does the classic control accept `E` writes?** It does not matter to the read-only module, but
    it matters for the security argument.
-4. **Should SolidCraft ship a hardware design at all**, or only a specification that third parties
-   build? An open hardware licence (for example CERN-OHL-P, which is permissive) would be needed
-   for the board; that is a maintainer decision.
+4. **Hosting Edge inside SolidCraft:** Jason proposes an open hardware design with embedded Rust
+   software and OS as a SolidCraft project (see
+   [SolidCraft Edge as an open hardware project](#solidcraft-edge-as-an-open-hardware-project-inside-solidcraft)).
+   Maintainers decide whether it lives in this repository, how the wasm rule applies to it, and
+   which open hardware licence to use (CERN-OHL-P-2.0 suggested).
 5. **NC-Link** (China's machine data standard): worth a connector, or out of scope?
 6. **I++ DME read-only:** is there a safe way to read CMM state without being the motion client?
    Worth asking the I++ DME 3.0 group.
