@@ -140,10 +140,12 @@ kit, then Fanuc and Haas, then everyone else.** In order (opinion, from the rank
 - **Renishaw gets its own pitch**, because its probes sit on almost every brand in the ranking:
   one documented probe-result record on every control, and Renishaw Central serving the same
   read-only profile (see [A pitch to Renishaw](#a-pitch-to-renishaw)).
-- **"Make everything standard" with MCP:** the machine interfaces file already sketches a
+- **"Make everything standard" with MCP (Model Context Protocol):** MCP is the right universal
+  standard for *AI agents*; MTConnect and OPC UA stay the data model underneath it, because makers
+  already ship them. The machine interfaces file already sketches a
   machine-tool MCP tool set with no motion tools. This file adds a **read-only-first "machine MCP
   profile"**, mapped onto MTConnect and umati names so makers can serve it from data they already
-  have, and a per-maker pitch in ranking order (see [One standard: a machine MCP profile](#one-standard-a-machine-mcp-profile)).
+  have, and a per-maker pitch in ranking order (see [One standard: an MCP profile for machines](#one-standard-a-model-context-protocol-mcp-profile-for-machines)).
 
 ## Fundamentals
 
@@ -550,9 +552,26 @@ developer or partner programme was found (the HaasConnect page offers none). Sug
 
 Named individuals are deliberately not listed in this public file.
 
-## One standard: a machine MCP profile
+## One standard: a Model Context Protocol (MCP) profile for machines
 
-Jason's goal is to suggest an MCP project to every maker and make everything standard. The machine
+Jason's goal is to get every maker to implement **MCP, the Model Context Protocol** (the open
+protocol AI agents use to discover and call tools; SolidCraft already ships an MCP server), unless
+there is a better universal standard.
+
+**Is there a better universal standard? (opinion, with the facts behind it)** For *machine data*,
+two open standards already exist and are widely shipped: **MTConnect** (read-only, HTTP/XML;
+built into Haas NGC, Mazak, Hurco and others) and **OPC UA for Machine Tools** (umati, OPC
+40501-1; driven by the German and Swiss builders and the control makers). Both describe machines
+better than MCP does: units, data types, rates, history. Neither is designed for an AI agent. They
+do not give self-describing tools with JSON Schema inputs and outputs, a way to ask the human for
+confirmation, or agent-style authorisation. MCP gives all three and describes no machine at all.
+So the answer is **both, layered**: makers keep MTConnect or OPC UA as the data model and add an
+MCP server on top that exposes that data as agent tools under a fixed safety profile. Asking
+makers to replace OPC UA or MTConnect with MCP would be refused. Asking them to add a thin MCP
+layer over what they already ship is cheap, and the OPC Foundation has already started down that
+road with its OPC UA MCP package. That is the profile below.
+
+The machine
 interfaces file already proposes the tool set and safety tiers (Record, Advise, Stage, Request,
 Commit, Never; dangerous tools absent, not hidden; confirmation on the machine). This file adds
 three things (opinion):
