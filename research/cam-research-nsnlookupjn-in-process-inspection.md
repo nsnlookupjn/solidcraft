@@ -807,6 +807,63 @@ part (default) and overrides on chosen faces:
 A finish on a face is one more **characteristic** in the inspection plan, like a size or a
 roughness, so nothing about it needs a drawing note.
 
+#### Scaled importance: critical down to "don't worry about it" (Jason)
+
+**Jason's requirement:** be able to identify the critical quality-control measurements and
+properties for later manufacturing and QC, and also be able to say "don't worry about this
+surface" or "this hole size doesn't matter". A **scaled importance** is important.
+
+Industry already grades characteristics, in different words (fact, general practice):
+
+- **Defect classes** in sampling standards (ANSI/ASQ Z1.4, the successor of MIL-STD-105):
+  critical, major and minor defects get different acceptance levels.
+- **Key characteristics** in aerospace (SAE AS9103, variation management of key
+  characteristics): features whose variation most affects fit, performance or life get a control
+  plan and capability tracking.
+- **Special characteristics** in automotive (AIAG APQP/PPAP, IATF 16949): critical (safety or
+  regulation) and significant (fit or function), each customer with its own symbol.
+- **Flight-safety / critical-safety items** in defence and aerospace: parts and features whose
+  failure could cause loss of life or the aircraft, with extra traceability.
+
+None of these appears in the 3D model today; they are symbols on a drawing or rows in a control
+plan typed separately (opinion).
+
+**Proposed scale (opinion).** Every characteristic (size, geometric tolerance, finish, hardness,
+note) has an **importance** from 0 to 5. The default is 2, so the designer only marks the
+exceptions:
+
+| Level | Name | Meaning | Inspection | CAM | Self-tuning and design feedback |
+|---|---|---|---|---|---|
+| 5 | **Critical / safety** | failure could cause injury, loss of the product or a regulatory breach | 100 % of parts, independent method (CMM or calibrated gauge), capability tracked (e.g. Cpk ≥ 1.67, customer-set), on every report level | finish pass always, conservative settings, probe in cycle | locked: never pushed harder automatically; any change needs an engineer's approval and a delta FAI |
+| 4 | **Key** | drives fit, function or life (bearing seats, sealing faces, datum features) | every part or a tight sampling plan, capability tracked (e.g. Cpk ≥ 1.33) | finish to the middle of the band, probe in cycle | tuned only with inspection margin, with approval |
+| 3 | **Major** | affects assembly or appearance noticeably | sampled (e.g. Z1.4 normal) | normal strategy | self-tuning allowed inside guard bands |
+| 2 | **Standard** (default) | normal toleranced feature or general tolerance | sampled, or first and last part | normal | self-tuning allowed |
+| 1 | **Minor** | barely matters (clearance holes with lots of room, chamfers) | first article only, or visual | may be roughed or finished in one pass | free to tune |
+| 0 | **Don't care** | non-functional surface or size; any reasonable result is fine | not inspected beyond first article; never a reason to reject a part | cheapest strategy: as-cast or as-sawn faces allowed, larger step-over, skip the finish pass, deburr only for safety | free; DFM may even suggest removing the feature or loosening it |
+
+Details of the scale (opinion):
+
+- **"Don't care" is explicit, not silence.** A face left unmarked keeps level 2 and the general
+  tolerance. Level 0 is a deliberate statement by the designer, recorded with the reason ("cosmetic
+  inside face, hidden") so a reviewer can challenge it. It may come with a looser tolerance (for
+  example ISO 2768-c just for that feature) or with "reference only, not inspected".
+- **First article still checks everything.** AS9102 requires every characteristic on a first
+  article, whatever its level; the level changes how production parts are checked, not what the
+  FAI covers.
+- **Properties too, not only sizes.** Hardness of a bearing face, coating thickness on a wear
+  face, roughness of a seal face and material certificates all carry a level.
+- **Inheritance.** A level set on a feature applies to all its characteristics unless overridden;
+  a joint fit (shaft in bearing) can set both mating faces at once.
+- **Customer symbols map onto it.** A customer's own marks (critical, significant, key) are stored
+  next to the level and printed with their symbol on reports and generated drawings, since
+  customers require their own notation.
+- **Visible in the model.** An importance view colours every face by level (red critical through
+  grey "don't care"), so a programmer or inspector sees at a glance where care and time are needed.
+- **Where it drives cost and time.** The level is the switch that the CAM physics system, the
+  self-tuning loop, the report levels and the DFM checker all read: spend effort on levels 4–5,
+  save it on 0–1. That is where most of the time saving in the
+  [design-feedback loop](#from-inspection-back-to-the-design) comes from.
+
 #### What it defines downstream
 
 | Consumer | Uses the tolerances for |
