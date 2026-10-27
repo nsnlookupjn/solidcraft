@@ -165,6 +165,11 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
     of many short points, and segments long enough that the control never hits its block-processing
     limit, so the machine always runs smoothly. See
     [Tolerance-driven toolpath accuracy](#tolerance-driven-toolpath-accuracy).
+18. **Permitted manufacturing deviations (Jason).** Real parts differ from the perfect model in
+    expected ways: internal corners get the tool's radius, edges get broken, blind holes get a
+    drill point, threads run out, castings get draft and parting lines. The designer states what is
+    acceptable, per part and per feature, so CAM, the shop and QC stop guessing. See
+    [Permitted manufacturing deviations](#permitted-manufacturing-deviations-per-part-and-per-feature).
 
 ## Fundamentals
 
@@ -912,6 +917,70 @@ Details of the scale (opinion):
   self-tuning loop, the report levels and the DFM checker all read: spend effort on levels 4–5,
   save it on 0–1. That is where most of the time saving in the
   [design-feedback loop](#from-inspection-back-to-the-design) comes from.
+
+#### Permitted manufacturing deviations, per part and per feature
+
+**Jason's question:** what about the other deviations that are common in manufacturing, such as
+internal radii added to sharp corners? What is acceptable, and can it be defined at the modelling
+stage, by part and by feature?
+
+Yes (opinion). These are not errors; they are the **expected signatures of a process**. A milled
+pocket cannot have a sharp internal corner, a drilled blind hole ends in a cone, a turned shoulder
+carries the insert's nose radius. Today the designer either draws the perfect shape and lets the
+shop decide, or adds a drawing note ("internal radii R1 max", "break all sharp edges"). Both leave
+room for argument at inspection. A few standards already define such allowances on drawings:
+
+- **ISO 13715** (edges of undefined shape): a symbol states an edge's required condition, for
+  example free from burr, burr allowed up to a size, or a "passing" or "undercut" within a size
+  range, plus a general indication for all edges of the part.
+- **ISO 6411** (centre holes on turned parts): a centre hole is required on the finished part,
+  permitted, or not permitted.
+- Supplier defaults fill the gaps: Xometry's standards say sharp edges "will be broken and
+  deburred by default" on CNC and sheet metal, edges that must stay sharp go on the print,
+  extrusions get corner radii of at least .016", castings show parting lines, gate vestiges and
+  ejector-pin marks, and supported 3D prints "may leave small vestiges".
+
+**Catalogue of common deviations (opinion, with the facts noted):**
+
+| Deviation | Why it happens | What the designer can state | What CAM and QC do with it |
+|---|---|---|---|
+| **Internal corner radius** (pocket corners, slot ends, keyways) | a rotating tool is round | max radius allowed (e.g. ≤ R1), or "sharp required" (then corner relief / dog-bone allowed, or EDM, broaching) | largest tool whose radius fits; adds relief cuts only if allowed; QC: radius gauge or optical check at low importance |
+| **Turned shoulder / groove radius** | insert nose radius | max radius, or undercut allowed (grinding relief, DIN 509 style) | insert choice; relief groove if permitted |
+| **External edges** (burr, sharp, broken) | cutting leaves burrs; sharp edges are unsafe | part default (e.g. "break edges 0.1–0.4") and per-edge overrides: keep sharp, chamfer C0.5, radius; ISO 13715 states | deburr or chamfer passes generated; edges marked "keep sharp" are left alone |
+| **Blind hole bottom** | twist drills have a point (commonly 118° or 140°) | drill point allowed, flat bottom required, or max cone depth | drill, flat-bottom drill or end mill; thread depth checked against the cone |
+| **Thread run-out** | taps and dies have a lead-in; incomplete threads at the end | minimum full-thread length; run-out allowed or a relief groove required | tap type (bottoming or plug), drill depth, relief groove |
+| **Centre holes** (turned parts) | needed to support long parts between centres | required, permitted or not permitted (ISO 6411) | facing them off if not permitted |
+| **Tool marks, scallops, witness lines, mismatch steps** between tools or setups | finite step-over; re-clamping | max cusp height, max step at a blend, which faces may show a witness line | step-over from cusp height; joins placed on faces that allow them |
+| **Draft** (casting, moulding, forging) | parts must release from the tool | minimum angle, direction (adds or removes material), faces where it is not allowed | casting or mould design; machined faces where draft is not allowed |
+| **Parting line, gate vestige, ejector marks, flash** | how the mould or die works | faces where they are allowed, max protrusion | gate and ejector locations; trimming |
+| **Sheet metal bends** | material and tooling | inside bend radius range, bend relief shape, burr side, micro-joint tab remnants allowed | tooling choice; tab placement; deburr |
+| **3D printing support marks, stair-stepping** | supports and layers | faces where supports are not allowed; max step height | build orientation, support placement |
+| **Cross-hole and exit burrs** | drill breakthrough | burr allowed or not inside intersecting holes | deburr tools, back-chamfering |
+| **Marks and engravings** | serial numbers, part marks | where marking is allowed, method, max depth | marking toolpath location (see [part marking](#part-serialisation-and-marking)) |
+
+**How it is stored (opinion):**
+
+- **Part defaults come from the process profile**, the same place as the general tolerance, for
+  example "CNC metal: internal radii up to R1 allowed, edges broken 0.1–0.4, drill points allowed,
+  centre holes not permitted". Like general tolerances, they apply to everything not overridden.
+- **Feature overrides** go on the face, edge or feature: this pocket needs corners ≤ R0.5, this
+  edge stays sharp, this hole needs a flat bottom.
+- **Importance links in.** On "don't care" faces (level 0), any process signature is acceptable by
+  default. On key and critical features, any deviation not explicitly allowed is not allowed.
+- **Every allowance is a characteristic** with its own importance, so it appears in the inspection
+  plan at the chosen report level (most at level 1, checked visually on the first article).
+- **Generated drawings print them** as general notes and ISO 13715 / ISO 6411 symbols, so a
+  traditional shop sees the same allowances.
+
+**The "as-made" preview (opinion):** the modeller can show the part as it will actually be made,
+with the allowed corner radii, drill points, draft and edge breaks applied (CAM simulation already
+computes most of this). That lets the designer check the real shape against mating parts: a milled
+pocket with R1 corners will not accept a sharp-cornered square insert, so the insert needs a
+chamfer or the pocket needs reliefs. Catching that in the model is cheaper than at assembly.
+
+**DFM link:** when a model asks for something the process cannot make (a sharp internal corner in
+a milled pocket with no allowance), the [DFM check](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uhz8i7/research/cam-research-nsnlookupjn-dfm-check.md) flags it and offers the fix: allow a
+radius, add reliefs, or change the process.
 
 #### What it defines downstream
 
@@ -1972,6 +2041,9 @@ Connectivity and SolidCraft Edge:
 - Physical properties research (same author; hardness regions, case depth, coatings): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uxzal2/research/design-research-nsnlookupjn-physical-properties.md
 - Haas UK, "Smooth Operator" (G187 smoothness levels, Setting 191): https://www.haas.co.uk/?p=1296
 - Heidenhain Klartext 61, Cycle 32 TOLERANCE: https://www.heidenhain.us/addl-materials/enews-pro/pdf/KLARTEXT_61_Cycle_32.pdf
+- ISO 13715:2017 catalogue and preview (edges of undefined shape): https://webstore.ansi.org/preview-pages/ISO/preview_ISO+13715-2017.pdf
+- ISO 6411 preview (centre holes on drawings): https://webstore.ansi.org/preview-pages/ISO/preview_ISO+6411-1982.pdf
+- DFM check research (same author): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uhz8i7/research/cam-research-nsnlookupjn-dfm-check.md
 - Revolution Pi products: https://revolutionpi.com/en/products
 - Raspberry Pi Integrator Programme and Powered by Raspberry Pi: https://www.raspberrypi.com/for-industry/integrator-programme/
 - Zebra CUPS driver configuration: https://support.zebra.com/cpws/docs/cups/cups_driver1_4_configure.pdf
