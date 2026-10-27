@@ -145,6 +145,13 @@ kit, then Fanuc and Haas, then everyone else.** In order (opinion, from the rank
   for the control's own stop or autofeed, and the Edge's fast load and vibration data teach
   SolidCraft each tool and setup, so the next program is better. The Edge never writes to the
   control (see [From CAM physics to the control and back](#from-cam-physics-to-the-control-and-back-load-limits-and-learning)).
+- **Every factory feature, every cut** (Jason): novices get the machine's best features switched
+  on and explained by default; pros see and override all of them (see
+  [Every factory feature, every cut](#every-factory-feature-every-cut)).
+- **Machine tables** (Jason): control generations and software versions with their monitoring
+  and control features, builder and model tables, user-base estimates by continent, and the
+  capability record the machine library needs (see
+  [Machine tables](#machine-tables-controls-versions-features-and-user-base)).
 - **Renishaw gets its own pitch**, because its probes sit on almost every brand in the ranking:
   one documented probe-result record on every control, and Renishaw Central serving the same
   read-only profile (see [A pitch to Renishaw](#a-pitch-to-renishaw)).
@@ -285,7 +292,7 @@ prediction needs only Tier A.
 | **C6** | **Haas** (own control, Haas machines only) | over 200,000 Haas machines by about 2018 (machinery.co.uk, 200,000th machine; fact); 125,000th CNC in February 2012 (American Machinist, fact) | **very high in US job shops** (Jason; uncited article: "dominates the US job shop market") | NGC: MDC over Ethernet, MTConnect (port 8082), DPRNT; classic: MDC over RS-232 | sensor kit; status relays |
 | **C7** | **Mazak Mazatrol** (SmoothX/G/Ai, Matrix and older; Mazak machines) | about 5–7 % (uncited estimate) | high in mid-size production shops | MTConnect built in on Smooth controls; SmartBox gateway | sensor kit |
 | **C8** | **Okuma OSP** (Okuma machines) | not found (estimate: a few %) | medium–high in US production | THINC API on the Windows HMI; MTConnect adapter | sensor kit |
-| **C9** | **Brother CNC-C00** (SPEEDIO compact machines) | not found (large unit counts in electronics manufacturing; unverified) | medium | MTConnect and FTP-based options (unverified) | sensor kit |
+| **C9** | **Brother CNC-D00** (SPEEDIO compact machines; older CNC-C00) | not found (large unit counts in electronics manufacturing; unverified) | medium | OPC UA, Ethernet, fieldbus slave options (Brother product page, machine interfaces file) | sensor kit |
 | **C10** | **Others**: Hurco WinMax (MTConnect built in, per machine interfaces file), Fagor, Tormach PathPilot (LinuxCNC-based; do not read its source), Centroid, FANUC-licensed and older brands | small each | Hurco and Tormach matter for small US shops | varies | sensor kit |
 | **C11** | **Legacy** (pre-network): Fadal CNC88, Cincinnati Milacron Acramatic, early Fanuc 0/6/11, early Haas, Bridgeport/BOSS, Allen-Bradley | large in total, unknown | **high**: many small shops still run them (Jason's own career started on these) | none | DNC drip-feed line; sensor kit |
 
@@ -513,6 +520,38 @@ read-only module never grows that ability.
 - **Never connect to E-stop, door interlock or other safety circuits**, even as an input.
 - **Check with the dealer** before any work inside the cabinet; for Haas, the local Haas Factory
   Outlet.
+
+### Every factory feature, every cut
+
+Jason's aim: **use every factory feature of every machine to optimise every cut**, and SolidCraft's
+audience: **novices who should make parts like pros, and pros who get every tool they ever asked
+for.** Both need the machine library to know the features, and the post to use them. Seed list of
+cut-optimising factory features (K unless marked; names are the makers' own; each becomes a flag
+in the machine library's "Motion and smoothing", "Load monitor and autofeed" or "Probing" group):
+
+| Control | Smoothing / high-speed | Load and adaptive feed | Chatter, thermal, collision | Probing and tool setting |
+|---|---|---|---|---|
+| Haas NGC | G187 (smoothness and corner tolerance) | per-tool load monitor; Setting 84 autofeed (F) | – | WIPS probing macros, VPS templates (F) |
+| Fanuc 0i/30i | AI contour control (G05.1 Q1), AICC II, nano smoothing | optional adaptive control and tool-load monitoring via builder/partner options | servo learning, thermal compensation options | probe macros (Renishaw and builder) |
+| Siemens 840D sl/ONE | CYCLE832 high-speed settings; Top Surface | ACM (adaptive control and monitoring) option; Edge apps (F) | collision avoidance option | measuring cycles |
+| Heidenhain TNC 640/TNC7 | Cycle 32 TOLERANCE | AFC adaptive feed control option | ACC active chatter control, DCM dynamic collision monitoring options | touch-probe cycles, KinematicsOpt |
+| Okuma OSP | Super-NURBS, Hi-Cut Pro | load monitor | Machining Navi (chatter avoidance using sound), Thermo-Friendly Concept, Collision Avoidance System | probing cycles |
+| Mazak Smooth | Smooth machining configuration | Intelligent Machining functions | Active Vibration Control, Intelligent Thermal Shield, Intelligent Safety Shield | probing, tool eye |
+| Mitsubishi M8 | SSS (super smooth surface) control | load monitor | chatter suppression (on some) | probing |
+| Brother CNC-D00 | high-accuracy mode | – | thermal compensation | – |
+
+**How SolidCraft uses them (opinion):**
+
+- **Novice:** they plug in the Edge, it discovers the machine, and CAM switches the right features
+  on by default. Smoothing tolerance comes from the part tolerance, load limits from CAM Physics,
+  probing where the model asks for it, and chatter avoidance where the control has it. Everything
+  is explained in plain words on the setup sheet ("G187 P2 E0.02 used because the tightest surface
+  tolerance in this operation is 0.05 mm").
+- **Pro:** every feature is visible and overridable per operation, every raw signal from the Edge
+  is available (plots, export, MCP), and nothing is hidden behind the defaults. An override is
+  recorded with its reason, like the risk slider.
+- **Both:** a feature is used only when the machine library says this machine has it (verified
+  or discovered for anything unattended), with a stated fallback otherwise.
 
 ### From CAM physics to the control and back: load limits and learning
 
@@ -852,6 +891,168 @@ software version, which connector, which signals at what rate, read-only or not,
 data path is bolt-on or factory. This goes into the machine library entry and decides what the
 Edge can promise the CAM side.
 
+## Machine tables: controls, versions, features and user base
+
+Jason asked for a starting set of tables: machines, controllers and software versions with the
+monitoring and control features each one offers, and an estimate of the user base per machine,
+by continent. These tables are **a starting point to be corrected** by maintainers, makers and
+shops. They also seed the machine library: see
+[The machine library's capability record](#the-machine-librarys-capability-record).
+
+**Confidence legend:** **F** = fact from a cited source in this file or the machine interfaces
+file; **K** = general industry knowledge, not checked against a source here (verify before
+relying on it); **E** = estimate made for this file, with its method stated. Years for control
+generations are approximate (K) unless marked F.
+
+### Table 1. CNC control generations and what each can give the Edge
+
+Features: **Mon** = monitoring (state, program, tool, alarms); **Load** = spindle/axis load
+readable through the interface; **Blk** = current block or line; **Off** = tool/work offsets
+readable; **Wr** = the interface also accepts writes (so the Edge must allow-list); **Std** =
+open standard (MTConnect or OPC UA) available.
+
+| Maker | Generation (approx. years) | Interface on that generation | Mon | Load | Blk | Off | Wr | Std | Conf. |
+|---|---|---|---|---|---|---|---|---|---|
+| **Haas** | Early control (1988 – about 2000) | RS-232 DNC only | – | – | DNC sent-block | – | – | – | F/K |
+| Haas | Classic (about 2001 – 2017), MDC Setting 143 ON/OFF | RS-232 MDC `?Q` queries, `Q600` variables | yes | via `Q600` (variable unverified) | via variable | via `Q600` | `E` unverified | – (Edge can republish as MTConnect) | F |
+| Haas | NGC 100.xx (2016 –), MDC Setting 143 = port | Ethernet MDC, DPRNT over TCP, HaasConnect | yes | via `Q600` | via DPRNT markers | yes | **yes (`?E` #1–33, #10000–10999)** | MTConnect :8082 (best ≥ 100.20.000.1200) | F |
+| **Fanuc** | 0 / 0-C, 15, 16/18/21 (1985 – late 1990s) | RS-232 DNC; some 16/18 with HSSB or Ethernet boards | DNC only, or limited | – | DNC | – | – | – | K |
+| Fanuc | 16i/18i/21i, 0i-A/B/C (late 1990s – 2008) | FOCAS1 on Ethernet option board or HSSB | yes | yes (`cnc_rdspload`) | yes | yes | yes (FOCAS writes) | – | K |
+| Fanuc | 0i-D/F, 0i-F Plus, 30i/31i/32i-A/B, -B Plus (2008 –) | FOCAS2 on embedded Ethernet (port 8193); MT-LINKi; MTConnect and OPC UA options | yes | yes | yes | yes | yes (password-gated parameters) | options | F (FOCAS) / K (years) |
+| **Siemens** | System 3/8, 810/820/850/880 (1970s – 1990s) | RS-232 DNC | – | – | DNC | – | – | – | K |
+| Siemens | 840C, 810D/840D powerline (1990s – 2000s) | HMI-based (Windows HMI on 840D), RS-232 | limited | via HMI tools | yes | yes | yes | – | K |
+| Siemens | 840D sl, 828D, 808D (2006 –), SINUMERIK ONE (2019 –) | Access MyMachine /OPC UA (licensed, port 4840); SINUMERIK Edge (500 Hz) | yes | yes | yes | yes | yes (OPC UA methods) | **OPC UA** | F (interface) / K (years) |
+| **Heidenhain** | TNC 1xx–4xx (1980s – 1990s) | RS-232 | – | – | DNC | – | – | – | K |
+| Heidenhain | iTNC 530 (about 2004 –) | HEIDENHAIN DNC (option 18), Ethernet | yes | limited | yes | yes | **yes (start/stop programs)** | – | F (DNC) / K |
+| Heidenhain | TNC 620 (81760x-08+), TNC 640 (34059x-10+), TNC7 (81762x-16+) | OPC UA NC Server (options 56–61, up to 6 clients) + DNC | yes | via builder extensions | yes | yes | yes (program control) | **OPC UA** | F |
+| **Mazak** | Mazatrol M-series, M-Plus, Fusion 640 (1981 – early 2000s) | RS-232 | – | – | DNC | – | – | – | F (1981) / K |
+| Mazak | Matrix, Matrix Nexus (2000s – 2010s) | Ethernet, MTConnect via adapter (K) | yes | partly | yes | partly | – (no public write) | MTConnect | K |
+| Mazak | Smooth X/G/Ai/Ez (2013 –) | **MTConnect native**, SmartBox gateway | yes | yes | yes | yes | no public write | **MTConnect** | F |
+| **Okuma** | OSP-U/E series (1990s – 2000s) | RS-232; MTConnect adapters on some | limited | – | DNC | – | – | – | K |
+| Okuma | OSP-P100/P200 (2000s), P300 (2013), P500 (2020s) | **THINC API** on the Windows HMI (6,000+ data points on P300), MTConnect; OPC UA on newer | yes | yes | yes | yes | **yes (THINC writes)** | MTConnect, OPC UA (newer) | F (P300, THINC) / K |
+| **Mitsubishi** | M500/M600, M60S (1990s – 2000s) | RS-232, Ethernet on later | limited | – | DNC | – | – | – | K |
+| Mitsubishi | M70/M700, M80/M800, M800V (2005 –) | Ethernet, maker API library, MTConnect | yes | yes | yes | yes | yes (API) | MTConnect | K |
+| **Brother** | CNC-B00/C00 (2000s – 2010s) | Ethernet, RS-232 | yes | limited | yes | yes | unknown | – | K |
+| Brother | CNC-D00 (current) | OPC UA, Ethernet, fieldbus slave options | yes | yes (K) | yes | yes | "computer remote" (undocumented) | **OPC UA** | F |
+| **Hurco** | Ultimax (1980s – 2000s) | RS-232 | – | – | DNC | – | – | – | K |
+| Hurco | WinMax (2000s –) | Ethernet, MTConnect (unverified) | yes | unknown | yes | yes | unknown | MTConnect | K |
+| **Chinese domestic** | GSK 980/928, KND K1000, Huazhong HNC-808/818/848 | maker protocols; NC-Link on newer Huazhong (K) | varies | varies | varies | varies | varies | NC-Link | F (models) / K |
+| **Tormach** | PathPilot (LinuxCNC-based) | network interfaces not checked (do not read LinuxCNC source) | unknown | unknown | unknown | unknown | unknown | – | K |
+| **Legacy others** | Fadal CNC88, Milacron Acramatic, Allen-Bradley, Bridgeport BOSS | RS-232 DNC, or tape | – | – | DNC | – | – | – | K |
+
+**Every row's "–" is where the bolt-on module does the work:** stack light and relay inputs for
+state, current sensors for load, the DNC line for program position.
+
+### Table 2. CNC machine families: builder, model, control, Edge route
+
+| Rank (control) | Builder | Model families | Controls fitted | Edge route, best first |
+|---|---|---|---|---|
+| C6 | **Haas** | VF vertical mills, VM, UMC 5-axis, EC horizontals, TM toolroom, Mini/Super Mini Mill, DT/DM drill-tap, ST/SL lathes, TL toolroom lathes, DS twin-spindle, Office/Desktop mill | Haas (early, classic, NGC) | NGC: MTConnect + MDC + DPRNT; classic: serial MDC; early: module |
+| C1 | **DN Solutions** (formerly Doosan) | DNM, DVF, Puma, Lynx | Fanuc mostly; some Siemens (K) | FOCAS2 / MTConnect option |
+| C1 | **Hyundai WIA**, Hwacheon, Smec | KF, L-series; Vesta, Hi-TECH | Fanuc, some Siemens/Hwacheon own (K) | FOCAS2 |
+| C1 | **Makino, Matsuura, Kitamura, Nakamura-Tome, Takisawa** | PS/a-series, MAM, Mycenter, WT | Fanuc (Makino Pro on Fanuc), some Mitsubishi (K) | FOCAS2 |
+| C1 | **Taiwanese builders** (Hartford, Feeler, Victor, Leadwell, YCM, Awea, Quaser) | many | Fanuc, Mitsubishi, Siemens, Heidenhain (K) | per control |
+| C2/C4 | **DMG Mori** | DMU, DMC, CMX, NLX, NTX, CTX | Siemens, Heidenhain, Fanuc, Mitsubishi by model and region (K) | OPC UA / umati (CELOS, IoTconnector) |
+| C2/C4 | **Hermle, Grob, Chiron, Spinner, Index** | C-series, G-series, FZ/DZ, VC, G-series lathes | Heidenhain or Siemens (K) | OPC UA |
+| C7 | **Mazak** | VCN, VCU, Variaxis, Integrex, QT, Quick Turn, HCN | Mazatrol; some Fanuc, Siemens (K) | MTConnect (native) |
+| C8 | **Okuma** | Genos, MB, MU, LB, LU, Multus | OSP | THINC (read-only use) / MTConnect |
+| C9 | **Brother** | SPEEDIO S/R/M/U series | CNC-D00 | OPC UA |
+| C10 | **Hurco** | VM, VMX, BX, TM lathes | WinMax | MTConnect |
+| C10 | **Tormach** | 440, 770, 1100, 1500 | PathPilot | module first; network API to be checked |
+| C5 | **Citizen, Star, Tsugami** (Swiss-type) | L, M, SR, SB | Mitsubishi or Fanuc (K) | per control |
+| C11 | **Legacy** | Fadal VMC, Bridgeport, Cincinnati, Milltronics | own or legacy | module + DNC |
+
+### Table 3. Additive machines
+
+| Rank | Brand | Models | Software / firmware version notes | Monitoring interface | Control interface (for read-only Edge: do not use) | Conf. |
+|---|---|---|---|---|---|---|
+| A1 | Bambu Lab | X1, P1, A1, H2 | authorisation-gated commands after the 2025 firmware change; **Developer Mode** (LAN only) behaves as before | LAN status (Developer Mode), Bambu Local Server HTTP API | print control in the same channels | F |
+| A2 | Creality / Elegoo / Anycubic | K1, K2, Ender (Creality); Centauri, Neptune, Saturn (Elegoo); Kobra, Photon (Anycubic) | Klipper-based on many FDM models; resin printers vary | Moonraker network API where Klipper (GPL project: network use only) | same API | K |
+| A3 | Prusa | MK4/MK4S, Core One, XL, Mini | PrusaLink built into recent firmware | PrusaLink local REST | same API | F/K |
+| A4 | Formlabs | Form 3, Form 4/4L, Fuse 1 | Local API needs a server app on a PC | Local API; Web API (cloud) | job send | F |
+| A5 | UltiMaker | S3/S5/S7, Factor 4, Method | local REST API (community-documented) | REST | REST | K |
+| A6 | Stratasys | F123, F900, Fortus 450mc, J-series PolyJet, Origin | Connectivity SDK on Fortus/F900/F123/J3–J8 | **MTConnect** (F900, Fortus 450mc), SDK | SDK (two-way) | F |
+| A7 | HP | MJF 4200/5200/5420 series | not researched | maker software | – | K |
+| A8 | EOS | M 290, M 300-4, M 400/400-4, P 396, P 500 | EOSCONNECT Core 1.0 (M 290, M 400, M 400-4), 1.2 (M 300-4, P 500), MQTT from 1.6 | **OPC UA**, REST Web API, MQTT | build start via OPC UA with Control licence | F |
+| A8 | BLT, Eplus3D, Farsoon, ZRapid, Nikon SLM | BLT-S, EP-M, FS, iSLM; NXG, SLM 280/500 | not researched | OPC UA likely (unverified) | – | K |
+
+### Table 4. CMMs and inspection
+
+| Rank | Brand | Machines | Controller / software | Read-only Edge route | Conf. |
+|---|---|---|---|---|---|
+| M1 | Hexagon | Global, Optiv, Leitz PMM/Reference, Tigo | DC-series controllers; PC-DMIS (21 controller interfaces incl. I++ DME client) | PC-DMIS reports, DMIS output, QIF, Q-DAS export; stack light | F (interfaces) / K |
+| M2 | Zeiss | CONTURA, PRISMO, ACCURA, O-INSPECT, DuraMax | Zeiss controllers (I++ DME server); CALYPSO; PiWeb | CALYPSO table files, PiWeb, QIF | F/K |
+| M3 | Mitutoyo | Crysta-Apex, Strato-Apex, MiSTAR | UC controllers (I++ DME; GPIB on older); MCOSMOS; MeasurLink | MCOSMOS results, MeasurLink database | F/K |
+| M4 | Nikon, Wenzel, LK, Aberlink, Coord3, Keyence, FARO, Creaform | bridge CMMs, arms, trackers, handheld scanners | own software; I++ DME on several | result files | K |
+| M5 | Renishaw (on-machine) | OMP/RMP probes, NC4 and OTS tool setters | probing macros on the CNC; Renishaw Central | DPRNT records; CNC interface | F/K |
+| M6 | Renishaw (CMM and gauging) | Equator, REVO heads, UCC controllers; RenAM (additive) | UCC (I++ DME); MODUS | result files; Renishaw Central | F/K |
+
+### Table 5. User base estimates by continent
+
+**Method (E):** units *still in service* in 2026 = cumulative units built (fact where cited,
+extrapolated otherwise) × a survival share (assumed 50–75 %, since machine tools run 20–30 years
+and many are resold rather than scrapped). The continent split is an estimate from where each
+maker sells, anchored on 2025 machine tool consumption by country: China US$26.4 billion, the US
+US$11.4 billion, Germany US$5.13 billion (Gardner World Machine Tool Survey, 2026 edition). Asia
+is therefore the largest market for most makers, and the US the second. **Every number in this
+table is an order of magnitude, not a count.** Ranges are deliberately wide.
+
+| Rank | Control family / brand | Built to date (basis) | In service 2026 (E) | Americas | Europe | Asia | Rest | Conf. |
+|---|---|---|---|---|---|---|---|---|
+| C1 | Fanuc CNC | 5 M by Feb 2022 (F); about 250 k/year 2018–22 (F, from milestones) → about 6 M by 2026 (E) | 3.5–4.5 M | 20 % | 20 % | 58 % | 2 % | medium |
+| C2 | Siemens SINUMERIK | no figure; share about half of Fanuc's (E from Table 1 sources) | 1.5–2.5 M | 12 % | 45 % | 40 % | 3 % | low |
+| C3 | Chinese domestic (GSK, Huazhong, KND …) | Huazhong 300 k cumulative; GSK near 100 k/year (report, E) | 1.5–3 M | 1 % | 1 % | 97 % | 1 % | low |
+| C4 | Heidenhain TNC | 200 k by June 2007 (F); about 15–25 k/year since (E) | 0.35–0.55 M | 12 % | 60 % | 26 % | 2 % | low |
+| C5 | Mitsubishi M-series | no figure | 0.5–1 M | 12 % | 8 % | 78 % | 2 % | low |
+| C6 | **Haas** | 125 k by Feb 2012, 200 k by about 2018 (F) → about 12 k/year → about 300 k by 2026 (E) | **0.2–0.27 M** | **65 %** | 22 % | 11 % | 2 % | medium (total) / low (split) |
+| C7 | Mazak (Mazatrol) | no figure | 0.15–0.3 M | 30 % | 25 % | 43 % | 2 % | low |
+| C8 | Okuma OSP | no figure | 0.1–0.2 M | 35 % | 15 % | 48 % | 2 % | low |
+| C9 | Brother CNC | no figure | 0.1–0.3 M | 10 % | 10 % | 79 % | 1 % | very low |
+| C10 | Hurco, Tormach, Fagor, Centroid, others | no figure | 0.1–0.3 M together | 50 % | 35 % | 13 % | 2 % | very low |
+| C11 | Legacy, pre-network (all makers) | — | 0.5–1.5 M | 30 % | 30 % | 38 % | 2 % | very low |
+| A1–A2 | Entry-level printers (Bambu Lab 37 % of 2025 entry-level shipments, F; Creality, Elegoo, Anycubic) | several million units a year in total (E) | 10–20 M, Bambu Lab several million (E) | 30 % | 30 % | 37 % | 3 % | low |
+| A3–A5 | Prusa, Formlabs (38 % of 2025 professional shipments, F), UltiMaker | — | 0.5–1.5 M together (E) | 40 % | 40 % | 18 % | 2 % | low |
+| A6–A9 | Industrial polymer and metal (EOS 5,000 installed by March 2025, F; Stratasys, HP, 3D Systems, Chinese metal PBF) | — | 50–150 k (E) | 30 % | 35 % | 33 % | 2 % | low |
+| M1–M4 | CMMs (Hexagon, Zeiss, Mitutoyo, others) | — | 150–400 k (E) | 25 % | 35 % | 38 % | 2 % | very low |
+
+**Haas by model family (E, very low confidence):** VF and VM vertical mills about 45 %; ST/SL
+lathes about 25 %; Mini/Super Mini Mill, TM and TL about 12 %; UMC 5-axis about 6 %; EC
+horizontals, DT/DM and others about 12 %. By generation in service in 2026 (E, from about 12 k
+machines a year since 2016): NGC about 45–50 %, classic with MDC about 40–45 %, early controls about
+5–10 %. **So a classic serial connector matters almost as much as the NGC connector.**
+
+### How to firm up these numbers
+
+1. **Edge installs count themselves.** Every Edge reads `?Q100`/`?Q102` (Haas), `cnc_sysinfo`
+   (Fanuc), the MTConnect `/probe` header or the OPC UA `Identification` node. With the shop's
+   opt-in, an anonymous count by model, control and software version is the best data anyone
+   could have about real machines in small shops (opinion).
+2. **Ask the makers.** Fanuc, Heidenhain and Haas publish milestones; the "machine MCP profile"
+   pitch is a natural moment to ask for installed-base figures by region.
+3. **Used-machine listings** as a proxy for model mix: sample a few thousand listings per region
+   and count by builder, model and control.
+4. **Buy the Gardner data** (consumption by country and type) if the maintainers want a firmer
+   continent split.
+
+### The machine library's capability record
+
+Jason's point: **the machine library has to know which features and capabilities each machine
+has.** The machine library file owns that model: its
+[Capability model](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md#capability-model-which-features-each-machine-has-and-how-we-know-jasons-requirement) keys a capability set on (machine model, control family and generation,
+software version range, options fitted), groups the flags (data interfaces, monitoring signals,
+motion and smoothing, load monitor and autofeed, probing, machine options, physics data) and
+records provenance per flag (discovered, verified by test, maker-declared, user-declared, unknown
+= treated as absent). **The tables in this section are seed data for that model.** This file adds
+only how the Edge fills each group on its own (opinion):
+
+| Capability group (machine library) | How the Edge discovers it | Example (Haas VF-2, NGC) |
+|---|---|---|
+| Identity and version (the key) | `?Q100`/`?Q101`/`?Q102`; FOCAS `cnc_sysinfo`; MTConnect `/probe` header; OPC UA `Identification` | VF-2, serial 1234567, software 100.20.000.1200 |
+| Data interfaces | port scan of known ports on the machine segment only (MDC port in Setting 143, 8082, 4840, 8193), then a harmless identity query on each | `haas-mdc-tcp` 5051, `mtconnect` 8082, `dprnt-tcp` 8001 |
+| Monitoring signals | MTConnect `/probe` data items; OPC UA browse; a test read of each candidate variable; module channel map | spindle load % at 1 Hz (MTConnect); spindle current at 10 kHz (module) |
+| Writes the interface allows | known per connector, **recorded even though the Edge never uses them**, so auditors see the exposure | `?E` on #1–33 and #10000–10999 |
+| Motion, load monitor, probing, options | from the version via Table 1 (maker-declared), then **verified by test** (a G187 block accepted, a DPRNT line received, a probe cycle result, the fingerprint cut) | G187 yes (verified); Setting 84 autofeed (declared); WIPS probe (verified) |
+
 ## Glossary
 
 - **BGA (ball grid array):** a chip package with solder balls underneath instead of pins.
@@ -922,6 +1123,9 @@ Edge can promise the CAM side.
 - Wikipedia, Haas Automation: https://en.wikipedia.org/wiki/Haas_Automation
 
 ### Market and other makers
+
+- Modern Machine Shop, 58th World Machine Tool Survey (2025 consumption by country): https://www.mmsonline.com/articles/58th-annual-world-machine-tool-survey-report-and-data-now-available-2
+- Okuma, History of the P-Control: https://okuma.com/blog/history-of-the-p-control
 
 - Fanuc, 5 million CNCs (17 March 2022): https://www.fanuc.co.jp/en/profile/pr/newsrelease/2022/notice20220317.html
 - machinery.co.uk, Heidenhain 200,000th control: https://www.machinery.co.uk/content/news/heidenhain-ships-200-000th-machine-control-unit
