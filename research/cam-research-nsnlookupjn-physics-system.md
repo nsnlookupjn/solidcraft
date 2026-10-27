@@ -513,8 +513,40 @@ Uses, in order of risk (opinion):
    the envelope the planned model allows, after a safety review. SolidCraft Edge never bypasses the
    control's own limits.
 
-The in-process inspection file covers the probing, gauging and per-part record on the same
-device. Opinion: feedback should **update the shop instance**
+**Per-tool load limits sent to the machine (Jason's idea).** CAM Physics already knows, for
+every tool and every segment, the load it expects and the limit that binds. So the post-processor
+can **tell the machine** what load is normal for each tool and where to stop:
+
+- **Auto shutdown:** per tool (and where the control allows, per operation), an expected load
+  band and an upper limit derived from the predicted torque and power plus a margin set by the
+  slider. The control's own load monitor, which reacts far faster than any external device,
+  stops or feed-holds the machine when the limit is crossed. A load far *below* prediction is
+  also a finding (missing or broken tool, wrong offset, air cutting).
+- **Auto feed control (later):** where the control has an adaptive feed option, CAM Physics sets
+  its target load and its bounds from the same prediction, so the control trims feed toward
+  steady maximum load and never above the planned envelope.
+
+Which controls accept per-tool limits or adaptive targets, at what rate, and how writes to the
+machine are kept safe are covered in the
+[machine interfaces file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-fz0g0g/research/cam-research-nsnlookupjn-machine-interfaces.md); what the signals mean for tool and machine condition (wear,
+chipping, missing tool) is in the
+[machine health file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-9w3gq9/research/cam-research-nsnlookupjn-machine-health.md), section "Tool condition".
+
+**Learning setups and tools (Jason's point).** Limits from the model are a start; **vibration
+and load analysis** from SolidCraft Edge is what lets the system *learn*. Every run, aligned to
+the G-code, adds to a record per tool, setup, machine and material: measured load vs predicted,
+vibration spectrum, where chatter appeared, how the tool wore. Over runs that record:
+
+- corrects the shop instance (cutting coefficients, effective stiffness, the setup's real
+  modes), so predictions and the per-tool limits sent to the machine get tighter;
+- shows where there is margin left, so the solver can **raise** load toward the true limit
+  (steady maximum load) rather than only cutting it back;
+- gives each tool and setup a baseline, so a later run that departs from it is flagged early
+  (the machine health file covers the analysis; the in-process inspection file covers measuring
+  the parts it made).
+
+The [in-process inspection file](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-y2w06n/research/cam-research-nsnlookupjn-in-process-inspection.md) covers the probing, gauging and per-part record on the
+same device. Opinion: feedback should **update the shop instance**
 (this machine, this vise, this material lot), never silently change the shared catalogue; a shop
 can choose to contribute measured values back, labelled as measured.
 
@@ -593,7 +625,7 @@ in the CAM core from the start.
 | 4. Machine | axis thrust and stiffness, rotary clamp torque, machine modes | 5 | the same job judged correctly on different machines |
 | 5. Stock integrity | stock stiffness as it is cut, deflection and wall modes, cut-order planning, re-clamp before finishing | 4 (+ FEA #1620) | thin parts; balancing stock against tool and hold |
 | (every phase) Simulation gate | each phase's checks run over the final program in simulation, and *Stop* findings block posting | all | novice errors are caught before they reach the machine, from the first phase on |
-| 6. Self-tuning CAM Operations | live load, torque and vibration (SolidCraft Edge), aligned to G-code lines and the timeline, plus probing, feeding back into shop instances | inspection file | lets the shop trust and move the slider |
+| 6. Self-tuning CAM Operations | per-tool load limits and adaptive-feed targets sent to the control; live load, torque and vibration (SolidCraft Edge), aligned to G-code lines and the timeline, plus probing, feeding back into shop instances | inspection file | lets the shop trust and move the slider |
 | 7. Within-tolerance machining | inspection deviations per feature corrected through the physics model first, then finishing offsets for the next part | inspection file | holds tolerance across a production run |
 
 ### The request to the maintainers
