@@ -548,8 +548,8 @@ repository.
 - `edge/firmware/` – the co-processor firmware (embedded Rust, `no_std`).
 - `edge/apps/` – the Pi user-space services (Rust): connectors, dashboard, reports, CAM link.
 - `edge/os/` – the image recipe and update scheme (configuration only).
-- `edge/hardware/` – schematics, PCB layout, bill of materials, enclosure model (the enclosure
-  modelled in SolidCraft itself).
+- `edge/hardware/` – the board and enclosure as SolidCraft designs (schematic, PCB layout, bill of
+  materials, enclosure), plus exported Gerber X2 / IPC-2581 for manufacture.
 - `edge/docs/` – the installation and safety guide (electrician steps, lockout/tagout, standards).
 
 **How it fits SolidCraft's rules (facts from AGENTS.md; consequences opinion):**
@@ -567,6 +567,29 @@ repository.
   GPL application, but designs made with it are the designer's own (running a tool is not reading
   its code). Maintainers should confirm that reading confirms this.
 - **Name:** "SolidCraft Edge" is still a working name.
+
+**Designed in SolidCraft itself (Jason's proposal).** The Edge hardware should be designed with
+SolidCraft, using a new **electronics module**, so the project proves the tool on its own product.
+SolidCraft has no electronics design today (the repository has mechanical CAD, CAM research and an
+"electronics enclosure" demo built over MCP, `docs/mcp.md`, but no schematic or PCB tools). A
+staged path (opinion):
+
+1. **Now: mechanical side in SolidCraft.** Enclosure, DIN-rail clip, connector cut-outs, heat
+   path and cable glands, as a normal SolidCraft design (the MCP enclosure demo shows this already
+   works).
+2. **Board as a part.** Board outline, mounting holes, keep-outs and 3D component placement in
+   SolidCraft, so the enclosure and board are checked together for fit and clearance.
+3. **Electronics module.** Schematic capture, PCB layout, electrical and design rule checks, and
+   manufacturing output in open formats: **Gerber X2** (open specification), **IPC-2581** (open
+   IPC standard) and a bill of materials, plus a STEP model of the populated board. Symbols and
+   footprints generated from the IPC-7351 land-pattern rules and maker datasheets, not copied from
+   another tool's libraries (clean-room ground rule).
+4. **Edge built with it.** Each Edge board revision is a SolidCraft design in the repository, in
+   the same reviewable format as other designs ("designs in git", checking skill).
+
+Until stage 3 exists, an external open tool could draw the first board, but that would be a
+stop-gap. The electronics module is a large topic of its own and deserves its own research file
+(opinion).
 
 **Why host it inside SolidCraft (opinion):** one repository means the CAM side, the machine library
 and the Edge share one signal vocabulary and one release. The read-only allow-list is reviewed in
