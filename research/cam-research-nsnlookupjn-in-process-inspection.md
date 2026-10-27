@@ -69,6 +69,12 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 
 ## Summary
 
+**The headline (Jason):** together, these pieces make SolidCraft **production-grade software**. A
+design carries its own acceptance criteria (tolerances, fits, finishes, hardness, importance,
+permitted deviations), and that intent flows unchanged into CAM, the machine, in-process and final
+inspection, the supplier's QC bench and the part's certificate. All of it stays optional, so
+SolidCraft remains as simple as today for users who do not need it.
+
 1. **The loop is old; the connections are missing.** Machinists already probe bores and faces
    with a spindle probe, compare the result with a tolerance written into a macro, nudge a wear
    offset, and write numbers on a paper traveller. Every one of those steps is done by hand or by
