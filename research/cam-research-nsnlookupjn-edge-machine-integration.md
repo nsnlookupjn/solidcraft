@@ -1101,12 +1101,11 @@ only how the Edge fills each group on its own (opinion):
 
 **Granular to the individual machine (Jason):** "We must be granular through manufacturer
 libraries to extract the most performance from every individual machine configuration and
-version." So the catalogue is layered (opinion): **maker library** (what a model and control can
-have, per software version and option) → **configuration** (this model with this control version
-and these options) → **this machine** (its serial number, its discovered and verified flags, and
-its own measured physics: real spindle power curve, block rate, axis dynamics, chatter
-frequencies, learned by the Edge). CAM always plans for the most specific layer it has, and falls
-back to the maker library only where the machine has not been measured yet.
+version." The machine library file's Capability model handles this with **three layers, from
+general to individual** (maker library, configuration, individual machine; see its
+[Capability model](https://github.com/nsnlookupjn/solidcraft/blob/research/cam-machine-library/research/cam-research-nsnlookupjn-machine-library.md#capability-model-which-features-each-machine-has-and-how-we-know-jasons-requirement)). The Edge's part is to fill the individual layer: discovered and verified
+flags and the machine's own measured physics (real spindle power curve, block rate, chatter
+frequencies).
 
 | Capability group (machine library) | How the Edge discovers it | Example (Haas VF-2, NGC) |
 |---|---|---|
