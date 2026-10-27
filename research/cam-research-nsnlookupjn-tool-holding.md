@@ -641,15 +641,62 @@ a scrapped part). Speed, balance, coolant pressure and fastener torques are **ha
 - Unknown drawbar force → use the low end of the machine maker's range, and suggest a gauge
   check (machine health file).
 
-### On the setup sheet and the tool tag
+### On the setup sheet: simple operator prompts (Jason's idea)
 
-- The torque to apply to each nut, stud and fastener, the wrench or fixture, and a field for the
-  operator to confirm it was applied (the same recorded-approval pattern as the workholding
-  overrides).
-- The assembly's maximum speed and which limit sets it.
-- Coolant: required pressure, whether the collet must be sealed, "tool to the bottom of the
-  collet".
-- Non-rotating tools: orient angle, centre height check, retract on back stroke.
+**The idea:** build the holder knowledge into the detailed setup sheet as short, plain prompts
+to the operator, such as "Make sure the tool shank is not oily before putting it in that
+hydraulic chuck." Jason's point is that simple prompts work well for novices and experts alike:
+the novice learns why it matters, and the expert gets a quick reminder at the moment it counts.
+
+**How the prompts are made (opinion).**
+
+- **Generated, not typed.** Each prompt comes from a rule in the holder library: holder style,
+  nut type, interface, coolant, speed and the operation's loads. If the assembly is a hydraulic
+  chuck, the oily-shank prompt appears; if it is a shrink-fit, it does not. The sheet only shows
+  prompts that apply to this job, so it stays short enough to be read.
+- **One line, a verb first, then the reason in a few words.** "Wipe the shank dry: oil can cut
+  the grip by about 40 %." The reason is what turns a rule into knowledge; a "Why?" link opens
+  the matching section of the physics for anyone who wants more.
+- **Numbers filled in.** Prompts carry the actual value for this assembly ("Torque the ER32 nut
+  to 136 N·m"), not "torque to spec".
+- **Three levels.** *Check* (must be confirmed with a tick before the job runs, recorded with
+  name and time, the same pattern as the workholding overrides), *Do* (an instruction) and
+  *Tip* (good practice). Hard limits from the physics become *Check* prompts; the slider never
+  removes them.
+- **At the right step.** Prompts are grouped by when they apply: assembling the tool, loading
+  it in the machine, before the first cut, after the operation. The same lines can go on the
+  printed tool tag and appear on the machine screen when that tool is called.
+- **Shop wording.** A shop can reword a prompt or add its own; the rule that triggers it stays
+  the same. Translated with the rest of the user interface text.
+
+**Example prompts generated from this file's physics:**
+
+| When | Trigger | Prompt | Level | Physics behind it |
+|---|---|---|---|---|
+| Assembling | Hydraulic chuck | Make sure the tool shank is clean and not oily before putting it in the hydraulic chuck: oil can cut the grip by about 40 %. | Check | Section 4 (900 → 520 N·m example) |
+| Assembling | Any friction holder | Wipe the shank and the bore clean and dry. | Do | Section 4 |
+| Assembling | ER collet, standard nut | Torque the ER32 nut to 136 N·m with a torque wrench or fixture. Do not guess it by feel. | Check | Section 4, maker table |
+| Assembling | ER collet, bearing nut | This is a bearing nut: use its own torque (value from the nut's table), not the standard nut value. Too much torque damages the collet. | Check | Section 4 |
+| Assembling | ER collet, small bore | Small collet: torque only to 24 N·m, or the shank can be crushed. | Check | Section 4 (ER32 2–2.5 mm) |
+| Assembling | ER collet | Put the collet into the nut first, then screw it onto the holder. | Do | Maker instruction (Rego-Fix coolant flyer) |
+| Assembling | Shank in collet or chuck | Insert the shank at least to the minimum clamp length marked on the sheet. | Check | Section 7 |
+| Assembling | Stick-out set by CAM | Set the stick-out to 36 mm. Longer stick-out means more bending: 48 mm bends 2.4 times as much. | Check | Section 7 |
+| Assembling | Sealed collet, through coolant | Push the tool to the bottom of the sealed collet, or it will not seal. | Check | Section 11 (forum advice) |
+| Assembling | Steep taper holder | Torque the pull stud to the maker's value with a torque wrench. Never use a hammer or a breaker bar: it can swell the taper. | Check | Section 9 |
+| Assembling | Pull stud older than the shop limit | This pull stud is over 3 years old (or past the hour limit). Replace it. | Check | Section 9 |
+| Assembling | Side-lock holder | The side-lock screw pushes the tool off centre. Expect more runout; check it if finish matters. | Tip | Section 2 |
+| Loading | Balance-limited speed | This assembly is limited to 5,700 rpm by its balance. Do not override the speed. | Check | Section 3 |
+| Loading | Flange-fed coolant holder | Tighten the flange coolant set screws, or coolant can be forced into the spindle. | Do | Section 10 |
+| Before first cut | Through coolant at high pressure | Run coolant at 70 bar maximum for this holder and collet. | Check | Section 11 |
+| Before first cut | Friction holder + walk-out flag | Heavy roughing with a high-helix tool in a friction chuck: this tool can walk out. Measure the tool length after this operation. | Check | Section 5 |
+| Before first cut | Drawbar force unknown or old reading | Drawbar force has not been checked for 2 months. Check it with the gauge. | Tip | Section 9, machine health |
+| Before first cut | Non-rotating tool on a mill | Orient the spindle and confirm it is locked before the broaching stroke. Check the edge angle. | Check | Section 12 |
+| Before first cut | Lathe static or broach tool | Check the edge is on centre height within 0.05 mm (small diameter). | Check | Section 12 |
+| After operation | Walk-out flag or heavy torque | Measure the tool length again. A change means the tool slipped. | Check | Section 5, in-process inspection |
+
+The values in the table are examples taken from the worked examples above; on a real sheet each
+number comes from the holder library entry for that assembly. A prompt whose value is unknown
+says so ("Nut torque unknown: use the maker's table") rather than inventing one.
 
 ### Closing the loop
 
