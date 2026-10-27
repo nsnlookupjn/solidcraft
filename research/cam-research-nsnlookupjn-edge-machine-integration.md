@@ -141,6 +141,10 @@ kit, then Fanuc and Haas, then everyone else.** In order (opinion, from the rank
   board, bare-metal embedded Rust firmware for the real-time I/O and read-only enforcement, and a
   minimal Linux image running only Rust services on the Pi (see
   [SolidCraft Edge as an open hardware project](#solidcraft-edge-as-an-open-hardware-project-inside-solidcraft)).
+- **CAM Physics sets the limits, the Edge learns** (Jason): the post writes per-tool load limits
+  for the control's own stop or autofeed, and the Edge's fast load and vibration data teach
+  SolidCraft each tool and setup, so the next program is better. The Edge never writes to the
+  control (see [From CAM physics to the control and back](#from-cam-physics-to-the-control-and-back-load-limits-and-learning)).
 - **Renishaw gets its own pitch**, because its probes sit on almost every brand in the ranking:
   one documented probe-result record on every control, and Renishaw Central serving the same
   read-only profile (see [A pitch to Renishaw](#a-pitch-to-renishaw)).
@@ -509,6 +513,51 @@ read-only module never grows that ability.
 - **Never connect to E-stop, door interlock or other safety circuits**, even as an input.
 - **Check with the dealer** before any work inside the cabinet; for Haas, the local Haas Factory
   Outlet.
+
+### From CAM physics to the control and back: load limits and learning
+
+Jason likes CAM Physics telling the machine the load limit for each tool, for automatic stop and
+perhaps automatic feed control, and still wants vibration and load analysis so SolidCraft can
+"learn" setups and tools and optimise the cutting. That is a closed loop that **never needs the
+Edge to write to the control** (opinion; it builds on the machine interfaces file's "Posting limits
+into the control", the machine health file's tool condition layers and the inspection file's
+self-tuning CAM operations):
+
+1. **CAM Physics predicts the load.** For each tool, the cutting physics file gives cutting power
+   per segment. Divided by the spindle's available power at that speed (the machine library's
+   power curve), that gives a predicted spindle load in %, the unit the control uses.
+2. **The post writes two limits per tool:**
+   - an **upper limit** (the heaviest predicted segment plus the margin set by the risk slider),
+     which the control uses for automatic stop or feed hold;
+   - a **lower limit** check: in segments where the tool should be cutting, load near idle means a
+     broken or missing tool. On a Haas this is a short macro at a safe point (the community macro
+     cited above does this), because the built-in monitor watches only the upper limit (inference).
+3. **The control reacts in milliseconds (Tier D).** On a Haas, Setting 84 picks alarm, feed hold,
+   beep or **autofeed**. Autofeed (feed steps down while load is over the limit, then back) fits
+   roughing with variable engagement. It is not for tapping or thread milling (Haas), and it can
+   hide a dulling tool, so the Edge logs every slowdown as evidence. How the post can set a Haas
+   tool's load limit from the program, rather than on the load page, is still unverified (machine
+   interfaces file, open question 2).
+4. **The Edge measures what really happened (Tier C).** The read-only module records spindle
+   current at kHz and vibration at 25.6 kS/s, aligned to CAM segments by the DPRNT markers the post
+   prints. For each segment it keeps measured over predicted load (the residual), and the vibration
+   at the tooth-passing frequency and any other strong peak (chatter).
+5. **SolidCraft learns, per combination of tool, holder, stick-out, setup and material lot:**
+   - **tools:** the real specific cutting force and how the residual grows with wear (tool life);
+   - **setups:** stiffness and the frequencies that chatter (chatter peaks that move with spindle
+     speed fit the stability model in the cutting physics file; peaks that stay put point at the
+     workholding or the part, per the workholding file);
+   - **the machine:** idle power and the spindle's real power curve (machine health file).
+6. **The next post is better.** Updated limits and suggested feeds and speeds come back to the
+   programmer as a proposal (Stage tier; the programmer accepts). The improved numbers reach the
+   machine in the next program, not through a live write. So the Edge can stay strictly read-only
+   and the loop still closes.
+
+**Learning a new tool or setup quickly (opinion):** an optional short "fingerprint" cut at the start
+of a job. That is an air cut (idle power at each speed), then two light cuts at known engagement.
+It calibrates the current sensor against the control's own load %, and gives a first specific
+cutting force before the real cuts begin. The machine library's warm-up cycle is the natural place
+for the air cut.
 
 ### Rust software on the Edge (sketch, opinion)
 
