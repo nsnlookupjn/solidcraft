@@ -152,6 +152,10 @@ kit, then Fanuc and Haas, then everyone else.** In order (opinion, from the rank
   discoveries and release notes, and an **upgrade advisor** that re-runs the shop's own recent
   jobs with a new feature on and shows hours saved, cost and payback (see
   [Keeping up with control software](#keeping-up-with-control-software-and-a-reason-to-upgrade)).
+- **Sensors that connect to the Edge** (Jason): from direct analog, Modbus and IO-Link to PoE,
+  Wi-Fi, Bluetooth LE, Zigbee and LoRaWAN, with the rate each really gives, an industrial and a
+  budget choice per signal, and a wired-only profile for secure shops (see
+  [Sensors that connect to the Edge](#sensors-that-connect-to-the-edge)).
 - **Machine tables** (Jason): control generations and software versions with their monitoring
   and control features, builder and model tables, user-base estimates by continent, and the
   capability record the machine library needs (see
@@ -652,6 +656,61 @@ of a job. That is an air cut (idle power at each speed), then two light cuts at 
 It calibrates the current sensor against the control's own load %, and gives a first specific
 cutting force before the real cuts begin. The machine library's warm-up cycle is the natural place
 for the air cut.
+
+### Sensors that connect to the Edge
+
+Jason: research the sensors that can connect to the Edge, from industrial-rated Modbus sensors to
+cheap commercial Wi-Fi, Bluetooth and PoE ones. This section covers **how each kind connects and
+what rate and reliability it gives**. What a signal means stays in the machine health file, and the
+retrofit sensor kit in the inspection file. Facts are cited; **K** marks general industry
+knowledge not checked here.
+
+#### By connection type
+
+| Connection | Typical sensors | Rate the Edge gets | Power | Cost | Good for | Not good for |
+|---|---|---|---|---|---|---|
+| **Direct analog into the I/O module** (IEPE, CT, Hall, 4–20 mA, 0–10 V, thermocouple/RTD) | accelerometers, current sensors, pressure transducers, temperature probes | **1–50 kHz** (the module's ADC) | from the module | low per signal | tooth-level vibration, spindle and axis current, anything fast | many signals spread around a shop |
+| **Modbus RTU (RS-485) / Modbus TCP** | power-quality meters, temperature and humidity transmitters, flow meters, chillers, coolant units, VFDs | polled, 1–10 values per second (K) | own supply | low | robust, cheap, every industrial maker supports it | fast signals; Modbus has no security of its own, so keep it on the machine segment (K) |
+| **IO-Link** (point-to-point, 24 V, three-wire; IEC 61131-9, K) | vibration sensors with built-in analysis, pressure, flow, temperature, level, RFID | COM1 4.8, COM2 38.4, COM3 230.4 kbaud (ifm); millisecond cycles (K) | from the IO-Link master | medium | **industrial plug-and-play**: each device is described by an IODD file; masters publish data as **REST, MQTT or OPC UA in JSON** (ifm), so the Edge needs no IO-Link stack of its own | raw kHz waveforms (devices usually send computed values) |
+| **IO-Link Wireless** | the same devices, wireless | up to 40 devices, 5 ms latency, packet error rate better than 10⁻⁹ (IO-Link community, 2018) | battery or local | medium–high | rotating or moving parts, retrofits without cable runs | secure wired-only shops |
+| **PoE (Power over Ethernet)** | IP cameras, multi-sensor nodes, PoE I/O modules | network rate; video | over the Ethernet cable | medium | cameras (slip, chips, door, operator view), sensor nodes a cable run away; **wired, so acceptable in secure shops** | very cheap single sensors |
+| **USB to the Pi** | USB accelerometers, measurement microphones, USB DAQ, cameras | kHz (DAQ, audio) | from the Pi | low | a sensor right next to the Edge; sound for chatter (Okuma's Machining Navi uses sound, K) | long distances |
+| **Wi-Fi** (ESP32-class boards, smart plugs and energy meters; MQTT or HTTP) | temperature, humidity, energy, door, light-on-stack-light sensors | about 1 value per second or slower (K) | mains or USB | **very low** | quick, cheap shop-wide coverage for novices; prototypes | fast signals; noisy RF near VFDs; **not allowed in many secure shops** (high-security file) |
+| **Bluetooth LE** | battery vibration and temperature sensors | bursts: a stored sample or summary every few minutes; one example sends complete samples and lasts about 25,000 measurements on one 3,400 mAh battery (Nordic case study) | battery | low–medium | **condition trends** on spindles, pumps, compressors, fans | tooth-level or continuous monitoring; secure shops |
+| **Zigbee / Thread / Matter** | building temperature, humidity, door, leak sensors | slow (K) | battery | very low | room conditions | machine signals |
+| **LoRaWAN** | tanks, compressors, outdoor and yard sensors | a few values an hour or faster (K) | battery | low | long range (compressor room, chip bins, coolant tanks) | anything fast |
+
+#### By signal: industrial choice and budget choice
+
+| Signal | Industrial-rated choice | Budget choice | Note |
+|---|---|---|---|
+| Spindle vibration (tooth-level, chatter) | IEPE accelerometer into the module | MEMS accelerometer on a short cable into the module | wireless sensors cannot do tooth-level (rate) |
+| Spindle and axis load | closed-loop Hall or split-core CT on one conductor, into the module | split-core CT (e.g. SCT-013 class, IMD guide) | calibrate against the control's own load % |
+| Machine state | status relays and stack-light lamp circuits into opto inputs | light sensors stuck on the stack-light lamps (no cabinet work) | the control's own data is better where it exists |
+| Ambient and casting temperature | Modbus or IO-Link transmitter | Wi-Fi/BLE sensor | read the machine's built-in sensors first |
+| Compressed air pressure and dew point | IO-Link or 4–20 mA transmitter | 4–20 mA transducer into the module | low air affects tool changes, clamping and probes |
+| Power quality | Modbus power-quality meter on the machine supply | Wi-Fi energy meter (no sub-cycle events) | sags and phase loss show as drive alarms |
+| Coolant concentration, level, temperature | inline refractometer (Modbus or 4–20 mA), level and temperature transmitters | manual refractometer reading typed into the Edge | machine health file has the meaning |
+| Sound | measurement microphone (USB) | USB or MEMS microphone | chatter frequency without touching the machine |
+| Vision | PoE industrial camera | Raspberry Pi camera | slip, chips, door, tool presence |
+
+#### Rules for sensors on the Edge (opinion)
+
+- **Every sensor is a capability** with signal, unit, rate, accuracy, location, calibration date and
+  provenance, in the same machine library model as the control's signals. CAM uses it only as far
+  as its rate and accuracy allow.
+- **Read-only both ways:** the Edge reads sensors and never drives an output. Sensor config pages
+  (smart plugs with relays, IO-Link actuators) are disabled or left unused.
+- **Time:** fast sensors are timestamped by the module; network sensors by the sender where possible
+  (PTP or NTP), otherwise on arrival with the delay noted.
+- **Secure shops get a wired-only profile** (direct, Modbus, IO-Link wired, PoE, USB): no Wi-Fi,
+  Bluetooth, Zigbee or LoRa radios on the Edge or its sensors (high-security file).
+- **Novices get kits, pros get a catalogue.** A novice buys a "basic kit" (spindle CT, MEMS
+  accelerometer, stack-light inputs, ambient sensor) that the Edge recognises without setup. A pro
+  can add any Modbus register map, IO-Link device (by its IODD) or MQTT topic, and name its unit
+  and rate.
+- **Drivers in Rust, licence-checked:** Modbus, MQTT and BLE crates exist, but each must pass
+  `cargo xtask licences --check` before use; no GPL code.
 
 ### Rust software on the Edge (sketch, opinion)
 
@@ -1208,6 +1267,12 @@ frequencies).
 - EOS, EOSCONNECT: https://uk.eos.info/en-gb/industrial-3d-printer/software/software-releases/eosconnect
 - Stratasys, connectivity and IIoT: https://www.stratasys.com/en/software/connectivity-and-iiot/
 - PrusaLink (community API reference): https://hexdocs.pm/prusa_link/api-reference.html
+
+### Sensors
+
+- ifm, IO-Link in detail: https://www.ifm.com/fr/en/shared/io-link/technology/io-link-in-detail
+- IO-Link community, IO-Link Wireless specification completed (April 2018): https://io-link.com/en/Global/newsmeldung.php?showId=567
+- Nordic Semiconductor, wireless sensor reports industrial asset health (July 2020): https://www.nordicsemi.com/Nordic-news/2020/07/Wireless-sensor-reports-industrial-asset-health-to-technicians
 
 ### CMM and probing
 
