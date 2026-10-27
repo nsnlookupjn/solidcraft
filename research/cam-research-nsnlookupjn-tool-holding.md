@@ -691,7 +691,7 @@ the novice learns why it matters, and the expert gets a quick reminder at the mo
 | Before first cut | Friction holder + walk-out flag | Heavy roughing with a high-helix tool in a friction chuck: this tool can walk out. Measure the tool length after this operation. | Check | Section 5 |
 | Before first cut | Drawbar force unknown or old reading | Drawbar force has not been checked for 2 months. Check it with the gauge. | Tip | Section 9, machine health |
 | Before first cut | Non-rotating tool on a mill | Orient the spindle and confirm it is locked before the broaching stroke. Check the edge angle. | Check | Section 12 |
-| Before first cut | Lathe static or broach tool | Check the edge is on centre height within 0.05 mm (small diameter). | Check | Section 12 |
+| Before first cut | Lathe static or broach tool | Check the edge is on centre height within 0.025 mm (0.005 × the radius of this 10 mm part). | Check | Section 12 |
 | After operation | Walk-out flag or heavy torque | Measure the tool length again. A change means the tool slipped. | Check | Section 5, in-process inspection |
 
 The values in the table are examples taken from the worked examples above; on a real sheet each
