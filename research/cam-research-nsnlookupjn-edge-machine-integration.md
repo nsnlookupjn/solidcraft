@@ -154,7 +154,7 @@ kit, then Fanuc and Haas, then everyone else.** In order (opinion, from the rank
   [Keeping up with control software](#keeping-up-with-control-software-and-a-reason-to-upgrade)).
 - **Sensors that connect to the Edge** (Jason): from direct analog, Modbus and IO-Link to PoE,
   Wi-Fi, Bluetooth LE, Zigbee and LoRaWAN, with the rate each really gives, an industrial and a
-  budget choice per signal, and a wired-only profile for secure shops (see
+  budget choice per signal, a **pricing and where-to-buy table** with example kits, and a wired-only profile for secure shops (see
   [Sensors that connect to the Edge](#sensors-that-connect-to-the-edge)).
 - **Machine tables** (Jason): control generations and software versions with their monitoring
   and control features, builder and model tables, user-base estimates by continent, and the
@@ -693,6 +693,49 @@ knowledge not checked here.
 | Coolant concentration, level, temperature | inline refractometer (Modbus or 4–20 mA), level and temperature transmitters | manual refractometer reading typed into the Edge | machine health file has the meaning |
 | Sound | measurement microphone (USB) | USB or MEMS microphone | chatter frequency without touching the machine |
 | Vision | PoE industrial camera | Raspberry Pi camera | slip, chips, door, tool presence |
+
+#### Sensor pricing and where to buy (seed for a sensor library)
+
+Jason: make a pricing table for sensors and where to buy them, so SolidCraft can build a sensor
+library later and give users the choices they need to instrument a machine. **Prices are as
+listed on the cited seller page when checked on 27 October 2026, unless marked as an older launch
+price.** They change often, vary by country and include or exclude VAT as noted. A future library
+should store the price with its date and seller and refresh it, never treat it as fixed. No seller
+is endorsed. The list is a starting set chosen to cover each signal at an industrial and a budget
+level.
+
+| Signal | Product (maker, model) | Class | Interface to the Edge | Price seen | Where (seller seen) | Notes |
+|---|---|---|---|---|---|---|
+| Edge computer | Raspberry Pi 5, 4 GB / 8 GB | both | — | US$110 / US$175 (official prices, July 2026 snapshot; raised three times Dec 2025 – Apr 2026 due to memory costs) | Raspberry Pi approved resellers | travis.media price guide |
+| Spindle/axis current | YHDC SCT-013-000 split-core CT, 100 A | budget | analog into the module | US$12.66 | Walmart marketplace; also eBay, OpenEnergyMonitor shop | AC only; weak at low spindle speed |
+| Spindle/axis current | LEM HLSR series Hall-effect current sensors | industrial | analog into the module | price not captured | RS Components, Digi-Key | passes DC and low frequency; PCB-mount, needs a carrier |
+| Vibration (tooth-level) | Analog Devices EVAL-ADXL355-PMDZ (MEMS accelerometer board) | budget | SPI into the module or Pi | price not captured | Digi-Key, Richardson RFPD | low-noise MEMS; short cable only |
+| Vibration (tooth-level) | PCB Piezotronics 603C01 IEPE accelerometer | industrial | IEPE input on the module | from £99 (**2016 launch price**; check current) | PCB Piezotronics and distributors | industrial ceramic shear sensor |
+| Vibration (condition) | ifm VVB001 IO-Link vibration sensor | industrial | IO-Link master → REST/MQTT/OPC UA | €632.39 incl. VAT | Bürklin | sends computed values and raw data blocks |
+| IO-Link gateway | ifm AL1350 IO-Link master, 4 ports, IoT | industrial | Ethernet (JSON over REST/MQTT/OPC UA per ifm's IoT masters; check this model) | €316.41 excl. VAT | Eltra Trade; RS Components | needs 24 V |
+| Power quality | Eastron SDM630MCT Modbus three-phase meter | industrial (budget end) | Modbus RTU on RS-485 | £124.17 excl. VAT (CTs extra, from about £37.50 each) | Bimble Solar | energy, voltage, current, power factor; not a sub-cycle event recorder |
+| Power (energy) | Shelly Pro 3EM V2 with three 120 A CTs | budget | Wi-Fi, Bluetooth, LAN | US$154.99 | Shelly US store | per-phase V, A, PF; 1-minute history; LAN keeps it wired |
+| Air pressure | ProSense SPTD25 pressure transmitter, 4–20 mA | industrial (budget end) | 4–20 mA into the module | from US$99 (**2016 launch price**) | AutomationDirect | low air affects tool change, clamping, probes |
+| Air dew point | Vaisala DMT143 dew-point transmitter (−70 to +60 °C) | industrial | analog output into the module | price on request | Vaisala distributors (e.g. AxFlow) | wet air damages spindles and pneumatics |
+| Ambient temperature, humidity | RS-485 Modbus SHT30 temperature/humidity sensor | budget | Modbus RTU | price not captured | KinCony shop, Core Electronics | read the machine's built-in sensors first |
+| Ambient temperature, humidity, pressure, motion | RuuviTag Bluetooth sensor | budget | Bluetooth LE | €39.99 | Verkkokauppa | battery for years (user review); not for secure shops |
+| Sound (chatter) | miniDSP UMIK-1 USB measurement microphone | both | USB audio, 48 kHz, 24-bit | US$139.98 | Parts Express | individually calibrated |
+| Vision | Reolink RLC-510A 5 MP PoE camera | budget | PoE (RTSP/ONVIF not confirmed on the seller page) | US$39.99 (sale) | 123SecurityProducts | slip, chips, door, operator view |
+| Machine state | the machine's own status/user relays into the module's opto inputs | both | digital inputs | wiring only | — | free where the relays exist (Haas 8M option) |
+
+**Example kits (estimates from the prices above; module and enclosure not yet priced):**
+
+- **Novice starter kit:** Pi 5 4 GB, one SCT-013 CT, one MEMS accelerometer board, one RuuviTag,
+  the machine's own data port. About **US$200–350** plus the I/O module.
+- **Pro wired kit (secure-shop friendly):** Pi 5 8 GB, one IEPE accelerometer, an IO-Link master
+  with a vibration sensor, a Modbus power meter with CTs, an air pressure transmitter and a
+  measurement microphone. About **US$1,800–2,600** plus the I/O module.
+
+**Fields for the future sensor library (opinion):** maker, model, class (industrial / budget),
+signal, range, accuracy, bandwidth and rate, interface, power, IP rating, approvals, mounting,
+wired-only safe (yes/no), Edge driver available (yes/no), datasheet link, and price entries (price,
+currency, VAT included or not, seller, country, date checked). Each sensor in a shop then links
+to its library entry plus its own calibration date, as in the capability model.
 
 #### Rules for sensors on the Edge (opinion)
 
@@ -1273,6 +1316,22 @@ frequencies).
 - ifm, IO-Link in detail: https://www.ifm.com/fr/en/shared/io-link/technology/io-link-in-detail
 - IO-Link community, IO-Link Wireless specification completed (April 2018): https://io-link.com/en/Global/newsmeldung.php?showId=567
 - Nordic Semiconductor, wireless sensor reports industrial asset health (July 2020): https://www.nordicsemi.com/Nordic-news/2020/07/Wireless-sensor-reports-industrial-asset-health-to-technicians
+
+- Raspberry Pi 5 prices (travis.media, July 2026 snapshot): https://travis.media/blog/buying-your-first-raspberry-pi-5/
+- SCT-013-000 (Walmart listing): https://www.walmart.com/ip/1663482259
+- Shelly Pro 3EM V2: https://us.shelly.com/products/shelly-pro-3em-v2
+- Eastron SDM630MCT (Bimble Solar): https://www.bimblesolar.com/EnergyMeter-3-phase-SDM630MCT
+- ifm VVB001 (Bürklin): https://buerklin.com/en/p/ifm-electronic/motion-sensors/vvb001/82P8793
+- ifm AL1350 (Eltra Trade): https://eltra-trade.com/products/ifm-electronic-al1350
+- PCB 603C01 price (instrumentation.co.uk, 2016): https://instrumentation.co.uk/pcb-piezotronics-reduces-pricing-for-industrial-accelerometers-shear-mode-quality-only-%c2%a399/
+- ProSense SPTD25 (2016 launch): https://www.plantautomation-technology.com/industrialtrends/automationdirect-announces-prosense-sptd25-pressure-transmitters
+- Vaisala DMT143 (AxFlow): https://www.axflow.com/catalog/products/instruments/humidity-instruments/vaisala-dmt143
+- RuuviTag (Verkkokauppa): https://www.verkkokauppa.com/en/product/613490/RuuviTag-Multi-Functional-Bluetooth-Sensor
+- miniDSP UMIK-1 (Parts Express): https://www.parts-express.com/miniDSP-UMIK-1-Omni-directional-USB-Measurement-Calibrated-Microphone-230-332
+- Reolink RLC-510A (123SecurityProducts): https://www.123securityproducts.com/security-cameras/bullet-cameras/rlc-510a.html
+- EVAL-ADXL355-PMDZ (Digi-Key): https://www.digikey.com/es/products/detail/analog-devices-inc/EVAL-ADXL355-PMDZ/7324256
+- LEM HLSR series (Digi-Key): https://www.digikey.com/en/product-highlight/l/lem-usa/hlsr-series-industrial-current-sensors
+- RS-485 SHT30 sensor (KinCony): https://shop.kincony.com/products/rs485-temperature-and-humidity-sensor-modbus-rtu-use-by-sht30
 
 ### CMM and probing
 
