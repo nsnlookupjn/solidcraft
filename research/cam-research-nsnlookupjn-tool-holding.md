@@ -76,12 +76,6 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 and adding to it, and others are encouraged to do the same, correct it and contribute their own
 findings and shop experience.
 
-> **[TODO Jason: personal experience]** Which holders you run (ER, shrink, hydraulic, side-lock,
-> milling chucks), on which tapers, how you torque ER nuts and pull studs today (by feel,
-> torque wrench, TORCO-style fixture), and any tool you have seen slip, pull out, walk down,
-> chatter from stick-out, or any pull stud or drawbar problem. Label this as personal
-> experience.
-
 ## Summary
 
 0. **Why this matters: the holder is an invisible limit.** Jason's starting point: maximum RPM
@@ -552,8 +546,6 @@ collected here).
 6. **No dedicated broaching operation in CAM**; users build it from contour or turning cycles
    with custom post processors ([GoEngineer](https://www.goengineer.com/en-us/blog/camworks-broaching-turn-setup-and-mill-setup)).
 
-> **[TODO Jason: personal experience]** Which of these you have hit, and any you would add.
-
 ## What users need
 
 ### Jason's request
@@ -745,9 +737,6 @@ says so ("Nut torque unknown: use the maker's table") rather than inventing one.
 7. Should coolant push-out (`p·A`) be applied in full, or do seal designs relieve part of it?
 8. Minimum clamped lengths per holder style, and how much grip is lost when a shank is clamped
    short.
-
-> **[TODO Jason: personal experience]** Answers to any of these from your shop, especially
-> questions 3, 4 and 6.
 
 ## Sources
 
