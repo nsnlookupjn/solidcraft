@@ -750,6 +750,63 @@ type (clearance, transition, interference) and the codes for both sides (opinion
   [physical properties research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uxzal2/research/design-research-nsnlookupjn-physical-properties.md); this file only needs hardness as one more inspectable
   characteristic.
 
+#### Required finish, by part and by surface (Jason)
+
+**Jason's suggestion:** capture the designer's required finish by part and maybe by surface,
+using Xometry's finishes page as a reference for what customers ask for.
+
+What Xometry's public finishes page lists (summary; accessed 2026-10-27):
+
+| Group | Finishes | Specs cited on the page |
+|---|---|---|
+| As machined | cleaned and deburred, no finish | — |
+| Conversion and anodic | Type II anodize (.0002–.0012"), Type III hardcoat (about .002"), chromate conversion / chem film, black oxide (no dimensional change) | MIL-A-8625 / MIL-PRF-8625 Type II and III, Class 1 or 2; MIL-DTL-5541 Type I/II, Class 1A or 3 |
+| Coatings | powder coat (.006–.012"), wet paint, Cerakote (.0005–.001") | ASTM D7803 and MIL specs for powder |
+| Plating | electroless nickel, gold, silver, zinc; tin, copper, cadmium and hard chrome by manual review | ASTM B733, AMS 2404, MIL-G-45204, ASTM B488, AMS QQ-S-365, ASTM B633 |
+| Material removal / cleaning | electropolish (removes .0001–.0025"), passivation of stainless, media tumbling | ASTM B912; ASTM A967, AMS 2700, AMS-QQ-P-35 and others |
+| Heat treatment | aluminium and steel heat treatment, given in notes or the drawing | ASTM B917; AMS-H-6875, AMS 2759 |
+| Additive | per process: SLS dyeing and vapour smoothing, MJF dyed black, DMLS media-blasted (typically 150–400 µin Ra), PolyJet glossy upward faces | — |
+| Moulding | mould-cavity finishes SPI A–D (Ra from 0.012 µm), Mold-Tech textures, VDI 12–45 | — |
+| Other by review | masking ("Finish Masking"), primers, CARC, phosphate, lubricant films, precision cleaning, MPI, FPI and ultrasonic inspection | — |
+
+How it is specified there: a finish is chosen **per part** from a list (several finishes per part
+allowed), and anything special goes in notes or the drawing. The page does not describe choosing a
+finish per surface (only PolyJet's "upward faces glossy" is face-dependent). Per-surface needs,
+like masking a bearing seat before anodizing or plating only the contact faces, still travel as
+drawing notes. That is the gap the model can close.
+
+**Proposal (opinion):** a **finish specification** is an object the designer attaches to the whole
+part (default) and overrides on chosen faces:
+
+- **Process and spec:** for example "anodize, MIL-PRF-8625 Type III, Class 2, black"; the spec,
+  type, class, colour and sheen are fields, not free text.
+- **Thickness or removal:** coating build-up or material removed, with limits.
+- **Per-face overrides:** "masked" (no finish, e.g. bearing seats, threads, electrical contact or
+  grounding faces), "different finish" (e.g. hardcoat only on wear faces), or "finish only here".
+- **Dimensions before or after finishing:** each toleranced dimension says whether its limits apply
+  after finishing (the usual meaning on a drawing) or before. Thick finishes such as Type III
+  anodize, powder coat and plating change fits. For example, a 0.050 mm hardcoat on an H7 bore
+  that the coating both builds on and penetrates can use up most of the bore's 0.021 mm tolerance
+  (unverified split between build-up and penetration; it depends on the process). So CAM needs a
+  **pre-finish target size** per face. The arithmetic of coating growth, masking and
+  before/after-coating dimensions is worked out in the
+  [physical properties research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uxzal2/research/design-research-nsnlookupjn-physical-properties.md); this file uses its results.
+- **Sequence:** finish after heat treatment, after final machining, or before a final operation
+  (for example ream a bore after coating).
+
+**What the finish specification drives (opinion):**
+
+| Consumer | Uses it for |
+|---|---|
+| CAM | pre-finish target sizes; which faces get a masking-friendly geometry (e.g. a plug-able thread); roughness needed before plating or anodize |
+| Traveller | an outside-processing step (send to anodizer, return, check), with the spec, masking picture generated from the model, and the supplier's certificate attached to the record |
+| Inspection | after-finish checks: coating thickness (magnetic and eddy-current gauges, ISO 2178 and ISO 2360), colour and appearance, masked faces bare, fits re-checked after coating |
+| Report | AS9102 Form 2 lists the special process (finish spec and certificate); Form 3 lists after-finish dimensions |
+| Quoting / DFM | which finishes the chosen supplier offers, and the cost of masking per face |
+
+A finish on a face is one more **characteristic** in the inspection plan, like a size or a
+roughness, so nothing about it needs a drawing note.
+
 #### What it defines downstream
 
 | Consumer | Uses the tolerances for |
@@ -1605,6 +1662,7 @@ Connectivity and SolidCraft Edge:
 - GD&T Seminars, the 2018 ASME Y14.5 changes (concentricity and symmetry removed): https://gdtseminars.com/2019/05/24/the-new-asme-y14-5-2018-standard/
 - Engineers Edge, housing tolerance classes for metric radial bearings: https://engineersedge.com/mechanical,045tolerances/housing_tolerance_classifications_for_metric_radial_ball_and_roller_bearings_15320.htm
 - ISO 15787:2016 catalogue (heat-treated ferrous parts on drawings): https://www.iso.org/standard/56851.html
+- Xometry, finishes: https://www.xometry.com/finishes/
 - Physical properties research (same author; hardness regions, case depth, coatings): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uxzal2/research/design-research-nsnlookupjn-physical-properties.md
 - Revolution Pi products: https://revolutionpi.com/en/products
 - Raspberry Pi Integrator Programme and Powered by Raspberry Pi: https://www.raspberrypi.com/for-industry/integrator-programme/
