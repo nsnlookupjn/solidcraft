@@ -65,11 +65,10 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
   sources. Claims new to this file cite their own sources below. No commercial CAD/CAM program
   was driven or scripted, no GPL/LGPL/AGPL source was read, and no text is copied beyond short
   quotes.
-- **Further input from Jason (27 October 2026):** notes from a discussion Jason had with another
-  AI assistant (Google Gemini), building on an architecture sketch from a computer engineer.
-  Jason's own points from it are labelled as his below. The assistant's text is not copied, and
-  its technical suggestions appear here only where they were checked against this repository or
-  a source, labelled as opinion.
+- **Further input from Jason (27 October 2026):** inspection feedback for within-tolerance
+  machining, early data contracts, and an architecture sketch from a computer engineer (GPU
+  stock model, stock-state graph). Jason's points are labelled as his below; the architecture
+  ideas are labelled as opinion.
 - **Units:** millimetres, newtons, newton-metres, watts, hertz, radians; stiffness in N/µm.
 - **Marking:** "(unverified)" marks a claim not confirmed against a source. **Fact**,
   **opinion** and **Jason's idea** are labelled where they mix. The architecture in "What users
