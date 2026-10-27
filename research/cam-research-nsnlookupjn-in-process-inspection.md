@@ -146,12 +146,13 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
     a tool, linked to SolidCraft Edge, can do fast checks: presence, orientation, rough location,
     reading the serial. Precise sizes stay with the touch probe. Cameras must be kept clean with an
     air blast or a wash-and-dry cycle. See [Cameras](#cameras-instead-of-or-beside-the-probe).
-15. **Capture the engineering in the 3D model (Jason).** A real dimension is never exact. Today the
+15. **Capture the engineering in the 3D model (Jason), optionally.** A real dimension is never exact. Today the
     3D model is perfect and a 2D drawing, written for people, says what is acceptable, so
     programmers, machinists and QC each decipher it again. Instead, every dimension, constraint and
     feature in the model carries its tolerance (typed by hand or looked up in ISO tables), every
     face its surface finish, and the part and each face their hardness. Those limits then drive
-    programming, inspection, QC and the final acceptance report. See
+    programming, inspection, QC and the final acceptance report. All of it is optional: a design
+    with no tolerances works exactly as today, and production users add detail in steps. See
     [Engineering intent in the model](#engineering-intent-in-the-model).
 
 ## Fundamentals
@@ -673,6 +674,41 @@ a tolerance, calculated by hand or taken from an ISO lookup table; surfaces have
 part and individual surfaces can have a hardness. That defines acceptable machining, with limits
 for programming, inspection, QC and final acceptance reports.
 
+#### Optional detail: simple by default, complete for production
+
+**Jason's requirement:** the system should still work like other design systems that do not
+require tolerances and finish details. Serious users doing production and QC can give a lot of
+detail, and it is carried through to the real part so no bad parts are made.
+
+How that works (opinion):
+
+- **Nothing is required.** A new design is nominal-only, exactly as SolidCraft works today: no
+  tolerance fields to fill in, no extra dialogs, no warnings about missing tolerances. Hobby,
+  concept, 3D-printing and rendering work is unchanged. Older designs open unchanged too; the
+  tolerance data is a new, optional part of the file (in SolidCraft terms, one new pending
+  design-format change, per AGENTS.md).
+- **Detail is added in steps**, each useful on its own:
+  1. **Nominal only** (default): CAM cuts to nominal; no inspection plan.
+  2. **One line of intent:** pick a process profile (for example "CNC metal, ISO 2768-m"). Every
+     dimension now has limits, and CAM and a basic inspection plan can use them.
+  3. **Key features:** tolerance and importance on the few features that matter (fits, threads,
+     datums, sealing faces, finish and hardness where needed); the rest stays general.
+  4. **Full definition (MBD):** every characteristic toleranced, importance set, finishes and
+     hardness per face, ready for AS9102 and QIF.
+- **The interface grows with the design.** Tolerance and importance fields stay folded away in
+  dialogs until a design has a profile or the user opens them; a nominal-only design never shows
+  red "missing tolerance" marks.
+- **A readiness check when it matters.** When the user says "release for production" (or picks a
+  report level that needs more), a check lists what is missing for that level: features without a
+  tolerance beyond the general one, a thread without a class, a fit face without a code, a finish
+  without a spec, critical characteristics without a method. The user fixes or accepts each item.
+  That check is what turns the extra detail into "no bad parts": every limit the shop will work to
+  was decided by the designer, not guessed from a drawing.
+- **Same commands either way.** Scripts, the CLI and MCP can run with or without tolerance data;
+  a command that needs limits (an inspection plan, a report) explains what is missing instead of
+  failing silently (opinion, matching AGENTS.md's "everything is a command" and "never crash"
+  rules).
+
 #### What carries a tolerance (opinion)
 
 | Model element | Today (exact) | With engineering intent | Standard / lookup |
@@ -685,9 +721,11 @@ for programming, inspection, QC and final acceptance reports.
 | **Body / part** | material | general tolerance class for its process, material condition and **core hardness** | ISO 2768 / DIN 16742 / ISO 8062 per process profile; ISO 6506/6507/6508 hardness methods |
 | **Datum features** | none | chosen faces and axes that set up how the part is measured and fixtured | ISO 5459 |
 
-Every element without its own tolerance gets the **general tolerance** of the body's process
-profile (see [general-tolerance profiles](#tolerances-in-the-model-design-side)), so **no
-dimension is ever exact** in the model. That is Jason's point made literal.
+Once a design has a process profile, every element without its own tolerance gets the
+**general tolerance** of that profile (see
+[general-tolerance profiles](#tolerances-in-the-model-design-side)), so **no dimension is ever
+exact** in the model. That is Jason's point made literal. A design with no profile stays a
+nominal-only design, as today (see [Optional detail](#optional-detail-simple-by-default-complete-for-production)).
 
 A note on constraints: a sketch constraint is an *instruction to the solver* ("make these
 parallel"); a geometric tolerance is a *requirement on the real part* ("parallel within 0.02 mm to
