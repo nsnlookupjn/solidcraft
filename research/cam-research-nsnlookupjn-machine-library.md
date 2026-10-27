@@ -591,6 +591,27 @@ below. This section defines the model they fill, and does not repeat them.
 version range, options fitted)`. The catalogue holds the sets for each published combination;
 the shop instance points at one and adds what is unique to that machine.
 
+**Three layers, from general to individual (Jason: "We must be granular through manufacturer
+libraries to extract the most performance from every individual machine configuration and
+version"; opinion on the structure):**
+
+1. **Maker library**: per machine model, control version and option, from the maker's published
+   data (or contributed by the maker): spindle curves per spindle option, thrust, feeds,
+   smoothing modes per software version, interfaces per version.
+2. **Configuration**: one buildable combination of model + control version + options fitted
+   (e.g. VF-2, NGC 100.20, 12k spindle, 8M relays, wireless probing, HRT210). It is assembled
+   from the maker library entries and is what the catalogue lists.
+3. **Individual machine**: one serial number in one shop: its configuration, its discovered and
+   verified capability flags, and its own **measured physics** learned by Edge (real spindle
+   power curve, stiffness, modes, block rate, warm-up behaviour, wear), plus its material scope.
+
+CAM plans from **the most specific layer that has a value**, field by field: a measured value on
+this machine beats the configuration's, which beats the maker's generic model value, which beats
+a class default. Each value shows which layer it came from, and values from the general layers
+count as less certain (pulling toward conservative), so the more a machine is measured the more
+performance CAM can safely take from it. This refines the two layers above (catalogue = layers 1
+and 2, shop instance = layer 3).
+
 **Capability groups (opinion; each one a list of named flags or parameters):**
 
 | Group | Examples of what is recorded | Who uses it |
