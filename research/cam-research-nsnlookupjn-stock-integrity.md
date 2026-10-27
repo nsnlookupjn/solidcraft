@@ -53,10 +53,21 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 and adding to it, and others are encouraged to do the same, correct it and contribute their own
 findings and shop experience.
 
-> **[TODO Jason: personal experience]** Parts you have seen move or spring after unclamping,
-> thin walls or floors that chattered or came out tapered, and the cut orders you use to avoid
-> it (rough all then finish, flip and re-clamp, finish walls in steps, leave tabs). Label this as
-> personal experience.
+**The author's shop experience with stock that moves (personal experience, not a cited source):**
+
+- Subtractive machining always disturbs the internal stresses ("grain forces") in the stock:
+  cutting either sets new stress up or releases what is already there.
+- **How the stock was made decides how it behaves:**
+  - saw-cut, cold-formed stock can behave quite well;
+  - forged blanks are very good when the forging is designed for the machining that follows;
+  - castings tend to be highly stressed;
+  - hot-rolled stock curls like a spring as it is cut.
+- **What the process does on top of that:** the order of cuts, how aggressive they are, the
+  local heating from cutting, and the clamping all change how the part moves as those stresses
+  are released.
+- **Heat-treated stock** adds a whole further dimension: cutting it is cutting a moving target.
+- **Then add the stock flexing under the cutting force**, and the problem becomes very hard to
+  manage by experience alone. That combination is what this file asks CAM to model.
 
 ## Summary
 
@@ -443,8 +454,11 @@ Paraphrased from public forum threads and case studies cited above:
    reject, with the cycle-time cost.
 3. **Release steps** in the operation list (unclamp, re-clamp at a given torque), produced
    together with the workholding recommendation.
-4. **Stock records that carry stress state**: alloy and temper, stress relieved or not, plate
-   thickness, and where the part sits in it, so the planner knows the risk.
+4. **Stock records that carry stress state**: alloy and temper, how the stock was made
+   (saw-cut cold-formed bar, forging, casting, hot-rolled, plate), heat treatment, stress
+   relieved or not, plate thickness, and where the part sits in it, so the planner knows the
+   risk. A first ranking from the author's experience (above): cold-formed and purpose-designed
+   forgings low, castings and heat-treated stock high, hot-rolled stock high (it curls).
 5. **One risk slider** for the whole system (overview and cutting physics files). For the stock it
    moves the share of tolerance given to deflection and the margin around the stock's natural
    frequency; it never allows the predicted deflection to exceed the tolerance band.
