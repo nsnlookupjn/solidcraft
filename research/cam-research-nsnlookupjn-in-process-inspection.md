@@ -146,6 +146,13 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
     a tool, linked to SolidCraft Edge, can do fast checks: presence, orientation, rough location,
     reading the serial. Precise sizes stay with the touch probe. Cameras must be kept clean with an
     air blast or a wash-and-dry cycle. See [Cameras](#cameras-instead-of-or-beside-the-probe).
+15. **Capture the engineering in the 3D model (Jason).** A real dimension is never exact. Today the
+    3D model is perfect and a 2D drawing, written for people, says what is acceptable, so
+    programmers, machinists and QC each decipher it again. Instead, every dimension, constraint and
+    feature in the model carries its tolerance (typed by hand or looked up in ISO tables), every
+    face its surface finish, and the part and each face their hardness. Those limits then drive
+    programming, inspection, QC and the final acceptance report. See
+    [Engineering intent in the model](#engineering-intent-in-the-model).
 
 ## Fundamentals
 
@@ -650,6 +657,113 @@ proves frequency):
   collection guide).
 
 ## What users need
+
+### Engineering intent in the model
+
+**Jason's statement of the problem:** in the real world a dimension is never exact; it needs a
+tolerance that separates acceptable from not. Current systems build a perfect 3D model from
+driving dimensions and constraints (concentric, parallel and so on), and put the tolerances,
+surface finish, parallelism, concentricity and other ISO requirements on a 2D drawing. That
+drawing is designed for people only, so programmers, machinists and QC each have to decipher it
+to find out what an acceptable part is. An engineer always designs with tolerances: can the shaft
+fit into the bearing, can the bearing fit into the housing? ISO fits are the reference, ISO
+general tolerances give fine, medium and coarse defaults for each process, and threads have
+classes. **Capture that engineering in the 3D model**: every dimension, constraint and feature has
+a tolerance, calculated by hand or taken from an ISO lookup table; surfaces have a finish; the
+part and individual surfaces can have a hardness. That defines acceptable machining, with limits
+for programming, inspection, QC and final acceptance reports.
+
+#### What carries a tolerance (opinion)
+
+| Model element | Today (exact) | With engineering intent | Standard / lookup |
+|---|---|---|---|
+| **Driving dimension** (sketch or feature parameter: length, diameter, depth, angle) | one value | nominal + tolerance: ±, +a/−b, limits, or a code | ISO 286 for size codes (H7, k5); ISO 2768-1 general linear and angular |
+| **Hole feature** | diameter, depth | diameter fit code, depth tolerance, countersink/counterbore tolerances | ISO 286; ISO 2768-1 |
+| **Thread feature** | designation | system + class (6H/6g, 2B/2A), length of full thread | ISO 965, ASME B1.1 (gauging ISO 1502) |
+| **Geometric constraint**: parallel, perpendicular, tangent, concentric, coincident, symmetric | forced to be exact | becomes a geometric tolerance with a zone and, where needed, datums: parallelism, perpendicularity, coaxiality (or runout), position, profile, symmetry (ISO) | ISO 1101 (or ASME Y14.5) |
+| **Face** | geometry only | form tolerance (flatness, cylindricity) where it matters, **surface texture** (Ra/Rz, lay), **hardness** (if surface-treated) | ISO 1101; ISO 21920-1 indication; ISO 15787 for heat-treated parts |
+| **Body / part** | material | general tolerance class for its process, material condition and **core hardness** | ISO 2768 / DIN 16742 / ISO 8062 per process profile; ISO 6506/6507/6508 hardness methods |
+| **Datum features** | none | chosen faces and axes that set up how the part is measured and fixtured | ISO 5459 |
+
+Every element without its own tolerance gets the **general tolerance** of the body's process
+profile (see [general-tolerance profiles](#tolerances-in-the-model-design-side)), so **no
+dimension is ever exact** in the model. That is Jason's point made literal.
+
+A note on constraints: a sketch constraint is an *instruction to the solver* ("make these
+parallel"); a geometric tolerance is a *requirement on the real part* ("parallel within 0.02 mm to
+datum A"). The modeller keeps both: the constraint builds the nominal shape, and the tolerance
+says how far the real part may deviate. Offering to turn a constraint into a matching tolerance,
+with the zone from the general tolerance until the engineer sets one, saves the engineer
+re-entering the intent (opinion).
+
+Concentricity specifically: ASME Y14.5-2018 removed the concentricity and symmetry symbols;
+coaxial features are controlled with position, runout or profile instead (gdtseminars summary).
+ISO 1101 still has coaxiality and symmetry. The modeller should offer whichever symbols the
+design's standard allows.
+
+#### Hand-calculated or ISO lookup (opinion)
+
+- **Lookup:** the engineer picks a code (H7, k5, 6H, ISO 2768-m) and the limits come from the
+  ISO tables, built into SolidCraft as data (the table values are facts and can be entered from
+  the standards the project licenses or from public secondary tables; no copied text).
+- **By hand:** the engineer types limits. The modeller still shows the nearest ISO code for
+  reference.
+- **From a calculation:** a fit or stack-up calculation (below) proposes limits; the engineer
+  accepts them.
+- Each tolerance records **where it came from** (lookup, by hand, calculated, general), so a reviewer
+  can see which ones are engineered and which are defaults.
+
+#### Worked example: shaft, bearing, housing
+
+A 6205 deep-groove ball bearing (bore 25 mm, outside diameter 52 mm) on a rotating shaft in a
+fixed housing. Values computed for this file from ISO 286 tables; the bearing's own bore and
+outside-diameter tolerances (ISO 492, normal class) are quoted from memory and marked
+(unverified):
+
+| Joint | Part A | Part B | Fit |
+|---|---|---|---|
+| Shaft in bearing bore | shaft Ø25 **k5**: +0.002 / +0.011 → 25.002–25.011 | bearing bore normal class: 0 / −0.010 → 24.990–25.000 (unverified) | interference 0.002–0.021 mm (inner ring rotates with the load: tight fit, common practice; check the bearing maker's tables) |
+| Bearing in housing | bearing OD normal class: 0 / −0.013 → 51.987–52.000 (unverified) | housing Ø52 **H7**: 0 / +0.030 → 52.000–52.030 | clearance 0–0.043 mm (stationary outer ring; H7 or H6 is listed for this case in published housing tables) |
+
+With this in the model: the modeller shows both fits on the joint, warns if someone changes the
+shaft to h6 (which would give a loose fit on a rotating inner ring), CAM finishes the shaft to
+the middle of 25.002–25.011 and the bore to the middle of 52.000–52.030, the probing cycle checks
+the housing bore and the hand-gauge step checks the shaft, and the report shows both against the
+same limits. No one reads a drawing to find them.
+
+SolidCraft already has joints between components (assemblies, revolute joints). A **fit on a
+joint** is a natural place to put this: picking two cylindrical faces in a joint proposes a fit
+type (clearance, transition, interference) and the codes for both sides (opinion).
+
+#### Surface finish and hardness
+
+- **Surface finish per face** (ISO 21920 or the older ISO 1302 indication): Ra or Rz value, lay
+  direction, and the process it implies. CAM reads it to cap feed per tooth or step-over, and the
+  inspection plan adds a roughness check (bench profilometer) at the chosen report level.
+- **Hardness for the part and for individual surfaces** (Jason): core hardness from the material
+  and heat treatment, and local surface hardness where faces are case-hardened, induction-hardened
+  or nitrided, with a hardness value and a case depth (ISO 15787 sets how heat-treated parts are
+  indicated on drawings; hardness tests are ISO 6506 Brinell, ISO 6507 Vickers, ISO 6508
+  Rockwell). The model then tells CAM which faces are hard (tool choice, grinding instead of
+  milling, machining before or after heat treatment) and tells inspection which faces need a
+  hardness test. The detailed model of hardness regions, case depth and coatings is in the
+  [physical properties research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uxzal2/research/design-research-nsnlookupjn-physical-properties.md); this file only needs hardness as one more inspectable
+  characteristic.
+
+#### What it defines downstream
+
+| Consumer | Uses the tolerances for |
+|---|---|
+| **CAM programming** | target size (middle of the band, or biased), finishing strategy, feed and step-over from roughness, process choice from hardness |
+| **In-process inspection** | the probing and gauging plan, limits in each cycle, offset-update rules |
+| **QC** | the characteristic list with balloons, methods and report level |
+| **Final acceptance** | the per-part report against the same limits, with the decision rule (ISO 14253-1) |
+| **Drawings** (when needed) | generated from the model's PMI, so the drawing and the model can never disagree |
+| **Exchange** | STEP AP242 semantic PMI and QIF MBD, so suppliers and CMMs get the same intent |
+
+The 2D drawing does not disappear (customers, suppliers and old processes still ask for one), but
+it becomes an **output** of the model's engineering intent rather than the only place that intent
+lives (opinion).
 
 ### Design side: tolerances as first-class data
 
@@ -1488,6 +1602,10 @@ Connectivity and SolidCraft Edge:
 - MMS, OptoVue spindle-mounted imaging system (2005): https://mmsonline.com/products/spindle-mounted-imaging-system-saves-time-and-reduces-error
 - Cell automation research (same author): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-g08nas/research/cam-research-nsnlookupjn-cell-automation.md
 - Machine health research (same author): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-9w3gq9/research/cam-research-nsnlookupjn-machine-health.md
+- GD&T Seminars, the 2018 ASME Y14.5 changes (concentricity and symmetry removed): https://gdtseminars.com/2019/05/24/the-new-asme-y14-5-2018-standard/
+- Engineers Edge, housing tolerance classes for metric radial bearings: https://engineersedge.com/mechanical,045tolerances/housing_tolerance_classifications_for_metric_radial_ball_and_roller_bearings_15320.htm
+- ISO 15787:2016 catalogue (heat-treated ferrous parts on drawings): https://www.iso.org/standard/56851.html
+- Physical properties research (same author; hardness regions, case depth, coatings): https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-uxzal2/research/design-research-nsnlookupjn-physical-properties.md
 - Revolution Pi products: https://revolutionpi.com/en/products
 - Raspberry Pi Integrator Programme and Powered by Raspberry Pi: https://www.raspberrypi.com/for-industry/integrator-programme/
 - Zebra CUPS driver configuration: https://support.zebra.com/cpws/docs/cups/cups_driver1_4_configure.pdf
