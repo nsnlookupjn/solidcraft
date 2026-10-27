@@ -1191,7 +1191,7 @@ permission (opinion; check the project's trademark position).
 
 ### Machine monitoring: loads, torque and vibration
 
-**Jason's idea:** the Raspberry Pi box (SolidCraft Edge) could also feed back machine vibration, loads and torques
+**Jason's idea:** SolidCraft Edge could also feed back machine vibration, loads and torques
 in real time, because some machines already output them. This closes the loop described in the
 [CAM physics system](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-vgqo3g/research/cam-research-nsnlookupjn-physics-system.md)
 file ("The closed loop: measuring what was predicted") and the "MTConnect (shop) → library" row
