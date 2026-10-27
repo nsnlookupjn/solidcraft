@@ -1099,6 +1099,15 @@ records provenance per flag (discovered, verified by test, maker-declared, user-
 = treated as absent). **The tables in this section are seed data for that model.** This file adds
 only how the Edge fills each group on its own (opinion):
 
+**Granular to the individual machine (Jason):** "We must be granular through manufacturer
+libraries to extract the most performance from every individual machine configuration and
+version." So the catalogue is layered (opinion): **maker library** (what a model and control can
+have, per software version and option) → **configuration** (this model with this control version
+and these options) → **this machine** (its serial number, its discovered and verified flags, and
+its own measured physics: real spindle power curve, block rate, axis dynamics, chatter
+frequencies, learned by the Edge). CAM always plans for the most specific layer it has, and falls
+back to the maker library only where the machine has not been measured yet.
+
 | Capability group (machine library) | How the Edge discovers it | Example (Haas VF-2, NGC) |
 |---|---|---|
 | Identity and version (the key) | `?Q100`/`?Q101`/`?Q102`; FOCAS `cnc_sysinfo`; MTConnect `/probe` header; OPC UA `Identification` | VF-2, serial 1234567, software 100.20.000.1200 |
