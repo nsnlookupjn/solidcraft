@@ -711,6 +711,10 @@ instructions for a mock-up, and the developer builds the reproduction.**
    report draft; `crash_reports` / `diagnostics.crash_report` returning design content or
    parameters to an agent whose endpoint is not trusted for that marking; and the skill's "zip it
    and attach" path. The refusal says why and offers step 3. Each attempt goes into the audit log.
+   The "is this agent trusted?" check uses the high-security file's
+   [marking announcement at connection time](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-2fa4g1/research/security-research-nsnlookupjn-high-security.md#announce-the-marking-to-every-connected-system):
+   an MCP client, API caller, plugin or sync peer that has not confirmed it can handle the marking
+   gets no design data, and that covers the MCP `crash_reports` tool too.
 2. **Crash copies stay inside the boundary.** For marked designs the crash folder is under the
    approved data root, encrypted like the design, carries the design's marking, and follows the
    design's retention and deletion rules (section 9). `report.json` keeps only what is safe to
