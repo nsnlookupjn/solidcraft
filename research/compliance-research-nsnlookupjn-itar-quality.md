@@ -125,8 +125,9 @@ findings and shop experience.
    and turns each one into a required record.
 10. **Bug and crash reports never carry a controlled design** (section 14, Jason's point). A
     marked design, its crash copy, its command parameters and its screenshots are blocked from
-    every report path. An AI running inside the boundary builds a synthetic mock that fails the
-    same way, a named person approves it, and only the mock is posted.
+    every report path. An AI running inside the boundary writes instructions for a generic mock-up
+    that fails the same way, a named person approves them, and the developer builds the
+    reproduction from those words.
 11. **Answer to Jason's ISO 9001 question:** today an ISO 9001 shop can record part number and
    revision and keep designs in git, but release states, sign-offs, change orders and CAPA links
    do not exist yet. The proposal below adds them without changing any default.
@@ -701,8 +702,8 @@ checked 2026-10-28). It is careful, but it was not designed with export control 
 - A user who wants a fix fast can still zip the design and attach it by hand. The skill even
   explains how, because GitHub rejects `.solidcraft` files.
 
-**Proposal: for a marked or confidential design, the design never leaves. A mock reproduces
-the bug instead.**
+**Proposal: for a marked or confidential design, the design never leaves. The report carries
+instructions for a mock-up, and the developer builds the reproduction.**
 
 1. **Hard block, not a warning.** When the design (or any component, by the high-water mark
    from the high-security file) is marked ITAR, EAR, CUI or confidential, these are **refused**:
@@ -715,28 +716,42 @@ the bug instead.**
    design's retention and deletion rules (section 9). `report.json` keeps only what is safe to
    share: kind, message, code location, backtrace, app version, OS and GPU, which command *type*
    failed (`solid.fillet`), but not its parameters.
-3. **AI-generated mock reproduction (Jason's idea).** An AI agent builds a **new, synthetic design
-   that triggers the same failure**, without the controlled geometry:
-   - It starts from the failing command type and the error, then uses the reporting skill's
-     minimise steps: replace profiles with boxes and cylinders, round every dimension, drop
-     everything unrelated, rename everything. It keeps only the **topological situation** that
-     triggers the bug ("a fillet on an edge between two tangent faces, radius more than half the
-     face width"), not the part.
-   - It confirms the mock fails **the same way** (same command, same error message, same code
-     location from the backtrace) by running it headless. A mock that does not reproduce the bug
-     is not filed.
-   - **The AI that looks at the real design must run inside the boundary.** That means a local
+3. **Preferred: AI-written mock-up instructions; the developer builds the model (Jason's
+   idea).** An AI agent writes **plain-language steps for a generic part that should trigger the
+   same failure**, and the developer builds that part themselves. Nothing that came out of the
+   controlled design is shipped as geometry, only a short description a person can read and
+   check line by line. For example: *"New design. Box 40 × 30 × 20 mm. Fillet the four top edges
+   at 12 mm, so the fillets meet at the corners and the faces are tangent. Expected: fillet
+   succeeds. Actual: `solid.fillet` fails with '…' at `crates/kernel/src/fillet.rs:…`."*
+   - **Only the situation, never the part.** The AI keeps only the **topological situation**
+     that triggers the bug (which command, what kind of edges or faces, which size relation,
+     such as "radius more than half the face width"). It uses round, invented dimensions and
+     generic names, and drops everything unrelated. These are the reporting skill's minimise
+     rules applied to words instead of a file.
+   - **Checked before it leaves.** Inside the boundary, the agent builds the instructions as a
+     throwaway design and runs it headless. It confirms the failure is **the same** (same command,
+     same error message, same code location from the backtrace). Instructions that do not
+     reproduce the bug are not sent. That throwaway build never leaves the shop; only the words
+     do.
+   - **The AI that reads the real design must run inside the boundary.** That means a local
      model on the same computer, or an endpoint the policy trusts for that marking (high-security
-     file, "Flow control"). A public cloud model must never see the real design. Only the finished
-     mock may go to a public model or tracker.
-   - **A person approves the release.** The mock, a side-by-side view, and a similarity report
-     go to a person the policy names (for ITAR, usually the shop's empowered official or export
-     control officer). The similarity report checks that no profile, dimension set, hole
-     pattern or name from the original survives in the mock. The approval is a signature
-     record (section 3). Only then can the report be posted.
-   - **The mock is marked as such.** The report says "synthetic reproduction of a failure seen
-     in a controlled design", so maintainers know not to ask for the original.
-4. **When a mock cannot reproduce it** (the bug really needs the exact geometry), the report goes
+     file, "Flow control"). A public cloud model must never see the real design or its crash
+     report. Only the approved instructions may go to a public tracker.
+   - **A person approves the release.** The instructions, plus a similarity report, go to a
+     person the policy names (for ITAR, usually the shop's empowered official or export control
+     officer). The similarity report checks that no dimension, profile, hole pattern, material
+     or name from the original appears in the text. Text is much easier to review than a model
+     file, which is why instructions are the preferred form. The approval is a signature record
+     (section 3), and only then can the report be posted.
+   - **The report says what it is:** "mock-up instructions for a failure seen in a controlled
+     design". Maintainers then know not to ask for the original. If the developer's build does
+     not fail, they reply with what they built, and the shop's agent revises the instructions
+     with the same checks and approval.
+   - **Alternative: a synthetic mock model.** The agent can instead attach the throwaway design
+     itself, as a `.zip`, after the same check and approval. It saves the developer a step, but a
+     model is harder for a reviewer to clear than a paragraph of text, so policy can forbid it for
+     ITAR and allow it for, say, customer-confidential work.
+4. **When no mock-up reproduces it** (the bug really needs the exact geometry), the report goes
    out **without a design**, with only the safe fields from step 2. The maintainers and the shop
    can then arrange a controlled channel: a US-person maintainer under an NDA or licence,
    reproducing on the shop's own systems. That is the shop's decision, never a default.
@@ -744,10 +759,10 @@ the bug instead.**
    refused for report drafts, as in step 1.
 
 What this needs from the code (opinion): the marking from the high-security proposal, a
-`report.mock` command that wraps the reporting skill's minimise loop and same-failure check, and
-a "safe fields" mode for crash reports. The reporting skill's privacy rule ("never attach the
-user's design without asking") becomes, for marked designs: **never attach it, even if asked.
-Build a mock.**
+`report.mockup` command that has an agent inside the boundary write the instructions, build them
+headless and check for the same failure, and a "safe fields" mode for crash reports. The
+reporting skill's privacy rule ("never attach the user's design without asking") becomes, for
+marked designs: **never attach it, even if asked. Send mock-up instructions instead.**
 
 ### Data model sketch
 
