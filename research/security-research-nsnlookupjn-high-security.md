@@ -348,6 +348,45 @@ Behaviour (opinion):
 - **Clipboard and drag-out** of geometry from a marked design carry the marking in the clipboard
   payload where the format allows (opinion; low priority).
 
+#### Announce the marking to every connected system
+
+Jason's point: an ITAR-flagged design should **tell any connected app (an AI agent, an MCP
+client, an API caller, a plugin, a sync service) that it is ITAR while the connection is being
+negotiated**, so the receiving system knows to protect the data. A marking that only SolidCraft
+knows about stops protecting the data as soon as the data leaves. Proposal (opinion):
+
+- **One marking descriptor, sent the same way everywhere.** A small JSON object built from
+  section 3, for example
+  `{"classification":"CUI","categories":["CTI"],"export":{"regime":"ITAR","usml_category":"XI"},"distribution":"D","handling":["us-persons-only","no-training","no-retention"]}`.
+  The `handling` list is plain instructions any receiver can follow without knowing US rules.
+- **Where it goes, per connection type:**
+
+  | Connection | At negotiation | During the session |
+  |---|---|---|
+  | MCP server (`solidcraft-cli mcp`) | In the `initialize` result: the server `instructions` text says it in words, and a `_meta` field (MCP's extension point) carries the descriptor | `_meta` on every tool result that contains design data (`inspect_design`, `screenshot`, `export`, `crash_reports`), plus a notification when the open design's marking changes |
+  | Control channel (`docs/control-protocol.md`) | In the token handshake reply | On every response, as above |
+  | Agent chat (ACP or an OpenAI/Anthropic-compatible endpoint) | First in the session context or system prompt the agent receives, in words and as the descriptor | Repeated in each prompt that attaches design data |
+  | HTTP API, sync service, library mirror, a future collaboration cloud | A request header, for example `SolidCraft-Data-Marking: CUI//EXPORT CONTROLLED; regime=ITAR` | On every upload; the server stores it with the object (section 13) |
+  | Plugins (`docs/plugins.md`) | In the host call that hands the plugin a design | On each call |
+  | Exported files | In the file (section 3: STEP/3MF metadata, side-car) | — |
+
+- **The other side must answer, and silence means no.** Announcing the marking is one half. The
+  other half is the receiver declaring what it can handle, for example
+  `{"accepts_markings":["CUI","ITAR"]}` in its MCP client capabilities or the agent profile.
+  If the receiver doesn't confirm it can handle ITAR, SolidCraft **sends no design data**. It
+  sends the marking and a refusal message, so the user sees why.
+- **Never trust the peer's claim alone.** A client can say anything. What decides is still
+  the administrator's policy (section 4: `agents.allowed` with trust levels). The receiver's
+  answer is checked against that policy and recorded in the audit log, so an assessor can see
+  which system was told what and what it promised.
+- **Mid-session changes.** If a design becomes ITAR while a connection is open (the switch is
+  turned on, or an ITAR component is inserted), SolidCraft announces it straight away and holds
+  further design data until the peer confirms again.
+- **Non-design data isn't held back.** Tool records that pass the section 12 filter carry no
+  marking, so the ITAR flag doesn't stop tool-data sharing.
+- **Upstream hope (opinion):** if MCP and ACP adopted a standard data-marking field, every AI tool
+  would get this for free. Proposing that to those projects is a separate, later step.
+
 ### 5. Audit log
 
 - **Append-only, hash-chained JSON lines** (each line has the SHA-256 of the previous one), the
