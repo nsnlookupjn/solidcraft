@@ -274,7 +274,7 @@ which policy key turns it off. From reading the current code and docs (fact as o
 | Update check | `crates/ui-egui/src/update.rs`, `apps/solidcraft` (ureq + rustls) | GET to api.github.com, then release files | Preference, `SOLIDCRAFT_UPDATE_CHECK=0`, `updates.check` |
 | Control channel / MCP bridge | `apps/solidcraft/src/control_server.rs`, `crates/mcp` | localhost only, token per launch | `mcp.enabled` |
 | Agent chat | `docs/agent-chat.md` | **the design and prompts** to the chosen agent or endpoint | `agents.allowed` |
-| Crash report draft | `docs/crash-reports.md` | opens a GitHub issue page in the browser (no design; screenshot only if the user pastes it) | `crash_reports.draft` |
+| Crash report draft | `docs/crash-reports.md` | opens a GitHub issue page in the browser (no design; screenshot only if the user pastes it). The local crash folder does hold the design and commands, and MCP `crash_reports` can pass them to an agent. | `crash_reports.draft` |
 | Web app | `apps/solidcraft-web` service worker | loads the app; designs stay in the browser unless cloud Open/Save is used | hosting choice |
 | Cloud Open/Save | `docs/web-runtime.md` (craft-cloud / CollabCraft) | design files to the cloud | `network.allow` |
 | Future: library sync, NSN lookups, tool/workholding/machine libraries, Pi box sync | proposals linked above | catalogue requests, possibly shop data | `libraries.sources`, `libraries.contribute` |
@@ -320,7 +320,13 @@ Behaviour (opinion):
   - 3MF, STL, OBJ: 3MF metadata; for STL/OBJ (no metadata) a side-car `.marking.json` and a
     file-name suffix if the policy asks;
   - screenshots and renders (UI and MCP `screenshot`): a corner mark burned into the image;
-  - crash reports and agent prompts: refused or redacted for marked designs (below).
+  - crash reports and agent prompts: refused or redacted for marked designs (below). **A bug or
+    crash report must never carry an ITAR, CUI or confidential design.** The crash folder keeps
+    `design.solidcraft` and the command parameters, and an agent reading `crash_reports` over MCP
+    passes them to its model. For a marked design the crash copy stays inside the boundary. The
+    developer gets **instructions for a mock-up** that reproduces the bug instead, written by an
+    AI inside the boundary and approved by a named person. See section 14 of the
+    [ITAR and quality compliance research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-ymp2ma/research/compliance-research-nsnlookupjn-itar-quality.md#14-bug-and-crash-reports-must-never-carry-a-controlled-design).
 - **Older designs** open as "unmarked" with no change; per the repository's format rule, adding
   markings is ONE new file in `crates/doc/src/format/pending/` (for example `markings.rs`).
 - **Libraries carry markings.** A pack entry can be marked; NSN items get theirs from FLIS DEMIL
