@@ -123,7 +123,11 @@ findings and shop experience.
    was replaced by 7008/7009. MIL-STD-31000B is the active standard for technical data
    packages. The profile keeps the number the customer cited, maps it to the current document
    and turns each one into a required record.
-10. **Answer to Jason's ISO 9001 question:** today an ISO 9001 shop can record part number and
+10. **Bug and crash reports never carry a controlled design** (section 14, Jason's point). A
+    marked design, its crash copy, its command parameters and its screenshots are blocked from
+    every report path. An AI running inside the boundary builds a synthetic mock that fails the
+    same way, a named person approves it, and only the mock is posted.
+11. **Answer to Jason's ISO 9001 question:** today an ISO 9001 shop can record part number and
    revision and keep designs in git, but release states, sign-offs, change orders and CAPA links
    do not exist yet. The proposal below adds them without changing any default.
 
@@ -670,6 +674,81 @@ What the profile does with this (proposal):
 > numbers or the SAE numbers on drawings and POs, and how you record specialty-metal melt
 > country today. Label this as personal experience.
 
+### 14. Bug and crash reports must never carry a controlled design
+
+**This is the easiest way for a controlled design to leak, and it can happen with no bad
+intent at all.** Jason raised it: a bug report helps maintainers most when it carries a copy of
+the design that triggers the bug. For an ITAR-marked, CUI or customer-confidential design, that
+copy is technical data. Posting it to a public issue tracker (GitHub is public and worldwide)
+is an **export to every foreign person who can see it**. It can be an ITAR violation the moment
+it is posted, and deleting it later does not undo the release (opinion; consult export
+counsel, but this is the plain reading of §120.50 and §120.56).
+
+**What SolidCraft does today** (`docs/crash-reports.md`, `skills/solidcraft-reporting/SKILL.md`,
+checked 2026-10-28). It is careful, but it was not designed with export control in mind:
+
+- A crash report is written **on the computer and never sent**. **Report…** opens a GitHub issue
+  draft *without* the design, and nothing is posted until the user submits it. Good.
+- But the crash folder **does keep a full copy of the design** (`design.solidcraft`) plus
+  `recent_commands` with their parameters. Command parameters (sketch coordinates, hole
+  diameters, fillet radii) can be technical data on their own. That copy sits in the user's
+  data folder, which may be outside the shop's approved, encrypted storage.
+- The agent reporting skill already says never attach the user's design without asking, and
+  to build a **minimal synthetic script** that reproduces the bug in a fresh design. That is the
+  right instinct. But an agent reading `crash_reports` over MCP sends the report, including the
+  commands and possibly the design, to **whatever AI model the agent runs on**. For a marked
+  design that is itself an export path, unless the model runs inside the boundary.
+- A user who wants a fix fast can still zip the design and attach it by hand. The skill even
+  explains how, because GitHub rejects `.solidcraft` files.
+
+**Proposal: for a marked or confidential design, the design never leaves. A mock reproduces
+the bug instead.**
+
+1. **Hard block, not a warning.** When the design (or any component, by the high-water mark
+   from the high-security file) is marked ITAR, EAR, CUI or confidential, these are **refused**:
+   adding the design, `replay.json`, command parameters, screenshots or renders to a bug or crash
+   report draft; `crash_reports` / `diagnostics.crash_report` returning design content or
+   parameters to an agent whose endpoint is not trusted for that marking; and the skill's "zip it
+   and attach" path. The refusal says why and offers step 3. Each attempt goes into the audit log.
+2. **Crash copies stay inside the boundary.** For marked designs the crash folder is under the
+   approved data root, encrypted like the design, carries the design's marking, and follows the
+   design's retention and deletion rules (section 9). `report.json` keeps only what is safe to
+   share: kind, message, code location, backtrace, app version, OS and GPU, which command *type*
+   failed (`solid.fillet`), but not its parameters.
+3. **AI-generated mock reproduction (Jason's idea).** An AI agent builds a **new, synthetic design
+   that triggers the same failure**, without the controlled geometry:
+   - It starts from the failing command type and the error, then uses the reporting skill's
+     minimise steps: replace profiles with boxes and cylinders, round every dimension, drop
+     everything unrelated, rename everything. It keeps only the **topological situation** that
+     triggers the bug ("a fillet on an edge between two tangent faces, radius more than half the
+     face width"), not the part.
+   - It confirms the mock fails **the same way** (same command, same error message, same code
+     location from the backtrace) by running it headless. A mock that does not reproduce the bug
+     is not filed.
+   - **The AI that looks at the real design must run inside the boundary.** That means a local
+     model on the same computer, or an endpoint the policy trusts for that marking (high-security
+     file, "Flow control"). A public cloud model must never see the real design. Only the finished
+     mock may go to a public model or tracker.
+   - **A person approves the release.** The mock, a side-by-side view, and a similarity report
+     go to a person the policy names (for ITAR, usually the shop's empowered official or export
+     control officer). The similarity report checks that no profile, dimension set, hole
+     pattern or name from the original survives in the mock. The approval is a signature
+     record (section 3). Only then can the report be posted.
+   - **The mock is marked as such.** The report says "synthetic reproduction of a failure seen
+     in a controlled design", so maintainers know not to ask for the original.
+4. **When a mock cannot reproduce it** (the bug really needs the exact geometry), the report goes
+   out **without a design**, with only the safe fields from step 2. The maintainers and the shop
+   can then arrange a controlled channel: a US-person maintainer under an NDA or licence,
+   reproducing on the shop's own systems. That is the shop's decision, never a default.
+5. **Screenshots** of a marked design get the burned-in marking (high-security file) and are
+   refused for report drafts, as in step 1.
+
+What this needs from the code (opinion): the marking from the high-security proposal, a
+`report.mock` command that wraps the reporting skill's minimise loop and same-failure check, and
+a "safe fields" mode for crash reports. The reporting skill's privacy rule ("never attach the
+user's design without asking") becomes, for marked designs: **never attach it, even if asked.
+Build a mock.**
+
 ### Data model sketch
 
 ```text
@@ -863,7 +942,7 @@ All have input and output schemas, in line with the repository's command rules.
     ASTM E2910-24: https://store.astm.org/e2910-24.html
   - LII, 48 CFR 252.225-7009 (JAN 2023): https://www.law.cornell.edu/cfr/text/48/252.225-7009 ;
     Acquisition.gov, DFARS 252.225-7014 (1997 text): https://www.acquisition.gov/node/17358
-- SolidCraft docs: `docs/oracle.md`, `docs/design-container.md`, `docs/book/src/guide/files.md`,
+- SolidCraft docs: `docs/crash-reports.md`, `skills/solidcraft-reporting/SKILL.md` (checked 2026-10-28), `docs/oracle.md`, `docs/design-container.md`, `docs/book/src/guide/files.md`,
   `skills/solidcraft-checking/SKILL.md`, `ROADMAP.md`.
 - Related research by the same author (linked at the top): high-security, in-process
   inspection, CAM Physics System, NSN part library, physical properties, tool-holding,
