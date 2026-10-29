@@ -362,6 +362,19 @@ ideas would get real data.
 > **[TODO Jason]** Which stage would be most useful to your shop first, and whether anyone at your
 > company might review the stand-in for realism.
 
+## Export control, sanctions and government use
+
+*Added 2026-10-29 from the [government use research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-qk5riz/research/gov-research-nsnlookupjn-government-use.md). Opinion and policy proposals, not legal advice.*
+
+**What in this file crosses a border:** a public stand-in test design; it must stay made-up and must never carry data from the real product beyond a realism review.
+
+- **No hosted service is proposed here.** If one is added later, it blocks comprehensively sanctioned regions, plus Russia and Belarus, and screens accounts and payers against the US Consolidated Screening List and the UK, EU and UN lists.
+- **No support there.** No support, consulting or custom work for users in sanctioned regions or for listed parties.
+- **Government mode.** At the Controlled level (CUI and allied equivalents) online parts are off or point to the organisation's own mirror; at the Isolated level they arrive only as signed packs on media; a design flagged Export controlled (ITAR/EAR or national equivalent) never leaves through them.
+- **Only generic data is shared.** Nothing derived from a controlled design (geometry, toolpaths, part or drawing numbers, test or inspection results) goes into a shared library, report or issue. Tool data stays shareable through the field allow-list in the high-security research.
+- **Code stays public.** Every build the project ships is public, which keeps it "published" software outside the EAR. The rules are tracked by the standing export and sanctions watch.
+- **Checked for controlled data (2026-10-29):** this file contains no controlled technical data. Its examples are public sources, generic values or made-up stand-ins, and the author's experience is stated in general terms.
+
 ## Glossary
 
 - **Allowance (machining):** extra material on a casting or turned part, removed by a later step.
