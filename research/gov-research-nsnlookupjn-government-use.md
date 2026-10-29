@@ -129,7 +129,10 @@ are encouraged to correct it and contribute.
    specific about free open source. So the project should geo-block its own hosted services, give
    no support to users in Russia or Belarus, keep every build public, and run a **standing
    export and sanctions watch** (weekly automated scan, monthly triage, quarterly written review,
-   yearly adviser check).
+   yearly adviser check). Party lists matter too: sponsors, accounts and marketplace parties are
+   screened against the US Consolidated Screening List and the UK, EU and UN lists. GitHub
+   enforces US sanctions itself but cannot geo-block a public repository, so the project keeps
+   code public there and puts country rules on the downloads and hosted app it serves itself.
 
 ## Fundamentals
 
@@ -588,6 +591,100 @@ names monthly), so a one-time review is not enough. Proposal (opinion):
 The same watch serves government mode: the country profiles (section "Government mode") carry
 the export regime names and are reviewed in the same quarterly entry.
 
+**Party lists in the watch:** the weekly job also downloads the US Consolidated Screening List
+(section 9) and the UK, EU and UN consolidated lists, and reports changes that match any name in
+the project's own records (sponsors, paying customers of any project service, marketplace
+participants). New Russia or Belarus designations of software, CAD or engineering companies
+are flagged for the monthly triage.
+
+### 8. GitHub and country filtering
+
+GitHub is where SolidCraft's source, issues and release downloads live, so its rules are part of
+the picture. What GitHub's trade-controls page says (fact, page read October 2026):
+
+- **GitHub enforces US sanctions itself.** Services are not available to developers in **North
+  Korea**. In **Crimea, Donetsk and Luhansk**, free public repositories stay available for
+  personal communications; **private repositories, paid services, Sponsors and Marketplace are
+  suspended** for restricted organisations, and paid Actions minutes stop. **Cuba** has general
+  access. **Iran** is covered by an OFAC licence GitHub obtained (January 2021) for public and
+  private, free and paid services.
+- **Russia and Belarus** appear in GitHub's own export restrictions for GitHub Enterprise Server
+  and Copilot (no sale or export without authorisation; Country Group E:1); public GitHub.com use
+  is not blocked by region.
+- **How GitHub decides:** IP address and payment history, not nationality; travel can affect an
+  account; appeals go to GitHub Support.
+- **What a repository owner cannot do:** GitHub *"does not currently offer the ability to
+  restrict repository access by country."* A public repository is public everywhere GitHub
+  serves.
+
+What the maintainers **can** do (opinion):
+
+| Option | Effect | Cost |
+|---|---|---|
+| **Keep the source public on GitHub** | Preserves the "published" status that keeps the code outside the EAR; a public repository cannot be geo-blocked anyway | none |
+| **Serve release binaries and the browser app from the project's own site** (solidcraft.io) behind a CDN with country rules, and point GitHub release notes to it | Lets the project block comprehensively sanctioned regions (and Russia and Belarus, given the EU and UK CAD/CAM rules) for the things the project itself *supplies*: installers, updates, the hosted app | small; most CDNs offer country rules on free or low tiers (unverified per provider) |
+| **Turn on GitHub Sponsors only through GitHub** (which already screens) and refuse direct payments without screening | Keeps money flows screened | none |
+| **Self-hosted GitHub Enterprise Server or a self-hosted forge for a government LTS mirror** | Lets a supporting company host an access-controlled mirror for government customers (GitHub says Enterprise Server can hold export-controlled data, with the operator responsible) | licence and hosting |
+| **Ask GitHub** | GitHub may say whether release-asset downloads can be region-restricted, and confirms the project's approach is consistent with GitHub's | one email |
+
+Recommended action (opinion): keep the code public on GitHub; move the *download and update*
+endpoints the project controls behind country rules; and send GitHub Support a short request so
+the project's position is on record. Draft for the maintainers (not sent):
+
+```text
+Subject: Trade controls and country restrictions for release downloads (tangency-labs/solidcraft)
+
+Hello GitHub Support,
+
+We maintain SolidCraft (github.com/tangency-labs/solidcraft), an open-source (MIT OR Apache-2.0)
+CAD/CAM application. Because the EU (Regulation 833/2014, Article 5n(2b)) and the UK
+(SI 2025/504) restrict supplying CAD/CAM software to Russia and Belarus, and US rules restrict
+related services, we want the downloads we supply to respect those rules while keeping our
+source code public.
+
+1. Can a repository owner restrict release-asset downloads, GitHub Pages or Packages by country
+   or region, now or on a roadmap?
+2. If not, is it consistent with GitHub's terms for us to keep source and releases public on
+   GitHub while hosting installers and updates on our own site with country restrictions?
+3. Does GitHub apply any restriction for Russia or Belarus to public repositories or release
+   assets beyond what the trade-controls page describes?
+
+Thank you,
+<maintainer name>, on behalf of the SolidCraft maintainers
+```
+
+### 9. Party-based sanctions lists (SDN, Entity List and others)
+
+Separate from country rules, governments list **people and companies** (fact, trade.gov):
+
+- The US **Consolidated Screening List (CSL)** combines Commerce's Denied Persons, Unverified,
+  Entity and Military End User lists; State's Nonproliferation Sanctions and AECA (ITAR)
+  Debarred lists; and Treasury OFAC's SDN, Foreign Sanctions Evaders, Sectoral Sanctions,
+  Non-SDN Chinese Military-Industrial Complex and other lists. It has a free search, downloadable
+  files and an API, and trade.gov says it *"may be used as an aid"*; a match needs *"additional
+  due diligence"* against the official lists.
+- Other regimes keep their own lists: UK (OFSI consolidated list), EU (consolidated financial
+  sanctions list), UN Security Council, Canada, Australia, Japan, Switzerland (background
+  knowledge).
+
+**Does this affect the project? Yes, wherever it deals with a person** (opinion, guided by the
+Linux Foundation's OFAC guidance for open source):
+
+| Activity | Risk | What to do |
+|---|---|---|
+| Someone listed downloads or uses public code | Low: the project is not transacting with them | Nothing beyond keeping it public |
+| **Sponsorships, donations, paid support, grants** | High: US persons may not deal with SDNs or companies 50% or more owned by them | Take money only through screened channels; screen any direct payer against the CSL and UK/EU/UN lists |
+| **Hosted services and accounts** (browser app with sign-in, cloud libraries, the collaboration cloud) | High | Screen at sign-up and on list updates; block listed parties and sanctioned regions |
+| **Marketplace and supplier features** ([stock marketplace](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-um9nlo/research/cam-research-nsnlookupjn-stock-marketplace.md), supplier links, NSN supplier lookups, shared tool and machine libraries with contributor accounts) | High: the service brokers deals between parties | Screen every buyer, seller and contributor account; for US government supply also check SAM.gov exclusions (background knowledge) |
+| **Support and two-way collaboration** with a developer employed by a listed company | Medium to high: the Linux Foundation notes two-way collaboration *"could be interpreted as a prohibited provision of services"*, and that OFAC has no blanket "publicly available" exemption like the EAR's | Maintainers do not mentor, review for or give support to people known to work for listed companies; ask an adviser before removing anyone (the Linux kernel removed several maintainers tied to sanctioned Russian companies in October 2024; background knowledge from news) |
+| Accepting a one-way public contribution | Unsettled | Ask an adviser; record the project's policy |
+
+**Should the project screen against the CSL?** Yes (opinion): at every point where money,
+accounts or brokered deals exist, using the CSL API plus the UK, EU and UN lists, with matches
+reviewed by a person and the result logged. For a desktop-only, donation-free project the
+screening load is small; it grows with every hosted feature, which is why each research file
+that proposes one now carries an export and sanctions section.
+
 ## Would DoD and NASA use it in house? A direct answer
 
 Opinion, from everything above:
@@ -744,6 +841,10 @@ Accessed October 2026. Quotations are short; everything else is paraphrased.
   https://finance.ec.europa.eu/system/files/2024-02/faqs-sanctions-russia-software_en%2C.pdf
 - Squire Patton Boggs, *UK expands its Russia sanctions through new controls on technology,
   software and strategic goods* (Apr 2025): https://www.squirepattonboggs.com/insights/publications/uk-expands-its-russia-sanctions-through-new-controls-on-technology-software-and-strategic-goods/
+- International Trade Administration, Consolidated Screening List:
+  https://www.trade.gov/consolidated-screening-list
+- Linux Foundation, *OFAC sanctions and open source collaboration*:
+  https://bestpractices.linuxfoundation.org/ofac/ofac-open-source.html
 - SolidCraft repository: `SECURITY.md`, `docs/agent-chat.md`, `docs/web-runtime.md`,
   `docs/book/src/guide/updates.md`, `apps/solidcraft/Cargo.toml`, `apps/solidcraft-web/Cargo.toml`,
   `AGENTS.md` (main at `2016ba7`).
