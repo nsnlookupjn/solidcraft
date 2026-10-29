@@ -839,6 +839,61 @@ reviewed by a person and the result logged. For a desktop-only, donation-free pr
 screening load is small; it grows with every hosted feature, which is why each research file
 that proposes one now carries an export and sanctions section.
 
+### 10. Where SolidCraft's infrastructure is (public information, 29 Oct 2026)
+
+**Method.** Only public sources were used: the repository's workflows, docs and source at main
+`2016ba7`. No scanning. Direct DNS and HTTP lookups of `solidcraft.io` and `craft.quasarke.net`
+were blocked by this research environment's network policy, so the hosting of the apex domain is
+**not confirmed**. A maintainer can confirm it with `dig solidcraft.io`, `dig docs.solidcraft.io`
+and the registrar's records.
+
+| Piece | Where it runs (from the repo) | Provider and country | Could CUI or ITAR data land there? | Region blocking possible? |
+|---|---|---|---|---|
+| **Source, issues, discussions** | github.com/tangency-labs/solidcraft | GitHub (Microsoft), US | **Yes, by accident**: a user attaching a design to an issue [CR 14] | No. GitHub applies its own US-sanctions blocks; owners cannot geo-block a public repository |
+| **Release downloads** (MSI, DMG, AppImage, deb, rpm, snap file, zips) | GitHub Releases (`release.yml`, `gh release upload`) | GitHub, US; served worldwide | No: public binaries only | No (GitHub-side only) |
+| **Update check** | `api.github.com/repos/bherbruck/solidcraft/releases/latest` (`crates/ui-egui/src/update.rs:30`); the old owner path is redirected by GitHub | GitHub, US | No design data; it reveals an IP address and app version to GitHub | Off with `SOLIDCRAFT_UPDATE_CHECK=0`; not compiled into the offline build |
+| **Docs site and browser app** | `docs.solidcraft.io` and `/app/` on **GitHub Pages** (`pages.yml`); README links `solidcraft.io/app` | GitHub Pages (US company, global CDN; CDN provider is background knowledge, unverified) | The static app keeps designs in the **browser's own storage (OPFS)**, not on the server (`docs/web-runtime.md`). But agent chat or cloud open and save from the browser would send data out | **No country rules on GitHub Pages** (background knowledge, unverified). See the recommendation below |
+| **Apex site `solidcraft.io`** (website, `/download`) | Not in the repo | **Unknown** (lookup blocked) | Depends on the host | Depends on the host |
+| **Flatpak repository** | Published to Pages (`flatpak-pages.yml`); Flathub also referenced | GitHub Pages; Flathub (community, servers abroad; unverified) | No | No |
+| **Snap Store** | `snap-store.yml`, `snapcraft upload` | Canonical, UK-headquartered (background knowledge) | No | Snap Store publishers can limit territories (background knowledge, unverified) |
+| **winget** | `winget.yml` | Microsoft community repository, US | No | No |
+| **Container image** | `ghcr.io/<owner>/solidcraft-web` (`docker.yml`) for self-hosting | GitHub Container Registry, US | No: the image holds only the static app. What a self-hoster stores is up to them | No (GitHub-side only) |
+| **CI runners** | GitHub-hosted runners, plus **Blacksmith** runners (`blacksmith-*` labels in workflows; README badge) | GitHub, US; Blacksmith, a US company (data-centre locations unverified) | **Yes, if a test fixture or crash file with controlled data were ever committed.** CI sees everything in the repository | n/a |
+| **Windows code signing** | SignPath Foundation / SignPath.io, being set up (`docs/downloads.md`) | SignPath, Austria (background knowledge, unverified) | No: it signs public binaries | n/a |
+| **macOS notarization** | Apple Developer ID, being set up | Apple, US | No | n/a |
+| **Cloud open and save ("CollabCraft")** | `craft.quasarke.net`, through `craft-cloud` (`docs/web-runtime.md`) | **Operator and country not stated in the repo** | **Yes**: it stores user designs | Unknown |
+| **Agent chat presets** | Ollama and LM Studio (local), OpenAI, Anthropic, Mammouth AI (`crates/ui-egui/src/agent_chat/agents.rs:268-276`) | OpenAI and Anthropic, US; Mammouth AI, France (unverified); local options stay on the computer | **Yes**: an agent endpoint receives the open design | Up to each provider |
+| **DeepSeek and Alibaba (DashScope) endpoints** | Appear **only in a code comment and tests** (`api_client.rs:748, 1397-1400`), not as presets | China-based providers | Only if a user types the URL | n/a |
+| **Community** | Discord invite in README | Discord, US | Yes, by accident (screenshots) | No |
+| **Crash reports and telemetry** | None sent: crash folders stay on the computer (`docs/crash-reports.md`); no analytics found in the source | — | Only through manual sharing [CR 14] | n/a |
+
+**Findings (opinion, conservative reading per the team policy):**
+
+1. **No project infrastructure is in a sanctioned country.** It is almost all US (GitHub,
+   Microsoft, Apple, Blacksmith, OpenAI, Anthropic), plus the UK (Canonical) and likely Austria
+   (SignPath) and France (Mammouth AI).
+2. **The browser app cannot be region-blocked where it lives today.** GitHub Pages serves it
+   worldwide, including to Russia and Belarus, and the EU and UK rules on supplying CAD/CAM there
+   are unclear for free software. Conservative fix: serve `solidcraft.io/app` and `/download`
+   from a host or CDN with country rules, keep GitHub Pages for the docs only, or put the
+   question to a lawyer before keeping it as is [Lawyer].
+3. **CollabCraft (`craft.quasarke.net`) is the biggest unknown.** It stores user designs, and its
+   operator and country aren't documented. Under the prevention rule it should be **off by
+   default and unavailable in government mode** until the maintainers document its operator,
+   location, screening and region blocks. It must never be offered for CUI or ITAR data.
+4. **AI endpoints are where design data most easily leaves.** The presets are US or EU and local.
+   Keep DeepSeek and other China-based endpoints out of the presets. In government mode, refuse
+   any endpoint not on the policy allow-list. The FY2026 NDAA's DeepSeek ban for DoD contractors
+   (section 1532) makes this a contract matter for defence users.
+5. **CI sees everything committed.** A pre-commit and CI check that refuses files carrying CUI or
+   export markings (`CUI`, distribution statements B–F, `ITAR`, `EAR-controlled`) in test data
+   and fixtures would stop the worst accident before it reaches GitHub and the runners.
+6. **The update check still names the old repository owner.** It works through GitHub's
+   redirect, but the security report should show the real endpoint, and a stable project-owned
+   update URL would make it easier for an administrator to allow-list.
+7. **Confirm the apex domain's host and registrar** and add them to the network behaviour
+   statement in the evidence pack.
+
 ## Would DoD and NASA use it in house? A direct answer
 
 Opinion, from everything above:
