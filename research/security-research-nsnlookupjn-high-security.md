@@ -713,6 +713,107 @@ what Xometry and Jiga do:
 uploaded. A design-side flag protects it from the first sketch, and it hands the flag to the
 marketplace at upload instead of relying on someone remembering to tick a box at checkout.
 
+### 14. Marketing an ITAR product: renders, animations, exploded views and web viewers
+
+Jason's scenario: he designs an ITAR product for a government customer and wants a 3D animation
+of it for marketing videos and websites, including **exploded views** and **animated controls**
+(moving parts, buttons in a web viewer) for non-technical viewers. What can SolidCraft do?
+
+**Short answer (opinion, not legal advice):** yes, but only through a **separate marketing
+version** with the real engineering removed. That version **stays ITAR-marked until the
+government has cleared it for public release**. SolidCraft can build the scrubbed version, the
+review package and the record of the approval. It can't decide that something is releasable.
+That decision belongs to the export compliance officer, a lawyer, and the government reviewer.
+**[Lawyer]**
+
+#### What the rules say (fact, with sources)
+
+- **Pictures are technical data.** ITAR defines technical data as information "required for the
+  design, development, production, manufacture, assembly, operation, repair, testing,
+  maintenance, or modification of defense articles", including "blueprints, drawings,
+  photographs, plans, instructions, or documentation" (22 CFR 120.33(a)). A render is a
+  photograph of the model, and an exploded view is close to an assembly instruction.
+- **The marketing exclusion is narrow.** Technical data "does not include basic marketing
+  information on function or purpose or general system descriptions of defense articles"
+  (120.33(b)). "What it does" and "what it is for" are fine. "How it is built, assembled or how
+  well it performs" is not covered by the exclusion.
+- **Public release needs government approval.** Information becomes public domain through
+  "public release (i.e., unlimited distribution) in any form ... after approval by the
+  cognizant U.S. Government department or agency" (120.34(a)(7)). For DoD that review is done by
+  the Defense Office of Prepublication and Security Review (DOPSR) under DoDI 5230.09. A
+  contractor normally submits through its sponsoring DoD program office, with a DD Form 1910
+  (exact routing for contractors is unverified; ask the program office). Many DoD contracts also
+  carry DFARS 252.204-7000 (Disclosure of Information), which requires the contracting officer's
+  approval before contract information is released. Its lead time of about 10 business days is
+  unverified. **[Lawyer]**
+- **EAR items** become "published" when made available to the public without restrictions on
+  further dissemination (15 CFR 734.7). For a 600-series or other EAR item, the same derivative
+  and review workflow applies, with the EAR's own release rules. **[Lawyer]**
+- **Distribution statement A** ("approved for public release", DoDI 5230.24) is the marking that
+  goes on the material after clearance. Before clearance, the material carries the master's
+  marking.
+
+#### What each kind of marketing content can reveal (most conservative reading)
+
+| Content | Risk | Safer form |
+|---|---|---|
+| Still render or turntable of the outside | Exact external shape, interfaces, mounting points, apertures, materials, finish | Defeatured outer shell, generic appearance, no close-ups of interfaces. Cleared before use. |
+| **Exploded view** | Internal arrangement, part count, how parts fit and the assembly order. All of that falls under "assembly" in 120.33(a). | **Stylised placeholder internals:** labelled generic blocks ("power", "sensor", "control") that are not real geometry, or only the outer covers lifting off. Never the real internal parts. |
+| **Animated controls / moving parts** | Real ranges of motion, speeds, rates, kinematics and sequences can reveal performance and operation | **Approved motions only:** illustrative timing and ranges, set by hand in the marketing version. Never driven by the master's real joint limits or drive data. |
+| Interactive **web viewer** (glTF / 3D on a website) | Anyone can download the mesh and **measure it**. A 3D file is close to a model you could manufacture from. | Prefer **video or image sequences** (a turntable as frames: interactive, but with no geometry served). If a 3D viewer is needed, serve only a decimated, defeatured, stylised mesh with no internal parts. Its file is reviewed and cleared like every other file. |
+| Captions and narration | Specifications, tolerances, materials, test results | Function and purpose only, from an approved text list |
+
+#### Proposed SolidCraft workflow: the marketing derivative (opinion)
+
+1. **Derive, never edit the master.**
+   `marketing.derive {source, profile}` creates a **new, separate design**, not a
+   configuration inside the controlled file. It is born with the master's marking (the
+   section 3 high-water mark), so it is ITAR from the start. The master's audit log records the
+   derivation (master hash, derivative ID, who, when). The derivative holds only an opaque link
+   back to the master, never its path or part number.
+2. **Scrub by allow-list**, the same principle as the tool-data filter in section 12: only
+   chosen external bodies are copied. Everything else is left behind. The profile then:
+   - replaces internals with **placeholder primitives** chosen by the user;
+   - **defeatures** the shell: holes, threads, fasteners, small fillets, text and engravings,
+     interface detail below a size threshold;
+   - removes **PMI, tolerances, dimensions, parameters, sketches, feature history, materials,
+     part numbers, CAGE codes and metadata**, so the derivative is a plain shape;
+   - **decimates** the mesh and can stylise it;
+   - applies generic appearances.
+
+   A **diff report** lists what was removed and what remains, for the reviewers.
+3. **Author explode and motion only in the derivative.** Explode steps and motion clips are
+   made by hand with illustrative timing. Joint limits are never copied from the master. The
+   web viewer's buttons play pre-approved clips. They don't run live kinematics.
+4. **Render-only exports by default.** The default outputs are MP4 video, image sequences and
+   stills. **glTF/3D web export is off** unless the release profile allows it. Every output
+   carries the derivative's marking (banners, side-car) until it is cleared, and its hash is
+   recorded.
+5. **Release gate on every file and frame.** `release.request` builds a review package: every
+   output file, a contact sheet of frames, the diff report, the caption text and a summary
+   ready for a DD Form 1910. The status is **Pending**. Nothing can go to a public destination
+   (a website upload, a public link, an agent not marked `public`) while it is pending.
+6. **Record the approval.** `release.record {case_number, approver, date, statement: "A"}`
+   imports a signed approval from the export compliance officer, plus the government case
+   number. Only then does the derivative's marking change to Distribution A, and only for the
+   exact file hashes that were reviewed.
+7. **Any change voids the approval.** Editing the derivative, re-rendering or changing a
+   caption makes a new hash. The status returns to Pending and the reviewers see a new diff.
+8. **Fingerprint review copies.** Copies sent to reviewers, agencies or an outside animation
+   studio before release carry a **per-recipient fingerprint**, following the
+   digital-fingerprint and leak-tracing idea from the NDA and IP research. A leaked
+   pre-release copy can then be traced. Once something is publicly released, fingerprints no
+   longer matter for it.
+9. **Outside studios.** If a marketing agency builds the animation, it receives only the
+   derivative, and only after review if it isn't a US person. Before release, sending it is
+   an export like any other technical data. **[Lawyer]**
+
+**Team rules applied:** *no one goes to jail*: the derivative stays ITAR until a recorded
+government clearance, SolidCraft refuses public export rather than warning, and every legal
+question is marked [Lawyer]. *Prevention first*: public export and 3D web export stay off until
+the gate passes. *Help users comply*: SolidCraft builds the scrubbed version, the review
+package and the record, so the right process is also the easy one.
+
 ### Proposed commands (sketch)
 
 | Command | Input | Output |
@@ -725,6 +826,9 @@ marketplace at upload instead of relying on someone remembering to tick a box at
 | `export_control.set` | `{regime: "ITAR" \| "EAR", usml_category?, eccn?, note?}` | effective marking; designs raised by inheritance |
 | `export_control.clear` | `{reason, approval?}` | cleared marking, or refusal naming the missing approval |
 | `tool_data.prepare_share` | `{records}` | outgoing records (allow-listed fields only) and refused values with reasons |
+| `marketing.derive` | `{source, profile}` | new derivative design (marked like the master), diff report |
+| `release.request` | `{design, outputs}` | review package path, status `pending` |
+| `release.record` | `{case_number, approver, date, statement, approval_file}` | cleared file hashes and new marking, or refusal |
 | `library.import_pack` | `{path}` | `{signer, verified, entries, warnings}` |
 | `security.report` | `{format?: "json" \| "pdf"}` | the report above |
 
@@ -816,6 +920,10 @@ All dialog-free, all with schemas, all audited when the profile is on.
     foreign partners in Xometry's partner job board is not stated publicly; RapidMade publishes
     no file-handling detail. Asking them directly would fill the gap.
 
+13. **Marketing derivatives:** what exactly DOPSR and typical program offices expect for
+    contractor marketing videos and 3D web viewers; whether a decimated glTF can ever be cleared,
+    or only video. **[Lawyer]** Ask the program office first.
+
 ## Sources
 
 Accessed 2026-10-26 unless noted.
@@ -844,6 +952,13 @@ Accessed 2026-10-26 unless noted.
 - AWS, *GovCloud DoD SRG*: <https://aws.amazon.com/govcloud-us/dodsrg>
 - AWS, *Amazon Bedrock models get FedRAMP High and DoD IL-4/5 approval in AWS GovCloud (US)* (23 May 2025):
   <https://aws.amazon.com/about-aws/whats-new/2025/05/amazon-bedrock-models-fedramp-high-dod-il-4-5-govcloud/>
+- 22 CFR 120.33, *Technical data*: <https://www.law.cornell.edu/cfr/text/22/120.33>
+- Stony Brook University, *Regulatory definitions of publicly available, public domain and published*
+  (quotes 22 CFR 120.34(a)(7) and 15 CFR 734.7):
+  <https://stonybrook.edu/research-security/export-controls/_export-control-regulations/_federal-export-control-regulations/publicly-available.html>
+- DD Form 1910, *Clearance request for public release of Department of Defense information*:
+  <https://www.esd.whs.mil/Portals/54/Documents/DD/forms/dd/dd1910.pdf>
+- DoDI 5230.09, *Clearance of DoD information for public release*: <https://assist.dla.mil/Online/help/523009p.pdf>
 - Xometry, *ITAR, DFARS, and export restrictions* (help article 666):
   <https://community.xometry.com/kb/articles/666-itar-dfars-and-export-restrictions>
 - Xometry, *Drawing discrepancies in ITAR, EAR and CUI* (help article 853, preview only):
