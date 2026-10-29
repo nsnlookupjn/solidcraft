@@ -61,6 +61,160 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 adding to it, and others (especially people who have pushed software through an agency approval)
 are encouraged to correct it and contribute.
 
+## Team policy: no one goes to jail
+
+**Our policy is simple: no one on our team goes to jail, or pays a fine, because of this
+project.** Export control and sanctions breaches can be crimes for the individual, not only the
+company, and **the project has no in-house counsel to help**. So every sanctions, export and ITAR
+proposal in this file, and in the short "Export control, sanctions and government use" section of
+each of the author's research files, follows four rules:
+
+1. **Take the most conservative reading wherever a rule is unclear.** If we cannot tell whether
+   something is allowed, we treat it as not allowed until a qualified person says otherwise.
+   In practice, for the open questions in this file:
+   - **Downloads to Russia and Belarus** (EU Article 5n(2b) and UK SI 2025/504 are silent on free
+     software): block them on every endpoint the project runs.
+   - **Answering issues or chat from users in Russia, Belarus or sanctioned regions** (is it "IT
+     support"?): do not, beyond closing the thread with a neutral link to the policy.
+   - **Contributions from people known to work for listed companies** (unsettled under OFAC):
+     do not accept, review or mentor until an outside lawyer says it is fine.
+   - **The BIS encryption notification** (742.15(b)): send it. It is a free email and removes the
+     doubt.
+   - **Any request that touches a defence article** (help with a weapon part, a military drone, a
+     controlled design): refuse, whoever asks.
+   - **Any money** from a party we have not screened: refuse.
+2. **Say plainly when something needs an outside export-control lawyer.** Items marked
+   **[Lawyer]** in this file are those. No maintainer or contributor decides them alone, and no
+   AI-written text (this file included) replaces that advice.
+3. **Use the free official help first.** US agencies answer questions at no charge:
+   - **BIS (Commerce, EAR):** export counselling by phone and email from the Office of Exporter
+     Services, advisory opinions in writing, and the encryption notification address
+     (`crypt@bis.gov`, with a copy to `enc@nsa.gov`, per 742.15(b); background knowledge, check
+     the current BIS encryption page before sending). Contact page: https://www.bis.gov/
+   - **DDTC (State, ITAR):** the DDTC Contact Center, and formal commodity jurisdiction
+     determinations and advisory opinions, all free (https://www.pmddtc.state.gov/; background
+     knowledge, unverified for current procedures).
+   - **OFAC (Treasury, sanctions):** the Compliance Hotline portal
+     (https://ofac.treasury.gov/ofac-compliance-hotline), published FAQs, the Sanctions List
+     Service, and requests for interpretive guidance.
+   - **trade.gov:** the Consolidated Screening List search and API.
+   - **UK and EU:** the UK Export Control Joint Unit and OFSI publish guidance and answer
+     questions; EU member-state export authorities do the same for EU rules (unverified per
+     country).
+   Free help is not a substitute for a lawyer on a [Lawyer] item, but it is the right first call
+   and its answers should be written into the project's compliance log.
+4. **When in doubt, stop.** Pause the feature, the support thread or the payment, record why,
+   and ask. A delayed feature costs nothing; a breach can cost someone their freedom.
+
+## Golden rule: SolidCraft helps its users comply
+
+**Alongside "no one goes to jail", the golden rule is that SolidCraft helps every user comply,
+in every country.** Users live under many laws, and sometimes those laws compete. The program
+cannot know which law wins for a given person, and it must never pretend to give legal advice.
+What it can do is make the rules visible, make the safe choice easy, and make conflicts
+impossible to miss. Proposal (opinion):
+
+- **Stop and explain at the moment of risk.** When an export, share, upload, agent request or
+  bug report would send a marked or export-controlled design somewhere its rules don't allow,
+  SolidCraft **refuses** (in doubt it refuses rather than warns), says why in plain language,
+  names the rule and links to the official guidance. Only an administrator's recorded decision
+  can open that path.
+- **Guided setup.** A government-mode setup assistant for administrators asks which
+  organisation, which countries and which kinds of work, then proposes the level and the rule
+  packs, and shows exactly what each choice switches on or off.
+- **Screening hooks.** Any hosted feature (library accounts, marketplace, collaboration) calls a
+  screening interface. The organisation plugs in its own provider, or the free US Consolidated
+  Screening List API, and names its other lists (UK, EU, UN and so on). SolidCraft records the
+  result but never decides that a match is a false positive; a person does.
+- **Plain-language explanations.** Every rule in a pack carries a short explanation, an official
+  source link and a review date. It never says "you are compliant". It says "this rule from this
+  source applies to this action".
+- **Never legal advice.** Every screen that shows a rule says that the user's own compliance
+  officer or lawyer decides, and points to the free official help in the team policy above.
+
+### Rule packs per jurisdiction
+
+The country profiles in "Government mode" become **jurisdiction rule packs**: reviewed data
+files, one per regime, that the user's **administrator picks** (often several at once). For
+example, a German subsidiary of a US company on a UK programme would pick EU + Germany + UK + US.
+Each pack lists:
+
+- marking vocabularies;
+- controlled-list names;
+- blocked destinations and parties;
+- storage-location rules;
+- which screening lists to use;
+- which actions need a warning, an approval or a block;
+- for every rule, the source, a plain explanation and a last-reviewed date.
+
+The packs are reviewed in the quarterly entry of the export and sanctions watch.
+
+**The software flags conflicts; it does not resolve them.** When two picked packs disagree about
+the same action, SolidCraft:
+
+- stops the action;
+- shows both rules side by side with their sources;
+- asks the administrator (not the user) to record a decision, with a reason, in the audit log.
+
+That decision then applies until a pack changes. SolidCraft never picks a winner itself.
+
+### Conflicts of law the packs must be able to show
+
+Opinion on design. The legal summaries below come from background knowledge and are unverified
+here; each needs a pack reviewer and, for a real decision, a lawyer [Lawyer].
+
+| Conflict | The two sides | What SolidCraft shows |
+|---|---|---|
+| **EU Blocking Statute vs US secondary sanctions** | The EU Blocking Statute (Regulation 2271/96) forbids EU persons from complying with certain listed US extraterritorial sanctions (for example, parts of the US Cuba and Iran measures). A US-linked company may still be told by US law to comply. | A conflict notice when an EU pack and a US pack both apply to a block based on a listed US measure. The admin records which rule the organisation follows on its lawyer's advice. |
+| **China's Anti-Foreign Sanctions Law and Export Control Law vs US and EU rules** | China's Anti-Foreign Sanctions Law (2021) allows countermeasures against those who implement foreign sanctions against China. Its Export Control Law (2020) and the MOFCOM Unreliable Entity List add China's own controls. | A conflict notice when a China pack and a US or EU pack disagree about serving or blocking a party. |
+| **US anti-boycott rules** | The EAR's anti-boycott rules (Part 760) forbid US persons from joining unsanctioned foreign boycotts (historically the Arab League boycott of Israel) and require some boycott requests to be reported. | A warning if a pack, supplier form or marketplace request asks the user to certify a boycott. Such text is flagged, not filled in. |
+| **Data localisation vs ITAR or US-only storage** | Some countries require certain data to stay in-country (Russia, China, India and others, each with its own scope). ITAR technical data and many US contracts need US-only or approved storage, unless the end-to-end encryption carve-out applies. | A storage-location conflict when the picked packs require different locations for the same design. Options shown: separate stores, the encryption carve-out where it applies, or don't process. |
+| **Re-export and "follows the item" rules** | US-origin items and technology keep US controls when re-exported (EAR re-export, de minimis and foreign direct product rules). ITAR technical data stays ITAR wherever it goes. A design made abroad from US technical data can carry US controls. | The ITAR/EAR flag stays with the design and every derivative [HS 13], whichever national pack is also picked. |
+| **Privacy law vs nationality checks** | ITAR access control depends on knowing who is a US person. The EU GDPR and national employment laws limit collecting and using nationality. | The identity attribute comes from the organisation's identity system (a yes/no "authorized for ITAR"), not from SolidCraft storing nationality. The privacy pack and the ITAR pack are both shown. |
+| **Two classification systems on one design** | A shared programme can need markings from two countries at once (for example, a UK classification on top of a US export-control marking). | Both markings carry through, the stricter handling rule applies to each action, and the conflict is shown if the two rules can't both be met. |
+
+## Prevention first: compliance gates
+
+**We cannot defend ourselves without in-house counsel, so we stop problems before they happen.**
+Prevention beats defence. The rule (opinion, proposed for CONTRIBUTING.md and the release
+process):
+
+**A risky feature does not merge or ship until its compliance controls are in place and
+checked.** Risky features are:
+
+- hosted services and user accounts
+- marketplace and supplier links
+- cloud sharing, sync and shared libraries that take contributions
+- paid support, donations and sponsorships
+- telemetry and any new network path
+- AI endpoints that receive design data
+- remote access to machines, including SolidCraft Edge
+
+| Gate | What it requires before merge or release |
+|---|---|
+| **Design gate** (in the issue or RFC) | A short compliance note: what crosses a border, which parties it deals with, its behaviour at each government-mode level, the ITAR flag handling, what data is allowed (field allow-list), and which [Lawyer] questions it raises. |
+| **Merge gate** (PR checks) | A `Compliance:` line in the PR description (like the existing `Changes a default:` line), checked by `pr-checks.yml`. `cargo xtask egress` fails on any new network path without an inventory entry. A `needs-compliance-review` label blocks merge until a named compliance maintainer clears it. |
+| **Release gate** | Before release, a risky feature must have: region blocks live and tested; screening wired in and failing closed; the ITAR/export flag blocking the feature; government-mode behaviour tested at each level; a dated entry in the compliance log. Any hosted service, paid offering or marketplace also needs written outside-lawyer sign-off [Lawyer]. No sign-off means no launch. |
+| **Run gate** (while it is live) | If screening is unavailable, the feature refuses, it does not let people through. If a rule pack is past its review date, hosted features in government mode refuse until the pack is reviewed. Any credible report of a sanctioned or military end user pauses the feature for that party at once. |
+
+**Safe defaults** (fact for today's app where noted, opinion otherwise):
+
+- Every risky feature is **off by default** and **deny by default** once on.
+- Refuse rather than warn when in doubt.
+- Fail closed when a check can't run.
+- The desktop app keeps working fully offline.
+- Today crash reports already stay on the computer, and the update check can be turned off (fact, [HS] summary).
+
+**Money is the easiest place to stop trouble.** Take donations and sponsorships only through
+platforms that screen (GitHub Sponsors already applies trade controls). Refuse direct payments
+from anyone not screened. Sell no paid support until a separate legal entity with its own adviser
+offers it.
+
+[Lawyer] items in this file: free downloads under EU and UK Russia rules; whether answering
+public issues is "IT support" under the OFAC determination; accepting contributions from staff
+of listed companies; the project's export classification and any non-public build; any hosted
+service, paid support or marketplace launch; any defence-services question.
+
 ## Summary
 
 1. **Can a government employee use SolidCraft? Yes, but not just by downloading it.** US policy
