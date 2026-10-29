@@ -685,22 +685,52 @@ is an **export to every foreign person who can see it**. It can be an ITAR viola
 it is posted, and deleting it later does not undo the release (opinion; consult export
 counsel, but this is the plain reading of §120.50 and §120.56).
 
-**What SolidCraft does today** (`docs/crash-reports.md`, `skills/solidcraft-reporting/SKILL.md`,
-checked 2026-10-28). It is careful, but it was not designed with export control in mind:
+**What the code does today: an audit of `main` at commit `2016ba7` (2026-10-29).** Jason asked
+for a check of whether an ITAR model could actually leave through a bug report. Line numbers
+are from that commit.
 
-- A crash report is written **on the computer and never sent**. **Report…** opens a GitHub issue
-  draft *without* the design, and nothing is posted until the user submits it. Good.
-- But the crash folder **does keep a full copy of the design** (`design.solidcraft`) plus
-  `recent_commands` with their parameters. Command parameters (sketch coordinates, hole
-  diameters, fillet radii) can be technical data on their own. That copy sits in the user's
-  data folder, which may be outside the shop's approved, encrypted storage.
-- The agent reporting skill already says never attach the user's design without asking, and
-  to build a **minimal synthetic script** that reproduces the bug in a fresh design. That is the
-  right instinct. But an agent reading `crash_reports` over MCP sends the report, including the
-  commands and possibly the design, to **whatever AI model the agent runs on**. For a marked
-  design that is itself an export path, unless the model runs inside the boundary.
-- A user who wants a fix fast can still zip the design and attach it by hand. The skill even
-  explains how, because GitHub rejects `.solidcraft` files.
+**Verdict: nothing is uploaded automatically, but yes, a controlled design or its dimensions
+can leave through a bug report, by four paths that need one human (or agent) action each.**
+SolidCraft has no idea of a marking yet, so none of these paths can tell an ITAR design from
+any other.
+
+| # | Path | What can leave | Evidence |
+|---|---|---|---|
+| 1 | **The GitHub bug template asks for the design.** For a problem on a particular design, it tells the reporter to turn the design into a command script with `solidcraft-cli script design.solidcraft --out repro.json` and **attach it**. | The **whole design history** as a script (every sketch, dimension and feature). This is the most direct path, and it is the documented one. | `.github/ISSUE_TEMPLATE/bug.yml:22` |
+| 2 | **Report drafts carry design parameters.** "Report a bug" adds the open dialog's command parameters (up to 10,000 characters), the selection with occurrence paths (component names), the selected and latest features' parameters, and the camera. A crash draft adds the crashing command with its parameters (up to 4,000 characters) and the list of recent command names. | Dimensions, feature parameters, component and feature names, the panic message (which can contain values). Whole documents, sketch geometry and imported files are left out on purpose. | `crates/ui-egui/src/issue_report.rs:305–345` (bug draft), `:398–407` (crash draft) |
+| 2a | **Short drafts travel inside the URL.** When the encoded draft fits in 2,000 characters, the body is put in the `issues/new?…&body=` link. The browser sends that link to github.com as soon as the page opens, **before** the user clicks Submit, and it stays in browser history (and any browser sync). Longer drafts go to the clipboard instead. | The draft text above, sent to GitHub's servers even if the issue is never submitted. | `issue_report.rs:20` (`ISSUE_URL`), `:462–470` (`draft_url`) |
+| 3 | **External AI agents can read crash reports.** The MCP server's `crash_reports` tool returns the whole report: the crashing command and recent commands **with their parameters**, plus `design_path` and `replay_path`. Everything the tool returns goes to the agent's AI model, usually a cloud model. | Command parameters (dimensions) and file paths to the full design copy. The crash folder is under a hidden data folder, so the MCP `open` tool refuses it by default. But an agent with its own file tools (a coding agent, for example) can read `design.solidcraft` directly. The recovery folder of autosaved designs *is* in the MCP server's reach by default. | `crates/mcp/src/tools.rs:554` and `:639`; `crates/engine/src/crash.rs:1156` (paths added); `docs/mcp.md:80–90` (reachable folders) |
+| 4 | **The crash folder holds a full copy of the design.** Each report folder keeps `design.solidcraft` (up to 10 MB) and `replay.json`. The crash draft says "Only attach the design if it can be shared publicly", and the reporting skill explains how to zip a design so GitHub accepts it. That is a **warning, not a block**. | The **whole design**, if the reporter attaches it. | `crash.rs:980` (design copy), `:989` (replay), `issue_report.rs:398` (warning text) |
+
+**Also kept on disk all the time** (not sent anywhere, but outside any approved-storage control):
+every running app keeps a session journal of every top-level command with its parameters (up to
+4 KB each, 512 KB per journal) in plain text under the data folder (`crash.rs:55–57`,
+`:501–521`). Crash reports are kept for up to 90 days, at most 20 of them and 50 MB in total
+(`crash.rs:45–51`).
+
+**Already right, and worth keeping:**
+
+- Nothing is sent automatically. The only network calls in the app are the update check (a GET
+  to GitHub) and the in-app agent chat to the endpoint the user configures
+  (`apps/solidcraft/src/main.rs:418`, `:479`); `crash.rs:28` and `diagnostics.rs:1–2` state
+  that reports never leave the computer.
+- The **in-app** agent chat refuses every `diagnostics.*` and crash command
+  (`crates/ui-egui/src/agent_chat/gate.rs:118`) and hides the `crash_reports` tool from the model
+  (`agent_chat/api_client.rs:50`). Only the external MCP server exposes it.
+- Report drafts leave out whole documents, sketch geometry and imported file contents
+  (`issue_report.rs:305`), screenshots are never attached automatically
+  (`docs/crash-reports.md:13–14`), and nothing is posted until the user submits on GitHub.
+
+**Smallest fixes for the paths above** (opinion; each one is useful before markings exist):
+
+1. **Template:** change `bug.yml:22` to say *"Do not attach a script made from an export-controlled,
+   CUI or confidential design. Describe a generic part that shows the problem instead."*
+2. **Drafts:** never put the body in the URL. Always copy it to the clipboard, so nothing reaches
+   GitHub until the user pastes and submits (`draft_url`).
+3. **MCP:** a `crash_reports` "safe fields" mode as the default (kind, message, location,
+   backtrace, version, command *type*), with parameters and paths only when the server was
+   started with an explicit flag.
+4. **Once markings exist:** everything in the proposal below.
 
 **Proposal: for a marked or confidential design, the design never leaves. The report carries
 instructions for a mock-up, and the developer builds the reproduction.**
