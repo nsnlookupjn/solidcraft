@@ -101,6 +101,23 @@ each of the author's research files, follows four rules:
    - **UK and EU:** the UK Export Control Joint Unit and OFSI publish guidance and answer
      questions; EU member-state export authorities do the same for EU rules (unverified per
      country).
+   - **Who could check the [Lawyer] items** (checked 29 Oct 2026, public sources only): the
+     repository has no governance file, no CODEOWNERS and no legal or export discussion in its
+     docs. Funding goes to the original author through GitHub Sponsors and Ko-fi
+     (`.github/FUNDING.yml`). No public statement names a lawyer in the community. Realistic
+     free or low-cost routes:
+     - the **Software Freedom Law Center**, which has given free legal help to non-profit
+       open-source developers since 2005;
+     - the **Software Freedom Conservancy**, which offers fiscal sponsorship with legal support
+       for member projects;
+     - the **Linux Foundation and OpenSSF's** published OFAC guidance for open source;
+     - the **US Commercial Service's** Export Assistance Centers (free export counselling; not
+       legal advice);
+     - university **law school clinics** (technology, IP or international trade; whether any one
+       takes export-control work is unverified);
+     - bar association **pro bono** programmes;
+     - the export counsel or Empowered Official of a contributor's own defence company. That
+       reviewer protects that company first, so the conflict needs stating.
    Free help is not a substitute for a lawyer on a [Lawyer] item, but it is the right first call
    and its answers should be written into the project's compliance log.
 4. **When in doubt, stop.** Pause the feature, the support thread or the payment, record why,
@@ -209,6 +226,26 @@ checked.** Risky features are:
 platforms that screen (GitHub Sponsors already applies trade controls). Refuse direct payments
 from anyone not screened. Sell no paid support until a separate legal entity with its own adviser
 offers it.
+
+### Enforcement cases that show why (public reports)
+
+- **3D Systems (settled 27 Feb 2023, up to about $27 million, State, Commerce and Justice).**
+  Design drawings and specifications, some for military electronics and US spacecraft work,
+  were emailed to a subsidiary in China, often **to get price quotes**. Controlled files also
+  sat on a **mirrored email server in Germany**. The violations ran from 2012 to 2019
+  (3D Printing Industry report).
+- **Honeywell (announced 3 May 2021, $13 million, State).** Engineering drawings with ITAR
+  technical data were sent to **foreign suppliers for quotes** between 2011 and 2015. Staff had
+  not reviewed, or had wrongly decided, the drawings' export jurisdiction (Shipman & Goodwin
+  summary).
+- **Defense Distributed v. US Department of State (2015 to 2018).** The government treated
+  published CAD files for 3D-printed guns as ITAR technical data. The case ended in a 2018
+  settlement that 20-plus states then challenged (Wikipedia summary of the court record).
+
+The lesson for SolidCraft (opinion): the riskiest moments are ordinary ones, such as asking a
+supplier for a quote, a server copy in another country, or publishing a design file. That is
+exactly why the ITAR flag blocks quote uploads and marketplace sharing [HS 13], why storage
+location is a rule-pack item, and why the prevention gates exist.
 
 [Lawyer] items in this file: free downloads under EU and UK Russia rules; whether answering
 public issues is "IT support" under the OFAC determination; accepting contributions from staff
