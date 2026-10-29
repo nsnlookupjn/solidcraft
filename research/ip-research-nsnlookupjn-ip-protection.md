@@ -439,8 +439,10 @@ This "canary trap" is an old counter-intelligence technique (background knowledg
 
 **Marketing material** (renders, web 3D viewers, brochures) needs the same idea in reverse:
 deliberate canary details and optionally a falsified scale in the marketing geometry, so a part
-copied from a brochure or viewer can be recognised. That case is covered by the author's separate
-design-to-brochure marketing pipeline research, which uses this file's fingerprint layers and
+copied from a brochure or viewer can be recognised. That case is covered by section 5 of the author's separate
+[design-to-brochure marketing pipeline research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-ey6ghb/research/marketing-research-nsnlookupjn-design-to-brochure.md#5-falsified-scale-and-canary-details-jasons-request-within-advertising-law)
+(marketing variants are marked "marketing only" and CAM, drawing and manufacturing exports
+refuse them, so canaries never reach a real part), which uses this file's fingerprint layers and
 `ip.trace` rather than its own.
 
 ### 7. Provenance: proving it's yours, and when
