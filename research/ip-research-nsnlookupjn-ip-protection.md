@@ -412,6 +412,9 @@ Rules (opinion):
 - **Shown, not hidden.** When SolidCraft opens a file with any fingerprint layer, it says so in
   the file properties ("This file carries a recipient mark from Owner X"). It does not decode the
   recipient for anyone but the key holder.
+- **One fingerprint engine.** The high-security research's section 14 (marketing an ITAR product)
+  uses per-recipient fingerprints on scrubbed marketing derivatives; it should call this same
+  engine rather than a second one [HS 14].
 - **Patent check first.** Mesh watermarking has been an active research and patent field since
   the late 1990s. Before L4 (and the similarity search) is built, its methods need a patent check,
   preferring methods from expired patents or well-known academic work [Lawyer].
