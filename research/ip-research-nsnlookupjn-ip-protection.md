@@ -437,6 +437,12 @@ shop's drawing trivially different in a way that doesn't matter (a note's wordin
 chamfer callout's position). A copy then shows which shop it came from even after re-drawing.
 This "canary trap" is an old counter-intelligence technique (background knowledge, unverified).
 
+**Marketing material** (renders, web 3D viewers, brochures) needs the same idea in reverse:
+deliberate canary details and optionally a falsified scale in the marketing geometry, so a part
+copied from a brochure or viewer can be recognised. That case is covered by the author's separate
+design-to-brochure marketing pipeline research, which uses this file's fingerprint layers and
+`ip.trace` rather than its own.
+
 ### 7. Provenance: proving it's yours, and when
 
 - **Signed revisions.** Each saved revision gets a content hash; released revisions get a
