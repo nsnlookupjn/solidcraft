@@ -702,6 +702,12 @@ says so ("Nut torque unknown: use the maker's table") rather than inventing one.
 
 *Added 2026-10-29 from the [government use research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-qk5riz/research/gov-research-nsnlookupjn-government-use.md). Opinion and policy proposals, not legal advice.*
 
+**Our three rules:**
+
+- **No one goes to jail.** Our team has no in-house counsel. So wherever a rule is unclear we take the most conservative reading and refuse rather than warn. Questions that need an outside export-control lawyer are marked as such, and free official help (BIS, DDTC, OFAC) is the first call.
+- **Help users comply.** SolidCraft stops and explains in plain language, using rule packs for each jurisdiction that the administrator picks. It flags conflicts between countries' laws, never resolves them, and never gives legal advice.
+- **Prevention first.** Nothing in this file that is hosted, shared, paid or networked ships until its compliance gates are in place and checked: region blocks, screening, ITAR flag handling, government-mode behaviour, and an outside lawyer's sign-off for any hosted or paid service.
+
 **What in this file crosses a border:** local tool holder modelling and checks; a shared holder library would follow the tool library rules.
 
 - **No hosted service is proposed here.** If one is added later, it blocks comprehensively sanctioned regions, plus Russia and Belarus, and screens accounts and payers against the US Consolidated Screening List and the UK, EU and UN lists.
