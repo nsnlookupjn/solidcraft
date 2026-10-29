@@ -710,9 +710,9 @@ every running app keeps a session journal of every top-level command with its pa
 
 **Already right, and worth keeping:**
 
-- Nothing is sent automatically. The only network calls in the app are the update check (a GET
-  to GitHub) and the in-app agent chat to the endpoint the user configures
-  (`apps/solidcraft/src/main.rs:418`, `:479`); `crash.rs:28` and `diagnostics.rs:1–2` state
+- Nothing is sent automatically. The app's network calls are the in-app agent chat to the
+  endpoint the user configures (`apps/solidcraft/src/main.rs:418`) and GET requests to GitHub
+  for updates (`:479`); `crash.rs:28` and `diagnostics.rs:1–2` state
   that reports never leave the computer.
 - The **in-app** agent chat refuses every `diagnostics.*` and crash command
   (`crates/ui-egui/src/agent_chat/gate.rs:118`) and hides the `crash_reports` tool from the model
