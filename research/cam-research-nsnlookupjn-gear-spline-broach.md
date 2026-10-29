@@ -829,6 +829,19 @@ In priority order (**opinion**):
 9. **Closed loop**: probe-based over-pins, wear trend from force, feeding the in-process
    inspection file's loop.
 
+## Export control, sanctions and government use
+
+*Added 2026-10-29 from the [government use research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-qk5riz/research/gov-research-nsnlookupjn-government-use.md). Opinion and policy proposals, not legal advice.*
+
+**What in this file crosses a border:** local gear, spline and broach geometry and CAM; standards references only.
+
+- **No hosted service is proposed here.** If one is added later, it blocks comprehensively sanctioned regions, plus Russia and Belarus, and screens accounts and payers against the US Consolidated Screening List and the UK, EU and UN lists.
+- **No support there.** No support, consulting or custom work for users in sanctioned regions or for listed parties.
+- **Government mode.** At the Controlled level (CUI and allied equivalents) online parts are off or point to the organisation's own mirror; at the Isolated level they arrive only as signed packs on media; a design flagged Export controlled (ITAR/EAR or national equivalent) never leaves through them.
+- **Only generic data is shared.** Nothing derived from a controlled design (geometry, toolpaths, part or drawing numbers, test or inspection results) goes into a shared library, report or issue. Tool data stays shareable through the field allow-list in the high-security research.
+- **Code stays public.** Every build the project ships is public, which keeps it "published" software outside the EAR. The rules are tracked by the standing export and sanctions watch.
+- **Checked for controlled data (2026-10-29):** this file contains no controlled technical data. Its examples are public sources, generic values or made-up stand-ins, and the author's experience is stated in general terms.
+
 ## Glossary
 
 - **Base circle**: the circle an involute unwinds from; `db = d·cos α`.
