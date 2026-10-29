@@ -51,6 +51,7 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
 - **Not legal advice, and not a compliance claim.** An organisation is registered with DDTC and
   certified to AS9100; software is not. A program can (1) not undermine the organisation's
   system and (2) produce its evidence well. That is the whole scope here.
+- **Team rules on sanctions and export control:** no one on our team goes to jail; SolidCraft helps users comply; prevention first. We have no in-house counsel, so unclear rules get the most conservative reading and are marked for an outside lawyer. Details in the [government use research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-qk5riz/research/gov-research-nsnlookupjn-government-use.md).
 - **Marking:** "(unverified)" marks a claim not confirmed against a source. **Fact**,
   **opinion** and **proposal** are labelled where they mix. Dates are as of 2026-10-26.
 
@@ -881,6 +882,12 @@ All have input and output schemas, in line with the repository's command rules.
 ## Export control, sanctions and government use
 
 *Added 2026-10-29 from the [government use research](https://github.com/nsnlookupjn/solidcraft/blob/claude/project-thread-qk5riz/research/gov-research-nsnlookupjn-government-use.md). Opinion and policy proposals, not legal advice.*
+
+**Our three rules:**
+
+- **No one goes to jail.** Our team has no in-house counsel. So wherever a rule is unclear we take the most conservative reading and refuse rather than warn. Questions that need an outside export-control lawyer are marked as such, and free official help (BIS, DDTC, OFAC) is the first call.
+- **Help users comply.** SolidCraft stops and explains in plain language, using rule packs for each jurisdiction that the administrator picks. It flags conflicts between countries' laws, never resolves them, and never gives legal advice.
+- **Prevention first.** Nothing in this file that is hosted, shared, paid or networked ships until its compliance gates are in place and checked: region blocks, screening, ITAR flag handling, government-mode behaviour, and an outside lawyer's sign-off for any hosted or paid service.
 
 **What in this file crosses a border:** integrations with QMS, PLM and ERP systems, supplier records and a future collaboration server; the US defence profile here should use the government mode's country profiles.
 
