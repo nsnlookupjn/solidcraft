@@ -135,8 +135,9 @@ Licence: MIT OR Apache-2.0, the same as SolidCraft (see the Licence section of C
    classes 1 to 11 and AGMA 2015's A-classes fall with accuracy (higher number = coarser). A
    model and drawing must store the system with the grade, never a bare number.
 8. **What users need, in short:** catalogue-driven Gear/Spline/Keyway/Broached Profile features
-   that store intent, generated true geometry with cosmetic display for speed, gear data tables
-   on drawings, design-for-process checks (runout grooves, pilot holes, cutter overtravel), CAM
+   that store intent, generate geometry proven exact against the chosen AGMA, DIN or ISO
+   definition, and print a complete manufacturer's data table (ISO 1340 items, inch or mm),
+   with a cosmetic display for speed, design-for-process checks (runout grooves, pilot holes, cutter overtravel), CAM
    that proposes a process from the feature, the machine and the batch size, and inspection
    numbers computed from the same data.
 
@@ -570,14 +571,118 @@ kernel's sweep accuracy.
 bands) keeps the viewport light, with true teeth generated for export, mass properties, drawing
 detail views and CAM.
 
-### Drawings
+### Standard-exact gears and the manufacturer's data table
 
-Gear drawings carry a **gear data table** (module, teeth, pressure angle, helix and hand,
-profile shift, accuracy grade with system, tooth thickness or over-pins dimension with pin size,
-span with number of teeth, mating gear) rather than dimensioning the involute
-(unverified reference to ISO 1340/ ANSI Y14.7.1 drawing conventions). Splines carry their
-designation and fit. These tables can be generated from the stored intent, the same way the
-Hole command produces thread callouts.
+Jason's requirement for this feature: **"The gear feature should build mathematically perfect
+AGMA/DIN/ISO standard models and provide a table of parameters for a gear manufacturer to
+follow."** This section says what that takes.
+
+**1. The definition is exact; the geometry is proven against it.**
+
+- The feature stores the *analytic* definition: the chosen standard family, basic rack, and
+  every parameter (module or DP, teeth, pressure angle, helix and hand, profile shift, tooth
+  thickness allowances, accuracy grade). Every number in the data table is computed from the
+  closed-form equations in double precision (the formulas in "Fundamentals" and "Inspection"),
+  never measured from the mesh or the B-rep.
+- The involute is a transcendental curve. SolidCraft's native B-rep has planes, cylinders,
+  cones, spheres and B-splines but no involute record (`docs/native-brep.md`), and STEP has no
+  involute curve type either (unverified for STEP). So there are two honest options:
+  1. **Certified fit (first step):** fit the flank with B-splines, measure the maximum deviation
+     from the analytic involute by dense sampling, store that deviation in the feature, and
+     require it to be far below the finest accuracy class asked for (for example 0.1 µm, which
+     is a small fraction of the profile tolerance of even the finest ISO 1328-1 classes
+     (unverified magnitude)). The feature shows "profile exact to 0.1 µm" rather than claiming
+     perfection.
+  2. **Analytic records (later):** add an involute curve and involute helicoid surface to the
+     native B-rep, so SolidCraft's own model is exact and only exports are fitted. That is a
+     design-format change (in SolidCraft that is one new file in
+     `crates/doc/src/format/pending/`), so it should follow once the fitted version is in use.
+- The root is the **envelope of the standard basic rack** (or of the named cutter), so it is the
+  root the standard and the shop produce, not an arbitrary fillet.
+- **Proof built in:** the feature checks itself the way a gear lab would. It places virtual pins
+  on the generated B-rep and measures M, measures the span W between tangent planes, and plots
+  the flank's deviation from the true involute as a profile chart. Then it compares all three
+  with the closed-form values. Tests do the same against analytic values and against published
+  worked examples, and after a STEP round trip.
+
+**2. One "standard family" field picks the whole rule set.**
+
+| Family | Geometry and terms | Basic rack | Tooth thickness and backlash | Accuracy | Drawing data |
+|---|---|---|---|---|---|
+| ISO | ISO 21771:2007, concepts and geometry ([DIN ISO 21771 entry](https://dinmedia.de/en/standard/din-iso-21771/203861353)) | ISO 53 A to D | upper and lower allowances on tooth thickness (method per ISO 21771, unverified detail) | ISO 1328-1:2013, ISO 1328-2:2020 | ISO 1340 |
+| DIN | DIN ISO 21771 (older DIN 3960 on legacy drawings (unverified)); deviations per DIN 21772 ([entry](https://www.dinmedia.de/en/standard/din-21772/125295771)) | DIN 867 | DIN 3967: a letter for the deviation series (`h` gives zero upper allowance, minimum backlash) and a number from 21 to 30 for the tolerance width ([MESYS manual](https://www.mesys.ch/manual/normal-tooth-allowance-din-396.html)) | ISO 1328 (older DIN 3961/3962 classes on legacy drawings (unverified)) | DIN 3966-1 (unverified) |
+| AGMA | ANSI/AGMA 1012 nomenclature (unverified) | AGMA full depth 20° and 25°, legacy 14.5°, stub, fine pitch (unverified list) | AGMA 2002 tooth thickness (unverified) | ANSI/AGMA 2015-1 and 2015-2 (legacy AGMA 2000 Q numbers, which run the opposite way) | AGMA 910-D12, "Formats for Fine-Pitch Gear Specification Data" ([Gear Technology](https://geartechnology.com/articles/24928)) |
+
+The family sets the symbols, the default basic rack, the tooth thickness system, the grade
+system and the table layout. Mixing families inside one gear (for example a DIN 3967 allowance
+on an AGMA 2015 grade) is allowed only as an explicit "custom" choice and is printed as such.
+
+**3. The data table follows ISO 1340's list.**
+
+ISO 1340 ("information to be given to the manufacturer by the purchaser") calls these items
+essential ([ISO 1340:1976 sample](https://cdn.standards.iteh.ai/samples/5905/ae7783962d0b4c4da5f327abcdb4ae03/ISO-1340-1976.pdf)).
+On the drawing: tip diameter and tolerance, face width, bore or shaft datum, locating face,
+flank surface finish. In the data table, preferably at the upper right: module (normal module
+for helical), teeth, basic rack, helix angle and direction, reference diameter, profile shift
+coefficient, tooth thickness with upper and lower deviations and the measuring method (span
+over k teeth, constant chord, or pins or balls with their diameter), accuracy per ISO 1328,
+centre distance and tolerance, and the mating gear's tooth count and drawing number. It lists
+datum run-outs, base diameter and surface texture as useful extras.
+
+Proposed table, filled from the stored intent. The example column is the gear used in the
+worked examples (m 2, z 24, 20°, ISO 53 A, x = 0), mated with a 36-tooth gear (derived values):
+
+| Item | Symbol | Example |
+|---|---|---|
+| Standard family and editions | | ISO 21771:2007, ISO 53, ISO 1328-1:2013 |
+| Normal module (or DP) | `mn` | 2 mm |
+| Number of teeth | `z` | 24 |
+| Normal pressure angle | `αn` | 20° |
+| Basic rack | | ISO 53 profile A |
+| Helix angle, hand | `β` | 0° (spur) |
+| Profile shift coefficient | `x` | 0 |
+| Reference diameter | `d` | 48.000 mm |
+| Base diameter | `db` | 45.105 mm |
+| Tip diameter, tolerance | `da` | 52.000 mm, tolerance per drawing |
+| Root diameter | `df` | 43.000 mm (reference) |
+| Root form diameter (involute starts) | `dFf` | 45.352 mm |
+| Start of active profile with the mate | `dNf` | 45.560 mm (must stay above `dFf`: it does) |
+| Tooth thickness at `d`, deviations | `sn` | 3.142 mm basic, allowances from the selected series |
+| Span over k teeth | `Wk` | k = 3, 15.433 mm basic, limits from the allowances |
+| Dimension over pins | `M`, `dp` | 52.951 mm basic over 3.5 mm pins, limits from the allowances |
+| Accuracy grade | | ISO 1328-1:2013 class 7 (example), with the individual tolerances it implies (`fp`, `Fp`, `Fα`, `Fβ`, `Fr`) |
+| Profile and lead modifications | `Cα`, `Cβ` | none (or tip relief, crowning, with amounts) |
+| Mating gear | | 36 teeth, its drawing number |
+| Centre distance, tolerance | `a` | 60.000 mm |
+| Transverse contact ratio | `εα` | 1.647 (reference) |
+| Flank finish | `Ra` | per drawing |
+| Material, heat treatment, case depth | | from the physical material card |
+
+Because the table comes from the same intent as the model, it cannot disagree with the model:
+change the tooth count and every row, the pin dimension and the drawing update together.
+
+**4. Output in the forms a gear shop takes.**
+
+- A **drawing table** in the chosen family's layout (ISO 1340 order, or an AGMA 910 style form).
+- **Units:** inch or mm per table. US shops (including Jason's, which mostly works in inches)
+  will want DP-based gears in inches, with metric gears shown in mm and optionally inches too.
+- A **command** that returns the table as JSON or CSV. That follows SolidCraft's rule that
+  everything is a command, and lets a gear shop's software or the CAM read the numbers
+  directly.
+- The same values carried as properties in exports where the format allows (STEP AP242
+  properties (unverified mapping)), so the shop does not have to retype them from a PDF.
+
+**5. Limits on "perfect" that must be stated.**
+
+- Tolerance *values* (the ISO 1328 formulas, the DIN 3967 allowance tables, AGMA 2015 tables)
+  are in paid, copyrighted standards. SolidCraft can only ship them if the content can be
+  licensed or re-derived. Otherwise the user enters them, or loads a data pack they have the
+  rights to. The geometry formulas are classical and free to implement.
+- A model can be exact; a part cannot. The table, not the CAD surface, is what the manufacturer
+  works to. That is why the table has to be complete and right.
+
+Splines carry their designation and fit in the same way (ISO 4156, ANSI B92.1, DIN 5480), with
+effective and actual limits. Keyways carry width, depth and tolerance class.
 
 ### Design-for-process checks (CAD side)
 
@@ -816,8 +921,10 @@ In priority order (**opinion**):
    option for assemblies.
 3. **Gear pair** relationship that drives `joint.gear` from tooth counts and checks centre
    distance, contact ratio and interference.
-4. **Drawing data tables** and **inspection numbers** (over-pins with pin size, span, spline
-   effective/actual limits) generated from the intent.
+4. **A manufacturer's data table** that follows ISO 1340 (AGMA 910 layout as an option), in inch
+   or mm, generated from the intent, with **inspection numbers** (over-pins with pin size, span,
+   spline effective and actual limits). Also available as JSON or CSV from a command. See
+   "Standard-exact gears and the manufacturer's data table".
 5. **Design-for-process checks** (undercut, runout, overtravel, pilot hole, through or relieved
    end).
 6. **CAM process proposal** from feature + machine + tools + batch, with cycle time and the
@@ -892,10 +999,16 @@ In priority order (**opinion**):
    only checking catalogue broaches?
 8. What is a reasonable public source for hob chip thickness formulas (Hoffmeister), so a check
    can be added beside the simulation?
+9. How can SolidCraft ship tolerance values (ISO 1328-1, DIN 3967, AGMA 2015) that live in paid
+   standards: a licensed data pack, values the user enters, or formulas re-derived from public
+   sources?
+10. Should the native B-rep get analytic involute curve and helicoid records (a design-format
+   change), or is a certified B-spline fit enough?
 
 ## Sources
 
-All accessed 2026-10-26.
+All accessed 2026-10-26, except the ISO 1340, DIN ISO 21771, DIN 21772, AGMA 910 and MESYS
+entries, accessed 2026-11-02.
 
 - Stadtfeld, H. J., "Power Skiving of Cylindrical Gears on Different Machine Platforms", Gear
   Technology, Jan/Feb 2014. https://ik.imagekit.io/agmamedia/gt/issues/0114x/power-skiving.pdf
@@ -938,5 +1051,14 @@ All accessed 2026-10-26.
 - MESYS, helical gear calculation. https://www.mesys.ch/calc/helicalgear.fcgi?lang=en
 - excelcalcs, base tangent length calculation for helical gears.
   https://excelcalcs.com/calcs/repository/Machines/Gears/Base-Tangent-Length-Calculation-for-Helical-Gears
+- ISO 1340:1976, Cylindrical gears: information to be given to the manufacturer by the
+  purchaser (sample pages).
+  https://cdn.standards.iteh.ai/samples/5905/ae7783962d0b4c4da5f327abcdb4ae03/ISO-1340-1976.pdf
+- DIN ISO 21771 catalogue entry. https://dinmedia.de/en/standard/din-iso-21771/203861353
+- DIN 21772 catalogue entry. https://www.dinmedia.de/en/standard/din-21772/125295771
+- Gear Technology, "AGMA Committee Revises Fine Pitch Gearing Data" (AGMA 910-D12), 2014.
+  https://geartechnology.com/articles/24928
+- MESYS manual, normal tooth allowance DIN 3967.
+  https://www.mesys.ch/manual/normal-tooth-allowance-din-396.html
 - SolidCraft repository: `docs/thread-catalogue.md`, `docs/cosmetic-threads.md`,
-  `docs/plugins.md`, `skills/solidcraft-mechanisms/SKILL.md` (gear and rack joints).
+  `docs/plugins.md`, `docs/native-brep.md`, `skills/solidcraft-mechanisms/SKILL.md` (gear and rack joints).
