@@ -1,0 +1,3 @@
+Let a design say what an acceptable part is (tolerances, fits, thread classes, GD&T, surface finish, hardness and permitted manufacturing deviations) so CAM, inspection, drawings and STEP export can read it from the model instead of a person re-reading a 2D drawing.
+
+This is what takes SolidCraft from a modeller to **production-grade software**. Today the acceptance criteria live only on a drawing that every programmer, machinist and inspector has to interpret again, and that is where mistakes and arguments start. The Drawing work already plans tolerance text (#6782) and GD&T frames (#7257) on drawings; this asks for the same intent to live in the model first, so the drawing, the CAM and the inspection all read one source.

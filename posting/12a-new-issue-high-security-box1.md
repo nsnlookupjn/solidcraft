@@ -1,0 +1,5 @@
+**In one line:** let defense and aerospace shops use SolidCraft for Controlled Unclassified Information (CUI) and export-controlled (ITAR/EAR) work, air-gapped or in AWS GovCloud or Azure Government, with one switch an administrator controls.
+
+Those shops have to show an assessor, now under CMMC (its clauses entered DoD contracts on 10 Nov 2025, and third-party Level 2 certification is phased in from 10 Nov 2026), that their software sends nothing out, keeps data on approved storage, marks controlled files, logs who did what and uses FIPS-validated crypto where it protects CUI.
+
+SolidCraft already starts well: no licence server, crash reports never leave the computer, the update check is anonymous and can be turned off (`SOLIDCRAFT_UPDATE_CHECK=0`), updates are checksum-verified, the control channel is localhost with a per-launch token, and `cargo deny` runs in CI. What's missing is one admin-controlled switch, a documented list of every network path, and markings that follow a model onto its exports.
