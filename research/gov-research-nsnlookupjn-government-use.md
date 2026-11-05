@@ -245,7 +245,7 @@ offers it.
   A US maker of optical design software (TracePro, OSLO, with IGES and STEP translators) sold
   EAR99 licences through distributors in Japan and China to Huawei Japan and SiCarrier, both on
   the Entity List. Its **automatic updates and subscription downloads** to those customers
-  counted as separate violations: 66 charges in all, 55 of them mostly updates. The company had
+  counted as separate violations: 66 charges in all, 54 of them for updates alone. The company had
   no written export compliance procedures (BIS settlement agreement). This is the closest case
   to a CAD/CAM program. Public open-source code is outside the EAR, but **any non-public build,
   subscription, licence key or update service would not be**. That is why the prevention gates
