@@ -241,6 +241,15 @@ offers it.
 - **Defense Distributed v. US Department of State (2015 to 2018).** The government treated
   published CAD files for 3D-printed guns as ITAR technical data. The case ended in a 2018
   settlement that 20-plus states then challenged (Wikipedia summary of the court record).
+- **Lambda Research Corporation (BIS settlement, order October 2026, $2 million, suspended).**
+  A US maker of optical design software (TracePro, OSLO, with IGES and STEP translators) sold
+  EAR99 licences through distributors in Japan and China to Huawei Japan and SiCarrier, both on
+  the Entity List. Its **automatic updates and subscription downloads** to those customers
+  counted as separate violations: 66 charges in all, 55 of them mostly updates. The company had
+  no written export compliance procedures (BIS settlement agreement). This is the closest case
+  to a CAD/CAM program. Public open-source code is outside the EAR, but **any non-public build,
+  subscription, licence key or update service would not be**. That is why the prevention gates
+  cover a government LTS line and paid support too.
 
 The lesson for SolidCraft (opinion): the riskiest moments are ordinary ones, such as asking a
 supplier for a quote, a server copy in another country, or publishing a design file. That is
@@ -787,6 +796,35 @@ the export regime names and are reviewed in the same quarterly entry.
 the project's own records (sponsors, paying customers of any project service, marketplace
 participants). New Russia or Belarus designations of software, CAD or engineering companies
 are flagged for the monthly triage.
+
+**Watch log** (newest first; each entry covers the week before its date):
+
+- **2026-11-05 (first weekly check, 29 Oct to 5 Nov 2026).** No violation found and no change
+  needed to the project's position. Items:
+  - **BIS "Affiliates Rule".** Companies owned 50% or more by Entity List or Military End User
+    List parties are treated like the listed party. The compliance date is **10 Nov 2026**
+    unless the US–China truce suspends it again (Benesch, 2 Nov 2026). Screening of any future
+    hosted, paid or marketplace feature must include ownership, as OFAC's 50% rule already does.
+  - **BIS enforcement against Lambda Research (optical design software, October 2026).** Updates
+    to Entity List customers were violations. Added to the enforcement cases above.
+  - **OFAC.** Iran-related designations (4 Nov) and an amended Iran general licence (29 Oct). No
+    software or Russia measure that week.
+  - **DDTC.** The ITAR omnibus proposed rule (published 1 Oct) takes comments until **30 Nov
+    2026**. It asks whether to change how "specially designed" applies to software, with nothing
+    on CAD files or public-domain data. Syria left the ITAR §126.1 denial list on 1 Oct 2026.
+    The project's geo-block list keeps "Syria only where still sanctioned", and that should be
+    re-checked against OFAC and BIS before any service launches [Lawyer].
+  - **EU.** The record listings package of 12 Oct 2026 (1,569 names, over half tied to Russian
+    missile and drone production) is now in force. A 22nd sectoral package is being prepared;
+    watch for any change to Article 5n.
+  - **UK.** Notice to Exporters 2026/24 (23 Oct, updated 2 Nov) proposes control-list updates
+    from the 2025 Wassenaar review, expected in force early December 2026; check for
+    machine-tool or software entries when the text is published.
+  - **Upstream SolidCraft.** Release v0.29.0 (around 1 Nov 2026, per a third-party release
+    tracker) adds more agent connections (Codex, Antigravity), a changed "Report a bug" window
+    and file format 46. Not checked in source this week. Next week: confirm that the bug window
+    still attaches no design by default [CR 14], and that no new agent preset points outside the
+    allow-list policy.
 
 ### 8. GitHub and country filtering
 
