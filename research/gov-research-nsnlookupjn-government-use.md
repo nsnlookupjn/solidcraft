@@ -799,6 +799,32 @@ are flagged for the monthly triage.
 
 **Watch log** (newest first; each entry covers the week before its date):
 
+- **2026-11-12 (weekly check 2, 5 to 12 Nov 2026).** No violation by the project or the author
+  found. **Two risks for defence users of upstream SolidCraft**, now in section 10:
+  - **China-headquartered AI presets.** Upstream v0.40.1 lists **DeepSeek and Qwen (Alibaba)**
+    as one-click agent presets. Sending a controlled design there would be an unlicensed export to
+    a §126.1 country, and DeepSeek use is barred for DoD contractors (FY2026 NDAA §1532).
+  - **EasyPrint uploads to Printables (Czech Republic).** Upstream asks for consent before
+    uploading, but says nothing about export control.
+  - **"Report a bug" window, checked in source at upstream `e3d7d1ff`.** It never attaches the
+    design file. The screenshot stays local until the user reviews and attaches it. The crash
+    template says "Only attach the design if it can be shared publicly". But the draft text
+    still includes command parameters, feature names, errors and the selection, and a short draft
+    goes into the GitHub link when opened, before the user submits. That leak path [CR 14] is
+    unchanged. Command parameters can carry controlled dimensions.
+  - **BIS.** The Affiliates Rule did **not** start on 10 Nov: a final rule of 5 Nov extended the
+    suspension to **10 Jan 2027**.
+  - **OFAC.** Iran designations (6 and 9 Nov), and cyber, crime and Cuba designations (5 Nov).
+    OFAC expanded Cuba sanctions to the electronics, manufacturing, marine and technology
+    sectors. Cuba is already on the project's block list.
+  - **Russia (US side).** Executive Order 14436 (16 Oct) waived most Russia provisions of the
+    2026 Graham Act. That Act lets Treasury bar any category of services to Russia. No new
+    software or IT services category has been named, but this is worth watching.
+  - **EU.** Listings for Russian oil refining, the shadow fleet and about 50 banks are expected on
+    16 Nov. The 22nd package is expected by the end of November. Nothing on software yet.
+  - **UK.** No software change. The control-list update (NTE 2026/24) is still due early December.
+  - **DDTC.** No new rule. ITAR omnibus comments are still due 30 Nov.
+
 - **2026-11-05 (first weekly check, 29 Oct to 5 Nov 2026).** No violation found and no change
   needed to the project's position. Items:
   - **BIS "Affiliates Rule".** Companies owned 50% or more by Entity List or Military End User
@@ -937,8 +963,8 @@ and the registrar's records.
 | **Windows code signing** | SignPath Foundation / SignPath.io, being set up (`docs/downloads.md`) | SignPath, Austria (background knowledge, unverified) | No: it signs public binaries | n/a |
 | **macOS notarization** | Apple Developer ID, being set up | Apple, US | No | n/a |
 | **Cloud open and save ("CollabCraft")** | `craft.quasarke.net`, through `craft-cloud` (`docs/web-runtime.md`) | **Operator and country not stated in the repo** | **Yes**: it stores user designs | Unknown |
-| **Agent chat presets** | Ollama and LM Studio (local), OpenAI, Anthropic, Mammouth AI (`crates/ui-egui/src/agent_chat/agents.rs:268-276`) | OpenAI and Anthropic, US; Mammouth AI, France (unverified); local options stay on the computer | **Yes**: an agent endpoint receives the open design | Up to each provider |
-| **DeepSeek and Alibaba (DashScope) endpoints** | Appear **only in a code comment and tests** (`api_client.rs:748, 1397-1400`), not as presets | China-based providers | Only if a user types the URL | n/a |
+| **Agent chat presets** (updated 12 Nov 2026, upstream v0.40.1) | Local: Ollama, LM Studio, OpenClaw. Hosted: OpenAI, Mistral AI, Google Gemini, Mammouth AI, OpenCode Go, **DeepSeek**, **Qwen (Alibaba DashScope, international endpoint)**, Cheaper Inference, OpenRouter, Anthropic (`crates/ui-egui/src/agent_chat/agents.rs:310-329`) | US (OpenAI, Google, Anthropic, OpenRouter and others), France (Mistral, Mammouth; unverified), **China-headquartered (DeepSeek, Alibaba)**; local options stay on the computer | **Yes**: an agent endpoint receives the open design | Up to each provider |
+| **EasyPrint upload** (new upstream, `file.open_in_easyprint`) | Uploads the model to Printables' servers (`slicer.printables.com`) after a consent prompt; the link expires after 30 minutes (`crates/engine/src/easyprint.rs`, `ui.easyprint_consent`) | Printables (Prusa Research), Czech Republic (background knowledge) | **Yes**: the model geometry leaves the computer for a foreign server | Not applicable; it is the user's own upload |
 | **Community** | Discord invite in README | Discord, US | Yes, by accident (screenshots) | No |
 | **Crash reports and telemetry** | None sent: crash folders stay on the computer (`docs/crash-reports.md`); no analytics found in the source | — | Only through manual sharing [CR 14] | n/a |
 
@@ -956,10 +982,18 @@ and the registrar's records.
    operator and country aren't documented. Under the prevention rule it should be **off by
    default and unavailable in government mode** until the maintainers document its operator,
    location, screening and region blocks. It must never be offered for CUI or ITAR data.
-4. **AI endpoints are where design data most easily leaves.** The presets are US or EU and local.
-   Keep DeepSeek and other China-based endpoints out of the presets. In government mode, refuse
-   any endpoint not on the policy allow-list. The FY2026 NDAA's DeepSeek ban for DoD contractors
-   (section 1532) makes this a contract matter for defence users.
+4. **AI endpoints are where design data most easily leaves.** Since this table was first
+   written, upstream has added **DeepSeek and Qwen (Alibaba) as one-click presets**. Sending an
+   ITAR-controlled design to them would be an export of technical data to a China-headquartered
+   service, and China is an ITAR §126.1 country. The FY2026 NDAA (section 1532) also bars DoD
+   contractors from using DeepSeek. Conservative fix: in government mode, refuse any endpoint not
+   on the policy allow-list. Until that exists, label China-headquartered presets with a plain
+   warning, or keep them out of the default list [Lawyer] for the wording. OpenRouter and similar
+   routers can forward to any provider, so they need the same care.
+4a. **Uploads to slicers and other services.** EasyPrint now uploads the model to Printables'
+   servers in the Czech Republic after a consent prompt. The prompt says nothing about export
+   control. In government mode, an export-controlled or marked design must never reach it; the
+   ITAR flag should block it like a quote upload [HS 13].
 5. **CI sees everything committed.** A pre-commit and CI check that refuses files carrying CUI or
    export markings (`CUI`, distribution statements B–F, `ITAR`, `EAR-controlled`) in test data
    and fixtures would stop the worst accident before it reaches GitHub and the runners.
