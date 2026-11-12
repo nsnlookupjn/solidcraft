@@ -382,6 +382,8 @@ Opinion, derived from the sections above:
 
 **What in this file crosses a border:** a shared material and machine library with per-shop measured values and spool-tag data.
 
+**Update 2026-11-12:** upstream SolidCraft now has EasyPrint, which uploads the model to Printables' servers in the Czech Republic after a consent prompt. That prompt doesn't mention export control. Under the team rules, a design flagged Export controlled or marked CUI must never reach any online slicer or print service. Government mode refuses it, the same way the ITAR flag blocks quote uploads.
+
 - **Hosted parts block sanctioned regions and screen people.** Any service this file proposes that the project would run blocks comprehensively sanctioned regions, plus Russia and Belarus (US, EU and UK rules restrict CAD/CAM software and related services there), and screens accounts, payers, contributors and marketplace parties against the US Consolidated Screening List and the UK, EU and UN lists.
 - **No support there.** No support, consulting or custom work for users in sanctioned regions or for listed parties.
 - **Government mode.** At the Controlled level (CUI and allied equivalents) online parts are off or point to the organisation's own mirror; at the Isolated level they arrive only as signed packs on media; a design flagged Export controlled (ITAR/EAR or national equivalent) never leaves through them.
