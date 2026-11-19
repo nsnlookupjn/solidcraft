@@ -799,6 +799,27 @@ are flagged for the monthly triage.
 
 **Watch log** (newest first; each entry covers the week before its date):
 
+- **2026-11-19 (weekly check 3, 12 to 19 Nov 2026).** No violation by the project or the author
+  found. The two upstream risks from last week are **still open**:
+  - **China-headquartered AI presets still ship.** Upstream main at `78d06f46` (0.45.0-rc.4)
+    still lists DeepSeek and Qwen (Alibaba) in both preset lists. It has added another router
+    (UnoRouter) beside OpenRouter. Routers can forward a design to any provider, China-based ones
+    included.
+  - **EasyPrint is unchanged.** It still uploads to Printables after a consent prompt that doesn't
+    mention export control.
+  - **"Report a bug" window:** no change this week. The design file is never attached; the
+    parameters-in-the-link path remains [CR 14].
+  - **EU.** On 16 Nov the EU listed about 114 more names (Russia asset freeze, hybrid threats,
+    cyber). The next sectoral package (Steptoe calls it the 22nd; some sources used that name for
+    the 12 Oct listings) is due to be presented at the 26–27 Nov European Council. Nothing on
+    software or Article 5n yet.
+  - **UK.** 12 Nov: Russia designations (Slavneft, Sibur, Vostok Oil and others) and ships. The
+    Export Control (Amendment) Regulations 2026 (SI 2026/1150, laid 3 Nov) **take effect 1 Dec
+    2026**. They update the military and dual-use lists (Wassenaar 2025, advanced computing,
+    semiconductor equipment). Check the machine-tool and software entries when in force.
+  - **US.** OFAC: narcotics and terrorism designations only (13 and 18 Nov). No new BIS or DDTC
+    rule found. ITAR omnibus comments close **30 Nov**; nothing in it touches CAD files.
+
 - **2026-11-12 (weekly check 2, 5 to 12 Nov 2026).** No violation by the project or the author
   found. **Two risks for defence users of upstream SolidCraft**, now in section 10:
   - **China-headquartered AI presets.** Upstream v0.40.1 lists **DeepSeek and Qwen (Alibaba)**
